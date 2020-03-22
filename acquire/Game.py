@@ -1,3 +1,4 @@
+from Board import *
 from Tiles import *
 from Player import *
 
@@ -10,10 +11,14 @@ def gameLoop():
   run=True
 
   # initialize the game: board, tiles, players, stocks
+  board = Board(BOARD_ROWS, BOARD_COLS)
   bag = TileBag(BOARD_ROWS, BOARD_COLS)
   players = [Player(id) for id in range(0,3)]
 
   # TODO: Define starting player (draw single tile)
+  for player in players:
+    t=bag.takeTile()
+    board.placeTile(t)
 
   # Give each player their starting tiles
   for player in players:
@@ -29,6 +34,7 @@ def gameLoop():
       pass
     run=False # kill it for now
 
+  print(board)
   print(players)
       
 if __name__ == "__main__":
