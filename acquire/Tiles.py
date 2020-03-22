@@ -9,6 +9,12 @@ class Tile:
     self.row = row
     self.col = col
 
+  def getRow(self):
+    return self.row
+
+  def getCol(self):
+    return self.col
+
   def __repr__(self):
     """
     Rebase tile to People-speak
@@ -40,6 +46,9 @@ if __name__ == "__main__":
   bag = TileBag(5,5)
   print(bag)
 
+  t=bag.takeTile()
+  print(t.getRow())
+   
   while not bag.isEmpty():
     t=bag.takeTile()
     print(t)
