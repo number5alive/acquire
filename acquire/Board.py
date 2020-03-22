@@ -5,10 +5,10 @@ class Board:
     self.rows=rows
     self.cols=cols
     self.tiles=[[False for row in range(0,self.rows)] for col in range(0,self.cols)]
+    print(len(self.tiles[0]))
    
   def placeTile(self, tile):
-    row=tile.getRow()
-    col=tile.getCol()
+    row, col = tile.getTilePos()
     self.tiles[row][col] = True
 
   def checkTile(self, row, col):

@@ -9,11 +9,8 @@ class Tile:
     self.row = row
     self.col = col
 
-  def getRow(self):
-    return self.row
-
-  def getCol(self):
-    return self.col
+  def getTilePos(self):
+    return self.row, self.col
 
   def __repr__(self):
     """
@@ -47,8 +44,7 @@ if __name__ == "__main__":
   print(bag)
 
   t=bag.takeTile()
-  print(t.getRow())
+  print(str(t.getTilePos()) + ' ' + str(t))
    
   while not bag.isEmpty():
     t=bag.takeTile()
-    print(t)
