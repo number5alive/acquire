@@ -1,11 +1,13 @@
 import pygame
 from Tiles import Tile
 from Board import *
- 
+
+SCREEN_X=500
+SCREEN_Y=500
 GRID_WIDTH=50
 GRID_BORDER=5
  
-def drawTile(screen, board, row, col, w):
+def drawBoardSquare(screen, board, row, col, w):
   colour=100
   if board.checkTile(row, col):
     colour=200
@@ -24,32 +26,44 @@ def redrawBoard(screen, board):
   rows,cols=board.getBoardSize()
   for row in range(0, rows):
     for col in range(0, cols):
-      drawTile(screen, board, row, col, GRID_WIDTH)
+      drawBoardSquare(screen, board, row, col, GRID_WIDTH)
    
   pygame.display.update()
    
+def checkMouseClick(board,x,y):
+  # Exit out if click was off the game window or lower half
+  if x > SCREEN_X or y > SCREEN_Y/2:
+    return False
+
+  # Find out if the click was on the board or not
+  try:
+    t=Tile(int(x/GRID_WIDTH),int(y/GRID_WIDTH))
+    board.placeTile(t)
+  except Exception as e:
+    pass #Click wasn't on the board
+  return True
+
 def boardLoop(screen, board):
-    run = True
-    clock = pygame.time.Clock()
+  run = True
+  clock = pygame.time.Clock()
 
-    while run:
-        clock.tick(60)
+  while run:
+    clock.tick(60)
    
-        redrawBoard(screen,board)
+    redrawBoard(screen,board)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                run = False
-
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        run = False
+      if event.type == pygame.MOUSEBUTTONDOWN:
+        x,y=pygame.mouse.get_pos()
+        if not checkMouseClick(board,x,y):
+          run=False
 
 if __name__ == "__main__":
   pygame.font.init()
-  width = 500
-  height = 500
-  screen = pygame.display.set_mode((width, height))
+  screen = pygame.display.set_mode((SCREEN_X, SCREEN_Y))
   pygame.display.set_caption("Client")
 
   board = Board(8,5)

@@ -5,7 +5,6 @@ class Board:
     self.rows=rows
     self.cols=cols
     self.tiles=[[False for col in range(0,self.cols)] for row in range(0,self.rows)]
-    print(len(self.tiles[0]))
    
   def placeTile(self, tile):
     row, col = tile.getTilePos()
