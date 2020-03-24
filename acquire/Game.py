@@ -7,13 +7,12 @@ BOARD_ROWS=8
 BOARD_COLS=12
 TILE_MAX=7
  
-def gameLoop():
+def gameLoop(players):
   run=True
 
   # initialize the game: board, tiles, players, stocks
   board = Board(BOARD_ROWS, BOARD_COLS)
   bag = TileBag(BOARD_ROWS, BOARD_COLS)
-  players = [Player(id) for id in range(0,3)]
 
   # TODO: Define starting player (draw single tile)
   for player in players:
@@ -38,5 +37,6 @@ def gameLoop():
   print(players)
       
 if __name__ == "__main__":
-  gameLoop()
+  players = [Player(id) for id in range(0,3)]
+  gameLoop(players)
 
