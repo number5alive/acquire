@@ -2,29 +2,29 @@ import pygame
 from Tiles import Tile
 from Board import *
  
+GRID_WIDTH=50
+GRID_BORDER=5
+ 
+def drawTile(screen, board, row, col, w):
+  colour=100
+  if board.checkTile(row, col):
+    colour=200
+  x=row*w
+  y=col*w
+  pygame.draw.rect(screen, colour, (x,y,w,w))
+  pygame.draw.rect(screen, 255, (x,y,w,w), GRID_BORDER)
+
 def redrawBoard(screen, board):
   screen.fill((128, 128, 128))
   font = pygame.font.SysFont("comicsans", 60)
   text = font.render("Click to Quit!", 1, (255,0,0))
   screen.blit(text, (100,200))
    
-  x=0
-  y=0
-  w=50
-  col_tile=100
-  col_free=200
-   
   # Get board size in Rows, Columns 
   rows,cols=board.getBoardSize()
   for row in range(0, rows):
     for col in range(0, cols):
-      if board.checkTile(row, col):
-        pygame.draw.rect(screen, col_tile, (x,y,w,w))
-      else:
-        pygame.draw.rect(screen, col_free, (x,y,w,w))
-      x+=w
-    x=0      
-    y+=w
+      drawTile(screen, board, row, col, GRID_WIDTH)
    
   pygame.display.update()
    
