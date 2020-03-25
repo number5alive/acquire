@@ -6,15 +6,22 @@ SCREEN_X=500
 SCREEN_Y=500
 GRID_WIDTH=50
 GRID_BORDER=5
+BOARD_MARGIN=5
  
 def drawBoardSquare(screen, board, row, col, w):
   colour=100
   if board.checkTile(row, col):
     colour=200
-  x=row*w
-  y=col*w
+  x=BOARD_MARGIN + row*w
+  y=BOARD_MARGIN + col*w
   pygame.draw.rect(screen, colour, (x,y,w,w))
   pygame.draw.rect(screen, 255, (x,y,w,w), GRID_BORDER)
+
+  # Label the tile
+  # TODO: center this and pick a better font ;)
+  font = pygame.font.SysFont("comicsans", 20)
+  text = font.render(str(Tile(row,col)), 1, (255,255,255))
+  screen.blit(text, (x+w/2,y+w/2))
 
 def redrawBoard(screen, board):
   screen.fill((128, 128, 128))
