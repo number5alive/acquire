@@ -2,41 +2,54 @@ from Board import *
 from Tiles import *
 from Player import *
 
-#Define the game constants
-BOARD_ROWS=8
-BOARD_COLS=12
-TILE_MAX=7
- 
-def gameLoop(players):
-  run=True
+class Game:
+  #Define the game constants
+  BOARD_ROWS=8
+  BOARD_COLS=12
+  TILE_MAX=7
 
-  # initialize the game: board, tiles, players, stocks
-  board = Board(BOARD_ROWS, BOARD_COLS)
-  bag = TileBag(BOARD_ROWS, BOARD_COLS)
+  def __init__(self, id):
+    # initialize the game: board, tiles, players, stocks
+    self.id = id
+    self.board = Board(Game.BOARD_ROWS, Game.BOARD_COLS)
+    self.bag = TileBag(Game.BOARD_ROWS, Game.BOARD_COLS)
+    self.started = False
 
-  # TODO: Define starting player (draw single tile)
-  for player in players:
-    t=bag.takeTile()
-    board.placeTile(t)
-
-  # Give each player their starting tiles
-  for player in players:
-    for i in range(0,TILE_MAX):
-      player.receiveTile(bag.takeTile())
+  def getId(self):
+    return self.id
    
-  while run:
-    # Each player takes their turn (TODO: enforce turn order)
-    for player in players:
-      # TODO: Play tile
-      # TODO: Buy stocks
-      # TODO: Take tile
-      pass
-    run=False # kill it for now
+  def start(self, players):
+    if self.started:
+      print("Game + " + self.ID + " already started!")
+      return False
+     
+    self.players = players
+    self.started=True
 
-  print(board)
-  print(players)
+    # TODO: Define starting player (draw single tile)
+    for player in self.players:
+      t=self.bag.takeTile()
+      self.board.placeTile(t)
+
+    # Give each player their starting tiles
+    for player in self.players:
+      for i in range(0,Game.TILE_MAX):
+        player.receiveTile(self.bag.takeTile())
+     
+    while self.started:
+      # Each player takes their turn (TODO: enforce turn order)
+      for player in self.players:
+        # TODO: Wait for Player to Play tile
+        # TODO: Wait for Player to Buy stocks
+        # TODO: Wait for Player to Take tile
+        pass
+      self.started=False # kill it for now
+
+    print(self.board)
+    print(self.players)
       
 if __name__ == "__main__":
   players = [Player(id) for id in range(0,3)]
-  gameLoop(players)
+  game = Game(55)
+  game.start(players)
 
