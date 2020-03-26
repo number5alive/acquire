@@ -17,6 +17,12 @@ class Game:
 
   def getId(self):
     return self.id
+
+  def serialize(self):
+    return {
+        'id': self.id,
+        'started' : self.started,
+     }
    
   def start(self, players):
     if self.started:

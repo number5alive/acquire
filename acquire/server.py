@@ -22,12 +22,31 @@ def hello_world():
      
 @app.route(BASEURI + '/games', methods=['GET'])
 def get_games():
+  req_id=request.args.get('id')
+  if req_id:
+    print("get one game")
+    theOne = games[0]
+    for i,q in enumerate(games):
+      if q.getId() == req_id:
+        theOne = games[i]
+        print(theOne)
+    return jsonify({'game' : theOne.serialize()})
+  else:
     return jsonify({'games' : [game.getId() for game in games]})
      
-@app.route('/games', methods=['POST'])
+@app.route(BASEURI + '/games', methods=['POST'])
 def add_game():
     games.append(new_quark)
     return jsonify({'games' : games})
+     
+@app.route(BASEURI + '/games?<int:id>', methods=['GET'])
+def returnOne(id):
+    print("get one game")
+    theOne = games[0]
+    for i,q in enumerate(games):
+      if q.getId() == id:
+        theOne = games[i]
+    return jsonify({'games' : theOne})
      
 if __name__ == "__main__":
     app.run(debug=True)
