@@ -2,6 +2,7 @@ from flask import Flask
 from flask import jsonify
 from flask import request, abort
 from Game import Game
+from Player import Player
 
 app = Flask(__name__)
 BASEURI="/acquire/v1"
@@ -50,8 +51,28 @@ def get_games():
 
 @app.route(BASEURI + '/players', methods=['GET'])
 def get_players():
+  req_gameid, req_game = getGameByReq()
+  if req_game is not None:
+    num_players, players=req_game.getPlayers()
+    return jsonify({'players' : [player.getName() for player in players]})
   abort(404)
      
+@app.route(BASEURI + '/players', methods=['POST'])
+def add_player():
+  print(request.json)
+  if not request.json or not 'gameid' in request.json or not 'name' in request.json:
+    print("something wrong with the json")
+    abort(400)
+
+  print("hey, we know what we need to know!")
+  game = getGameById(request.json['gameid'])
+  if game is None:
+    abort(404)
+
+  print("cool cool, add this player to the game!")
+  game.addPlayer(Player(100,name=request.json['name']))
+   
+  abort(404)
      
 """
 @app.route(BASEURI + '/games', methods=['POST'])
@@ -69,41 +90,7 @@ def startGame():
 """
 
 if __name__ == "__main__":
-    app.run(debug=True)
+  playerIdCount=0
+  app.run(debug=True)
      
-"""
-@app.route('/quarks', methods=['GET'])
-def returnAll():
-    return jsonify({'quarks' : quarks})
-
-@app.route('/quarks/<string:name>', methods=['GET'])
-def returnOne(name):
-    theOne = quarks[0]
-    for i,q in enumerate(quarks):
-      if q['name'] == name:
-        theOne = quarks[i]
-    return jsonify({'quarks' : theOne})
-
-@app.route('/quarks', methods=['POST'])
-def addOne():
-    new_quark = request.get_json()
-    quarks.append(new_quark)
-    return jsonify({'quarks' : quarks})
-
-@app.route('/quarks/<string:name>', methods=['PUT'])
-def editOne(name):
-    new_quark = request.get_json()
-    for i,q in enumerate(quarks):
-      if q['name'] == name:
-        quarks[i] = new_quark    
-    qs = request.get_json()
-    return jsonify({'quarks' : quarks})
-
-@app.route('/quarks/<string:name>', methods=['DELETE'])
-def deleteOne(name):
-    for i,q in enumerate(quarks):
-      if q['name'] == name:
-        del quarks[i]  
-    return jsonify({'quarks' : quarks})
-"""
 
