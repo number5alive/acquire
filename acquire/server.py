@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import jsonify
-from flask import request
+from flask import request, abort
 from Game import Game
 
 app = Flask(__name__)
@@ -20,33 +20,38 @@ POST /games Create a new game
 def hello_world():
     return jsonify({'message' : 'Hello, World!'})
      
+def getGameById(id):
+  print("get one game: " + str(id))
+  for i,q in enumerate(games):
+    currId=q.getId()
+    print(str(id) + "?=" + str(q.getId()))
+    print(str(type(id)) + "?=" + str(type(q.getId())))
+    if q.getId() == id:
+      print("Match!")
+      return games[i]
+    else:
+      print("No Match")
+  return None
+   
 @app.route(BASEURI + '/games', methods=['GET'])
 def get_games():
   req_id=request.args.get('id')
   if req_id:
-    print("get one game")
-    theOne = games[0]
-    for i,q in enumerate(games):
-      if q.getId() == req_id:
-        theOne = games[i]
-        print(theOne)
-    return jsonify({'game' : theOne.serialize()})
+    theOne = getGameById(int(req_id))
+    if theOne:
+      return jsonify({'game' : theOne.serialize()})
+    else:
+      abort(404)
   else:
     return jsonify({'games' : [game.getId() for game in games]})
      
-@app.route(BASEURI + '/games', methods=['POST'])
-def add_game():
-    games.append(new_quark)
-    return jsonify({'games' : games})
-     
-@app.route(BASEURI + '/games?<int:id>', methods=['GET'])
-def returnOne(id):
-    print("get one game")
-    theOne = games[0]
-    for i,q in enumerate(games):
-      if q.getId() == id:
-        theOne = games[i]
-    return jsonify({'games' : theOne})
+@app.route('/games', methods=['POST'])
+def startGame():
+  req_id=request.args.get('id')
+  new_quark = request.get_json()
+  games.append(new_quark)
+  return jsonify({'games' : games})
+
      
 if __name__ == "__main__":
     app.run(debug=True)
