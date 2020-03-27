@@ -13,7 +13,8 @@ print(games)
 API
 GET / Confirm Server is running
 GET /games List of existing games on the server
-POST /games Create a new game
+GET /games?id= Get details about a specific game
+POST /games {'id'} Start a game
 """
  
 @app.route(BASEURI + '/', methods=['GET'])
@@ -21,38 +22,52 @@ def hello_world():
     return jsonify({'message' : 'Hello, World!'})
      
 def getGameById(id):
-  print("get one game: " + str(id))
   for i,q in enumerate(games):
     currId=q.getId()
-    print(str(id) + "?=" + str(q.getId()))
-    print(str(type(id)) + "?=" + str(type(q.getId())))
-    if q.getId() == id:
-      print("Match!")
+    if currId == id:
       return games[i]
-    else:
-      print("No Match")
   return None
-   
+
+def getGameByReq():
+  req_id=request.values.get('gameid')
+  req_game=None
+  if req_id is not None and req_id.isdigit():
+    req_id=int(req_id) # we read it from the request as a string
+    req_game=getGameById(req_id)
+  return req_id, req_game
+ 
 @app.route(BASEURI + '/games', methods=['GET'])
 def get_games():
-  req_id=request.args.get('id')
-  if req_id:
-    theOne = getGameById(int(req_id))
-    if theOne:
-      return jsonify({'game' : theOne.serialize()})
+  req_id, req_game = getGameByReq()
+  if req_id is not None:
+    print("get one game: " + str(req_id))
+    if req_game is not None:
+      return jsonify({'game' : req_game.serialize()})
     else:
-      abort(404)
+      abort(404) #no such game
   else:
     return jsonify({'games' : [game.getId() for game in games]})
-     
-@app.route('/games', methods=['POST'])
-def startGame():
-  req_id=request.args.get('id')
-  new_quark = request.get_json()
-  games.append(new_quark)
-  return jsonify({'games' : games})
 
+@app.route(BASEURI + '/players', methods=['GET'])
+def get_players():
+  abort(404)
      
+     
+"""
+@app.route(BASEURI + '/games', methods=['POST'])
+def startGame():
+  req_id, req_game = getGameByReq()
+  print(req_id)
+  print(req_game)
+  if req_id and req_game:
+    if req_game.isStarted():
+      abort(500)
+    else:
+      req_game.start()
+      return jsonify({'game' : req_game.serialize()})
+  abort(404)
+"""
+
 if __name__ == "__main__":
     app.run(debug=True)
      

@@ -68,6 +68,7 @@ class Game:
     return {
         'id': self.id,
         'started' : self.started,
+        'players' : len(self.players),
      }
       
 if __name__ == "__main__":
