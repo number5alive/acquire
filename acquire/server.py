@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask import jsonify
 from flask import request, abort
 from Game import Game
@@ -74,6 +74,18 @@ def add_player():
    
   abort(404)
      
+""" Test endpoint for rendering tiles """
+from Tiles import TileBag, Tile
+@app.route(BASEURI + '/tiles', methods=['GET'])
+def get_tiles():
+  bag = TileBag(9,12)
+  tiles=[str(bag.takeTile()) for i in range(0,7)]
+  return jsonify({'tiles' : tiles})
+   
+@app.route(BASEURI + '/tiletest', methods=['GET'])
+def get_tiletest():
+  return render_template('showtiles.html')
+ 
 """
 @app.route(BASEURI + '/games', methods=['POST'])
 def startGame():
