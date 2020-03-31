@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
+<head>
+<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
 <style>
+body {
+    font-family: 'Roboto';font-size: 22px;
+}
 .tile {
   position: absolute;
   z-index: 9;
   cursor: move;
-  font-size: x-large;
   line-height: 30px;
   height: 80px;
   width: 80px;
@@ -30,47 +34,77 @@
 }
 
 </style>
+</head>
 <body>
 
-<h1>Draggable DIV Element</h1>
+<h1>Your Tiles</h1>
 
-<p>Click and hold the mouse button down while moving the DIV element</p>
+<p>Click-and-drag the tile you want to Play to the Play area</p>
+ 
+<!-- debug messages may print here -->
+<div class="dbgpanel"></div>
 
+<!--
 <div id="containerDiv">
-  <div class="tile" id="tile0">
-    <p>A4</p>
-  </div>
   <div class="tile" id="tile1">
     <p>C5</p>
   </div>
-  <div class="tile" id="tile2">
-    <p>B2</p>
-  </div>
-  <div class="tile" id="tile3">
-    <p>I10</p>
-  </div>
-</div>
-
+  ...
+-->
+ 
+<div id="containerDiv"></div>
+<script>
+var containerDiv = document.getElementById("containerDiv");
+tiles=gettiles();
+async function gettiles()
+{
+    const response = await fetch('http://localhost:5000/acquire/v1/tiles');
+    const data = await response.json();
+    tiles=data['tiles']
+    //$(".dbgpanel").append("<br><br><br><br><br><br>" + tiles + "<br>");
+     
+    for(var i=0;i<tiles.length;i++)
+    {
+      // Create a tile div so we can append to the list
+      var innerDiv = document.createElement('div');
+      innerDiv.className = 'tile';
+      innerDiv.id = 'tile'+i;
+       
+      // Add the Text to the Tile element
+      var para = document.createElement("P"); // <p>
+      var t = document.createTextNode(tiles[i]); // "tile0"
+      para.appendChild(t);
+      innerDiv.appendChild(para)
+       
+      // Add the new tile to the list of tiles
+      containerDiv.appendChild(innerDiv);
+    }
+     
+    return tiles
+}
+</script>
+ 
 <div id="dropzone">
   <p>Drop Here to Play</p>
 </div>
 
 <script>
-//Make the DIV element draggagle:
-//dragElement(document.getElementById("mydiv"));
-
-var dropZone = document.getElementById("dropzone");
-
-
-var containerDiv = document.getElementById("containerDiv");
-var innerDivs = containerDiv.getElementsByTagName("DIV");
-for(var i=0; i<innerDivs.length; i++)
+ 
+// Make the tiles drag-able
+addmouselisteners(tiles)
+async function addmouselisteners(tiles)
 {
-	elmnt=document.getElementById(innerDivs[i].id)
-    elmnt.style.left = 10+i*(elmnt.clientWidth+10) + "px";
-	dragElement(elmnt);
+  await tiles;
+  var innerDivs = containerDiv.getElementsByTagName("DIV");
+  for(var i=0; i<innerDivs.length; i++)
+  {
+    elmnt=document.getElementById(innerDivs[i].id)
+      elmnt.style.left = 10+i*(elmnt.clientWidth+10) + "px";
+    dragElement(elmnt);
+  }
 }
 
+var dropZone = document.getElementById("dropzone");
 function dragElement(elmnt) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var crossingDropZone = false;
