@@ -44,7 +44,8 @@ body {
 <!-- debug messages may print here -->
 <div class="dbgpanel"></div>
 
-<!--
+<div id="containerDiv"></div>
+<!-- (The above will dynamically be expanded to look like the following)
 <div id="containerDiv">
   <div class="tile" id="tile1">
     <p>C5</p>
@@ -52,13 +53,12 @@ body {
   ...
 -->
  
-<div id="containerDiv"></div>
 <script>
 var containerDiv = document.getElementById("containerDiv");
 tiles=gettiles();
 async function gettiles()
 {
-    const response = await fetch('http://localhost:5000/acquire/v1/tiles');
+    const response = await fetch(window.location.origin+'/acquire/v1/tiles');
     const data = await response.json();
     tiles=data['tiles']
     //$(".dbgpanel").append("<br><br><br><br><br><br>" + tiles + "<br>");
@@ -76,6 +76,10 @@ async function gettiles()
       para.appendChild(t);
       innerDiv.appendChild(para)
        
+      // TODO: query the stylesheet directly to get the default width
+      innerDiv.style.left = 10+i*(80+10) + "px";
+      dragElement(innerDiv);
+     
       // Add the new tile to the list of tiles
       containerDiv.appendChild(innerDiv);
     }
@@ -89,25 +93,11 @@ async function gettiles()
 </div>
 
 <script>
- 
-// Make the tiles drag-able
-addmouselisteners(tiles)
-async function addmouselisteners(tiles)
-{
-  await tiles;
-  var innerDivs = containerDiv.getElementsByTagName("DIV");
-  for(var i=0; i<innerDivs.length; i++)
-  {
-    elmnt=document.getElementById(innerDivs[i].id)
-      elmnt.style.left = 10+i*(elmnt.clientWidth+10) + "px";
-    dragElement(elmnt);
-  }
-}
 
-var dropZone = document.getElementById("dropzone");
 function dragElement(elmnt) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var crossingDropZone = false;
+  var dropZone = document.getElementById("dropzone");
 
   elmnt.onmousedown = dragMouseDown;
   
