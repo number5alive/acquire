@@ -6,7 +6,11 @@ clientweb - a client that visits the lobby and can play/render the game
 clientlocal - a client that runs on the native machine
 
 NOTE: run these apps from the root folder via:
-(virtual-env) $ python3 -m lobby.server
+(virtual-env) $ python3 -m server
+
+# to test the acquire classes (unit tests)
 (virtual-env) $ python3 -m acquire.player
-etc.
+(virtual-env) $ python3 -m acquire.tiles
+(virtual-env) $ python3 -m acquire.board
+(virtual-env) $ python3 -m acquire.game
  

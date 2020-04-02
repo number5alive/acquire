@@ -4,8 +4,11 @@ from flask import request, abort
 from acquire.game import Game
 from acquire.player import Player
 
-app = Flask(__name__)
 BASEURI="/acquire/v1"
+ 
+# Expose these routes to the main server application 
+from flask import Blueprint
+lobbyrest_blueprint = Blueprint('lobbyrest_blueprint', __name__)
 
 games=[Game(id) for id in range(0,2)]
 print(games)
@@ -18,7 +21,7 @@ GET /games?id= Get details about a specific game
 POST /games {'id'} Start a game
 """
  
-@app.route(BASEURI + '/', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/', methods=['GET'])
 def hello_world():
     return jsonify({'message' : 'Hello, World!'})
      
@@ -37,7 +40,7 @@ def getGameByReq():
     req_game=getGameById(req_id)
   return req_id, req_game
  
-@app.route(BASEURI + '/games', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/games', methods=['GET'])
 def get_games():
   req_id, req_game = getGameByReq()
   if req_id is not None:
@@ -49,7 +52,7 @@ def get_games():
   else:
     return jsonify({'games' : [game.getId() for game in games]})
 
-@app.route(BASEURI + '/players', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/players', methods=['GET'])
 def get_players():
   req_gameid, req_game = getGameByReq()
   if req_game is not None:
@@ -57,7 +60,7 @@ def get_players():
     return jsonify({'players' : [player.getName() for player in players]})
   abort(404)
      
-@app.route(BASEURI + '/players', methods=['POST'])
+@lobbyrest_blueprint.route(BASEURI + '/players', methods=['POST'])
 def add_player():
   print(request.json)
   if not request.json or not 'gameid' in request.json or not 'name' in request.json:
@@ -76,18 +79,14 @@ def add_player():
      
 """ Test endpoint for rendering tiles """
 from acquire.tiles import TileBag, Tile
-@app.route(BASEURI + '/tiles', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/tiles', methods=['GET'])
 def get_tiles():
   bag = TileBag(9,12)
   tiles=[str(bag.takeTile()) for i in range(0,7)]
   return jsonify({'tiles' : tiles})
    
-@app.route(BASEURI + '/tiletest', methods=['GET'])
-def get_tiletest():
-  return render_template('showtiles.html')
- 
 """
-@app.route(BASEURI + '/games', methods=['POST'])
+@lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
 def startGame():
   req_id, req_game = getGameByReq()
   print(req_id)
