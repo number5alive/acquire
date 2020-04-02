@@ -15,12 +15,10 @@ print(games)
 
 """
 API
-GET / Confirm Server is running
-GET /games List of existing games on the server
-GET /games?id= Get details about a specific game
-POST /games {'id'} Start a game
+POST /games/id Start a game
 """
  
+# GET / Confirm Server is running
 @lobbyrest_blueprint.route(BASEURI + '/', methods=['GET'])
 def hello_world():
     return jsonify({'message' : 'Hello, World!'})
@@ -31,26 +29,20 @@ def getGameById(id):
     if currId == id:
       return games[i]
   return None
-
-def getGameByReq():
-  req_id=request.values.get('gameid')
-  req_game=None
-  if req_id is not None and req_id.isdigit():
-    req_id=int(req_id) # we read it from the request as a string
-    req_game=getGameById(req_id)
-  return req_id, req_game
  
+# GET /games List of existing games on the server
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['GET'])
-def get_games():
-  req_id, req_game = getGameByReq()
-  if req_id is not None:
-    print("get one game: " + str(req_id))
-    if req_game is not None:
-      return jsonify({'game' : req_game.serialize()})
-    else:
-      abort(404) #no such game
+def get_all_games():
+  return jsonify({'games' : [game.getId() for game in games]})
+   
+# GET /games/id Get details about a specific game
+@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['GET'])
+def get_gameinfo(gameid):
+  req_game=getGameById(gameid)
+  if req_game is not None:
+    return jsonify({'game' : req_game.serialize()})
   else:
-    return jsonify({'games' : [game.getId() for game in games]})
+    abort(404) #no such game
 
 @lobbyrest_blueprint.route(BASEURI + '/players', methods=['GET'])
 def get_players():
@@ -77,13 +69,6 @@ def add_player():
    
   abort(404)
      
-""" Test endpoint for rendering tiles """
-from acquire.tiles import TileBag, Tile
-@lobbyrest_blueprint.route(BASEURI + '/tiles', methods=['GET'])
-def get_tiles():
-  bag = TileBag(9,12)
-  tiles=[str(bag.takeTile()) for i in range(0,7)]
-  return jsonify({'tiles' : tiles})
    
 """
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
@@ -99,9 +84,4 @@ def startGame():
       return jsonify({'game' : req_game.serialize()})
   abort(404)
 """
-
-if __name__ == "__main__":
-  playerIdCount=0
-  app.run(debug=True)
-     
 
