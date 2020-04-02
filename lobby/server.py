@@ -1,8 +1,8 @@
 from flask import Flask, render_template
 from flask import jsonify
 from flask import request, abort
-from Game import Game
-from Player import Player
+from acquire.game import Game
+from acquire.player import Player
 
 app = Flask(__name__)
 BASEURI="/acquire/v1"
@@ -75,7 +75,7 @@ def add_player():
   abort(404)
      
 """ Test endpoint for rendering tiles """
-from Tiles import TileBag, Tile
+from acquire.tiles import TileBag, Tile
 @app.route(BASEURI + '/tiles', methods=['GET'])
 def get_tiles():
   bag = TileBag(9,12)

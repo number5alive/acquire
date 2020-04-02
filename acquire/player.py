@@ -1,4 +1,4 @@
-from Tiles import Tile
+from acquire.tiles import Tile
 
 class Player:
   def __init__(self, id, name=None):

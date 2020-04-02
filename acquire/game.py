@@ -1,6 +1,6 @@
-from Board import *
-from Tiles import *
-from Player import *
+from acquire.board import *
+from acquire.tiles import *
+from acquire.player import *
 
 class Game:
   #Define the game constants

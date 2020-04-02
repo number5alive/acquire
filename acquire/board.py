@@ -1,4 +1,4 @@
-from Tiles import Tile
+from acquire.tiles import Tile
 
 class Board:
   def __init__(self, rows, cols):
