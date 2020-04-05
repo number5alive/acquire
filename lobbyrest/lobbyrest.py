@@ -1,7 +1,8 @@
 from flask import Flask, render_template
 from flask import jsonify
 from flask import request, abort
-from acquire.game import Game
+from flask import Response 
+from lobbyrest.dataif import getGameById, getAllGameIds, createGame
 from acquire.player import Player
 
 BASEURI="/acquire/v1"
@@ -10,78 +11,79 @@ BASEURI="/acquire/v1"
 from flask import Blueprint
 lobbyrest_blueprint = Blueprint('lobbyrest_blueprint', __name__)
 
-games=[Game(id) for id in range(0,2)]
-print(games)
-
-"""
-API
-POST /games/id Start a game
-"""
- 
 # GET / Confirm Server is running
 @lobbyrest_blueprint.route(BASEURI + '/', methods=['GET'])
-def hello_world():
+def rest_lobby_hello():
     return jsonify({'message' : 'Hello, World!'})
-     
-def getGameById(id):
-  for i,q in enumerate(games):
-    currId=q.getId()
-    if currId == id:
-      return games[i]
-  return None
  
 # GET /games List of existing games on the server
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['GET'])
-def get_all_games():
-  return jsonify({'games' : [game.getId() for game in games]})
+def rest_lobby_get_games():
+  return jsonify({'games' : getAllGameIds()})
+
+# POST /games Create a new game
+@lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
+def rest_lobby_make_game():
+  newGame=createGame()
+  return Response(request.base_url + '/' + str(newGame.getId()), status=201)
    
 # GET /games/id Get details about a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['GET'])
-def get_gameinfo(gameid):
+def rest_lobby_get_game_info(gameid):
   req_game=getGameById(gameid)
   if req_game is not None:
     return jsonify({'game' : req_game.serialize()})
   else:
     abort(404) #no such game
-
-@lobbyrest_blueprint.route(BASEURI + '/players', methods=['GET'])
-def get_players():
-  req_gameid, req_game = getGameByReq()
+   
+# PATCH /games/id Start a specific game
+# TODO: Implement this - patch "running" to true to start the game
+@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['PATCH'])
+def rest_lobby_start_game(gameid):
+  abort(403)
+   
+# GET /games/<id>/players List all the players playing a specific game
+@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['GET'])
+def rest_lobby_get_players(gameid): 
+  req_game=getGameById(gameid)
   if req_game is not None:
     num_players, players=req_game.getPlayers()
-    return jsonify({'players' : [player.getName() for player in players]})
-  abort(404)
+    return jsonify({'players' : [player.serialize() for player in players]})
+  else:
+    abort(404) #no such game
      
-@lobbyrest_blueprint.route(BASEURI + '/players', methods=['POST'])
-def add_player():
+# GET /games/<id>/players/<id> Get specific details about a given player
+# TODO: Maybe tweak this to return game-specific details only to the actual player
+@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players/<int:playerid>', methods=['GET'])
+def rest_lobby_get_player_info(gameid, playerid): 
+  req_game=getGameById(gameid)
+  if req_game is not None:
+    num_players, players=req_game.getPlayers()
+    for player in players:
+      if player.getId() == playerid:
+        return jsonify({'player' : player.serialize()})
+    abort(404) #no such player
+  else:
+    abort(404) #no such game
+     
+@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['POST'])
+def rest_lobby_join_game(gameid):
   print(request.json)
-  if not request.json or not 'gameid' in request.json or not 'name' in request.json:
+  if not request.json or not 'name' in request.json:
     print("something wrong with the json")
     abort(400)
 
   print("hey, we know what we need to know!")
-  game = getGameById(request.json['gameid'])
-  if game is None:
-    abort(404)
-
-  print("cool cool, add this player to the game!")
-  game.addPlayer(Player(100,name=request.json['name']))
-   
-  abort(404)
-     
-   
-"""
-@lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
-def startGame():
-  req_id, req_game = getGameByReq()
-  print(req_id)
-  print(req_game)
-  if req_id and req_game:
-    if req_game.isStarted():
-      abort(500)
+  req_game=getGameById(gameid)
+  if req_game is not None:
+    print("cool cool, try to add this player to the game!")
+    num_players, players=req_game.getPlayers()
+    newPlayerId=(gameid<<3)+(num_players+1)
+    print("newPlayerId == " + str(newPlayerId))
+    if req_game.addPlayer(Player(newPlayerId,name=request.json['name'])):
+      return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:
-      req_game.start()
-      return jsonify({'game' : req_game.serialize()})
-  abort(404)
-"""
+      abort(401)
+  else:
+    abort(404) #no such game
 
