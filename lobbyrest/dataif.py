@@ -1,11 +1,11 @@
-from acquire.game import Game
+from base import Game
 
+# This version of the data interface just uses global variable
+# it is intended only to help development - the final version will
+# swap this out for one that uses a datastore
 nGames=2
 games=[Game(id) for id in range(0,nGames)]
  
-def getCurrentuser():
-  return 7
-   
 # return details about a game
 # TODO: Change this from an acquire game, to details about what the game might be
 def getGameById(gameid):
@@ -25,7 +25,7 @@ def createGame():
   games.append(newGame)
   return newGame;
 
-# get details about a user (name, if playing, etc.)
+# get details about user (name, if playing, etc.)
 def getUserDetails(user):
   pass
 

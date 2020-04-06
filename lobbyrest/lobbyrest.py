@@ -3,7 +3,7 @@ from flask import jsonify
 from flask import request, abort
 from flask import Response 
 from lobbyrest.dataif import getGameById, getAllGameIds, createGame
-from acquire.player import Player
+from base import Player
 
 BASEURI="/acquire/v1"
  
@@ -66,21 +66,25 @@ def rest_lobby_get_player_info(gameid, playerid):
   else:
     abort(404) #no such game
      
+# POST /games/id/players - Join the game
+# TODO: get the USER info from the logged in person, not the post data
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['POST'])
 def rest_lobby_join_game(gameid):
+  # Get the user that wants to the join the game
   print(request.json)
   if not request.json or not 'name' in request.json:
     print("something wrong with the json")
     abort(400)
+  newPlayerName=request.json['name']
 
-  print("hey, we know what we need to know!")
+  # Find the game they want to join
   req_game=getGameById(gameid)
   if req_game is not None:
     print("cool cool, try to add this player to the game!")
     num_players, players=req_game.getPlayers()
-    newPlayerId=(gameid<<3)+(num_players+1)
+    newPlayerId=(gameid<<8)+(num_players+1)
     print("newPlayerId == " + str(newPlayerId))
-    if req_game.addPlayer(Player(newPlayerId,name=request.json['name'])):
+    if req_game.addPlayer(Player(newPlayerId,newPlayerName)):
       return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:
       abort(401)
