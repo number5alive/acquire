@@ -3,36 +3,43 @@
 class Game:
   def __init__(self, id, name="None"):
     # initialize the game: board, tiles, players, stocks
-    self.id = id
-    self.name = name
-    self.started = False
-    self.players = []
+    self._id = id
+    self._name = name
+    self._started = False
+    self._players = []
      
-  def getId(self):
-    return self.id
+  @property
+  def id(self):
+    return self._id
      
-  def isStarted(self):
-    return self.started
+  @property
+  def name(self):
+    return self._name
 
-  def getPlayers(self):
-    return len(self.players), self.players
+  @property
+  def started(self):
+    return self._started
+
+  @property
+  def players(self):
+    return len(self._players), self._players
 
   def addPlayer(self, player):
-    if self.started:
+    if self._started:
       return False
     else:
-      self.players.append(player)
+      self._players.append(player)
       return True
    
   def __repr__(self):
-    return 'Game ' + str(self.id) + ' (' + self.name + ')'
+    return 'Game ' + str(self._id) + ' (' + self._name + ')'
      
   def serialize(self):
     return {
-        'id': self.id,
-        'name' : self.name,
-        'players' : len(self.players),
-        'started' : self.started,
+        'id': self._id,
+        'name' : self._name,
+        'players' : len(self._players),
+        'started' : self._started,
      }
  
 class Player:

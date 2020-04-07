@@ -10,13 +10,13 @@ games=[Game(id) for id in range(0,nGames)]
 # return details about a game
 def getGameById(gameid):
   for i,q in enumerate(games):
-    currId=q.getId()
+    currId=q.id
     if currId == gameid:
       return games[i]
   return None
  
 def getAllGameIds():
-  return [game.getId() for game in games]
+  return [game.id for game in games]
 
 # Called when we've made a change to a game (e.g. add player)
 # in this mode we'll do nothing, in a datastore version we'll have to update
@@ -35,7 +35,7 @@ def createGame():
 def getAllPlayersInGame(gameid):
   req_game=getGameById(gameid)
   if req_game is not None:
-    num_players, players=req_game.getPlayers()
+    num_players, players=req_game.players
     return players
   return None
      
