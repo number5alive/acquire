@@ -58,7 +58,7 @@ var containerDiv = document.getElementById("containerDiv");
 tiles=gettiles();
 async function gettiles()
 {
-    const response = await fetch(window.location.origin+'/acquire/v1/tiles');
+    const response = await fetch(window.location.origin+'{{baseuri}}/tiles');
     const data = await response.json();
     tiles=data['tiles']
     //$(".dbgpanel").append("<br><br><br><br><br><br>" + tiles + "<br>");

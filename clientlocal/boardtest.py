@@ -1,6 +1,6 @@
 import pygame
-from acquire.tiles import Tile
-from acquire.board import *
+from games.acquire.tiles import Tile
+from games.acquire.board import *
 
 SCREEN_X=500
 SCREEN_Y=500

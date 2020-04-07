@@ -2,11 +2,11 @@ from flask import Flask, render_template
 from flask import jsonify
 from flask import request, abort
 from flask import Response 
-from lobbyrest import dataif as DataIf
+from restengine import dataif as DataIf
 from base import Game, Player
 from config import gamesavail
 
-BASEURI="/acquire/v1"
+BASEURI="/gamelobby/v1"
  
 # Expose these routes to the main server application 
 from flask import Blueprint

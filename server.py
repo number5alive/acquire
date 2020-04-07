@@ -1,5 +1,5 @@
 from flask import Flask
-from lobbyrest.lobbyrest import lobbyrest_blueprint
+from restengine.lobbyrest import lobbyrest_blueprint
 from clientweb.tilesview import tilesview_blueprint
 
 app = Flask(__name__)
