@@ -6,8 +6,8 @@ from base import Game
 nGames=2
 games=[Game(id) for id in range(0,nGames)]
  
+# ----- Query Games -----
 # return details about a game
-# TODO: Change this from an acquire game, to details about what the game might be
 def getGameById(gameid):
   for i,q in enumerate(games):
     currId=q.getId()
@@ -18,6 +18,12 @@ def getGameById(gameid):
 def getAllGameIds():
   return [game.getId() for game in games]
 
+# Called when we've made a change to a game (e.g. add player)
+# in this mode we'll do nothing, in a datastore version we'll have to update
+# the datastore
+def updateGame(gameid):
+  pass
+
 def createGame():
   global nGames 
   newGame=Game(nGames)
@@ -25,11 +31,11 @@ def createGame():
   games.append(newGame)
   return newGame;
 
-# get details about user (name, if playing, etc.)
-def getUserDetails(user):
-  pass
-
-# get details about a player IN a game (pieces, money, etc.)
-def getPlayerDetailsInGame(user, game):
-  pass
-
+# ----- Query Players -----
+def getAllPlayersInGame(gameid):
+  req_game=getGameById(gameid)
+  if req_game is not None:
+    num_players, players=req_game.getPlayers()
+    return players
+  return None
+     

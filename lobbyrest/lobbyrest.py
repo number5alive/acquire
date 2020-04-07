@@ -2,8 +2,8 @@ from flask import Flask, render_template
 from flask import jsonify
 from flask import request, abort
 from flask import Response 
-from lobbyrest.dataif import getGameById, getAllGameIds, createGame
-from base import Player
+from lobbyrest import dataif as DataIf
+from base import Game, Player
 
 BASEURI="/acquire/v1"
  
@@ -19,18 +19,18 @@ def rest_lobby_hello():
 # GET /games List of existing games on the server
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['GET'])
 def rest_lobby_get_games():
-  return jsonify({'games' : getAllGameIds()})
+  return jsonify({'games' : DataIf.getAllGameIds()})
 
 # POST /games Create a new game
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
 def rest_lobby_make_game():
-  newGame=createGame()
+  newGame=DataIf.createGame()
   return Response(request.base_url + '/' + str(newGame.getId()), status=201)
    
 # GET /games/id Get details about a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['GET'])
 def rest_lobby_get_game_info(gameid):
-  req_game=getGameById(gameid)
+  req_game=DataIf.getGameById(gameid)
   if req_game is not None:
     return jsonify({'game' : req_game.serialize()})
   else:
@@ -45,26 +45,23 @@ def rest_lobby_start_game(gameid):
 # GET /games/<id>/players List all the players playing a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['GET'])
 def rest_lobby_get_players(gameid): 
-  req_game=getGameById(gameid)
-  if req_game is not None:
-    num_players, players=req_game.getPlayers()
+  players=DataIf.getAllPlayersInGame(gameid)
+  if players is not None:
     return jsonify({'players' : [player.serialize() for player in players]})
   else:
-    abort(404) #no such game
+    abort(404) #Likely no such game
      
 # GET /games/<id>/players/<id> Get specific details about a given player
-# TODO: Maybe tweak this to return game-specific details only to the actual player
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players/<int:playerid>', methods=['GET'])
 def rest_lobby_get_player_info(gameid, playerid): 
-  req_game=getGameById(gameid)
-  if req_game is not None:
-    num_players, players=req_game.getPlayers()
+  players=DataIf.getAllPlayersInGame(gameid)
+  if players is not None:
     for player in players:
       if player.getId() == playerid:
         return jsonify({'player' : player.serialize()})
     abort(404) #no such player
   else:
-    abort(404) #no such game
+    abort(404) #Likely no such game
      
 # POST /games/id/players - Join the game
 # TODO: get the USER info from the logged in person, not the post data
@@ -78,13 +75,14 @@ def rest_lobby_join_game(gameid):
   newPlayerName=request.json['name']
 
   # Find the game they want to join
-  req_game=getGameById(gameid)
+  req_game=DataIf.getGameById(gameid)
   if req_game is not None:
     print("cool cool, try to add this player to the game!")
     num_players, players=req_game.getPlayers()
     newPlayerId=(gameid<<8)+(num_players+1)
     print("newPlayerId == " + str(newPlayerId))
     if req_game.addPlayer(Player(newPlayerId,newPlayerName)):
+      DataIf.updateGame(gameid)
       return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:
       abort(401)
