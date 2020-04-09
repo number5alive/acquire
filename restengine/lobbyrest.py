@@ -20,7 +20,7 @@ def rest_lobby_hello():
 # get /gametypes list of existing types of games on the server
 @lobbyrest_blueprint.route(BASEURI + '/gametypes', methods=['get'])
 def rest_lobby_get_gametypes():
-  return jsonify({'gametypes' : gamesavail})
+  return jsonify({'gametypes' : list(gamesavail.keys())})
    
 # GET /games List of existing games on the server
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['GET'])
@@ -30,8 +30,20 @@ def rest_lobby_get_games():
 # POST /games Create a new game
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
 def rest_lobby_make_game():
-  newGame=DataIf.createGame()
-  return Response(request.base_url + '/' + str(newGame.id), status=201)
+  if not request.json or not 'gamename' in request.json:
+    print("didn't specify the game type to create")
+    abort(404)
+   
+  req_gname=request.json['gamename']
+  if not req_gname in gamesavail:
+    print("asking for a game that doesn't exist")
+    abort(404)
+     
+  newGame=DataIf.createGame(request.json['gamename'])
+  if newGame:
+    return Response(request.base_url + '/' + str(newGame.id), status=201)
+  else:
+    abort(404) # couldn't create the game
    
 # GET /games/id Get details about a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['GET'])
@@ -43,10 +55,37 @@ def rest_lobby_get_game_info(gameid):
     abort(404) #no such game
    
 # PATCH /games/id Start a specific game
-# TODO: Implement this - patch "running" to true to start the game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['PATCH'])
 def rest_lobby_start_game(gameid):
-  abort(403)
+  # make sure they're trying to set running : true
+  print(request.json)
+  if not request.json or not 'started' in request.json:
+    print("no json, or not asking to update the 'started' field")
+    abort(400)
+
+  print(request.json['started'])
+  print(type(request.json['started']))
+  if not request.json['started'] == 'true':
+    print("some keener tried to change started to something other than true")
+    abort(400)
+   
+  # Find the game they want to run
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    # make sure there are enough players
+    num_players, players=req_game.players
+    if num_players < req_game.minPlayers() or num_players > req_game.maxPlayers():
+      print("Not enough players to play yet")
+      abort(400)
+       
+    # if we got this far, they must have asked us to start the game
+    req_game.run() # note, probably won't do anything
+     
+    # return the URL for the running game (maybe tilebag/<id>?)
+    # TODO: We might want a different url pattern, with version?
+    return Response(request.host_url + req_game.name() + '/' + str(gameid), status=201)
+     
+  abort(404) # Couldn't find the game
    
 # GET /games/<id>/players List all the players playing a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['GET'])
@@ -83,15 +122,20 @@ def rest_lobby_join_game(gameid):
   # Find the game they want to join
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
-    print("cool cool, try to add this player to the game!")
+    # make sure there's room for one more at the table
     num_players, players=req_game.players
+    if num_players >= req_game.maxPlayers():
+      print("whoa-la, already at the max for players")
+      abort(400)
+     
+    print("cool cool, try to add this player to the game!")
     newPlayerId=(gameid<<8)+(num_players+1)
     print("newPlayerId == " + str(newPlayerId))
     if req_game.addPlayer(Player(newPlayerId,newPlayerName)):
       DataIf.updateGame(gameid)
       return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:
-      abort(401)
+      abort(401) #that's odd
   else:
     abort(404) #no such game
 

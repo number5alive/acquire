@@ -1,4 +1,6 @@
+from pydoc import locate
 from base import Game
+from config import gamesavail
 
 # This version of the data interface just uses global variable
 # it is intended only to help development - the final version will
@@ -15,6 +17,7 @@ def getGameById(gameid):
       return games[i]
   return None
  
+# TODO: return also the name of the game
 def getAllGameIds():
   return [game.id for game in games]
 
@@ -24,11 +27,17 @@ def getAllGameIds():
 def updateGame(gameid):
   pass
 
-def createGame():
+def createGame(gamename):
   global nGames 
-  newGame=Game(nGames)
-  nGames+=1
-  games.append(newGame)
+  newGame=None
+  class_name=gamesavail[gamename] + '.' + gamename
+  game_class=locate(class_name)
+  print('looked for: ' + class_name)
+  print('found: ' + str(game_class))
+  if game_class:
+    newGame=game_class(nGames)
+    nGames+=1
+    games.append(newGame)
   return newGame;
 
 # ----- Query Players -----

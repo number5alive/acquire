@@ -8,8 +8,6 @@ from flask import Blueprint
 tilesview_blueprint = Blueprint('tilesview_blueprint', __name__,
                   template_folder='templates')
 
-#BASEURI="/acquire/v1" #for now, we'll move this later
- 
 """ Test endpoint for rendering tiles """
 @tilesview_blueprint.route(BASEURI + '/tiles', methods=['GET'])
 def get_tiles():

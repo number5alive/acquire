@@ -1,2 +1,3 @@
 # TODO: query for game subclasses and presume they can be loaded
-gamesavail=['acquire','testtactoe']
+# dictionary should be key=Class value=module
+gamesavail={'TileBag' : 'games.tilebag.tilebag'}

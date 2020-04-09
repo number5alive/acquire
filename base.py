@@ -1,10 +1,13 @@
 
  
 class Game:
+  _minPlayers=0
+  _maxPlayers=0
+  _name="None"
+   
   def __init__(self, id, name="None"):
     # initialize the game: board, tiles, players, stocks
     self._id = id
-    self._name = name
     self._started = False
     self._players = []
      
@@ -12,9 +15,17 @@ class Game:
   def id(self):
     return self._id
      
-  @property
-  def name(self):
-    return self._name
+  @classmethod
+  def name(cls):
+    return cls._name
+
+  @classmethod
+  def minPlayers(cls):
+    return cls._minPlayers
+
+  @classmethod
+  def maxPlayers(cls):
+    return cls._maxPlayers
 
   @property
   def started(self):
@@ -30,6 +41,10 @@ class Game:
     else:
       self._players.append(player)
       return True
+
+  # child classes really need to override this puppy
+  def run(self):
+    return False
    
   def __repr__(self):
     return 'Game ' + str(self._id) + ' (' + self._name + ')'
