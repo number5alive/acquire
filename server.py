@@ -11,4 +11,6 @@ app.register_blueprint(testview_blueprint, url_prefix='/test')
 app.register_blueprint(lobby_blueprint)
    
 if __name__ == "__main__":
+  app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
   app.run(debug=True)
+
