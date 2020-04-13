@@ -1,0 +1,35 @@
+#chessBoard{
+    display: inline-block;
+    border: 2px outset lightGray;
+    margin: 10px;
+}
+
+#chessBoard div{
+    line-height: 32px;
+}
+
+#chessBoard span, blarg{
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    text-align: center;
+    font-size: small;
+}
+
+
+#chessBoard div:nth-child(odd) span:nth-child(even),
+#chessBoard div:nth-child(even) span:nth-child(odd){
+    background-color: grey;
+}
+#chessBoard div:nth-child(even) span:nth-child(even),
+#chessBoard div:nth-child(odd) span:nth-child(odd){
+    background-color: snow;
+}
+
+
+#chessBoard blarg{
+  background-color: red;
+  z-index: -1;
+}
+
