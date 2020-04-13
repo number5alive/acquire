@@ -3,15 +3,17 @@
 <head>
   <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
   <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
+  <script src="{{ url_for('.static', filename='board.js') }}"></script>
    
 </head>
 <body>
   <h1>Hi ya</h1>
    
   <!-- Add the board, and populate it -->
-  <div id="chessBoard"></div>
-  <script src="{{ url_for('.static', filename='board.js') }}"></script>
-   
+  <div id="acquireBoard"></div>
+  <script>
+  drawBoard(document.getElementById("acquireBoard"));
+  </script>
 </body>
 </html>
 

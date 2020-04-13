@@ -2,12 +2,9 @@ var x=12;
 var y=9;
 var colNames="ABCEDFGHIJKLMNOPQRSTUVWXYZ";
 
-drawBoard();
-
-function drawBoard(){
-  var chessBoard = document.getElementById("chessBoard");
+function drawBoard(acquireBoard){
   for (var i=0; i<y; i++){
-    var row = chessBoard.appendChild(document.createElement("div"));
+    var row = acquireBoard.appendChild(document.createElement("div"));
     for (var j=0; j<x; j++){
         var cellname=(j+1) + colNames.charAt(i);         
          

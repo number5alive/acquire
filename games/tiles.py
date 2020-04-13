@@ -16,7 +16,7 @@ class Tile:
     """
     Rebase tile to People-speak
     """
-    return chr(self.row+65) + str(self.col+1)
+    return str(self.col+1) + chr(self.row+65)
 
 class TileBag:
   """

@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- Include the Styles we'll want to use --> 
   <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
   <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
+<!-- Include our javascript helpers -->
+<script src="{{ url_for('.static', filename='board.js') }}"></script>
+<script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
+<!-- A bit of page-specific style -->
 <style>
 body {
     font-family: 'Roboto';font-size: 22px;
@@ -22,139 +27,52 @@ body {
   border: 1px solid #d3d3d3;
   border-radius: 15px;
 }
-
 </style>
 </head>
+ 
+<!-- Ahh, the meat of our page -->
 <body>
 
 <h1>Your Tiles</h1>
 
 <p>Click-and-drag the tile you want to Play to the Play area</p>
  
-<!-- debug messages may print here -->
-<div class="dbgpanel"></div>
-
 <div id="tileRack"></div>
-<!-- (The above will dynamically be expanded to look like the following)
-<div id="tileRack">
-  <div class="tile" id="tile1">
-    <p>C5</p>
-  </div>
-  ...
--->
+ 
+<div id="dropzone">
+  <p>Drop Here to Play</p>
+   
+  <!-- Add the board, and populate it -->
+  <div id="acquireBoard"></div>
+</div>
  
 <script>
 var tileRack = document.getElementById("tileRack");
+drawTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
+drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
+
 tiles=gettiles();
 async function gettiles()
 {
-    //const response = await fetch(window.location.origin+'{{baseuri}}/tiles');
     const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
     const data = await response.json();
     tiles=data['tiles']
-    //$(".dbgpanel").append("<br><br><br><br><br><br>" + tiles + "<br>");
      
     for(var i=0;i<tiles.length;i++)
     {
-      // Create a tile div so we can append to the list
-      var innerDiv = document.createElement('div');
-      innerDiv.className = 'tile';
-      innerDiv.id = 'tile'+i;
+      var tile = document.getElementById("tile" + i);
        
       // Add the Text to the Tile element
       var para = document.createElement("P"); // <p>
       var t = document.createTextNode(tiles[i]); // "tile0"
       para.appendChild(t);
-      innerDiv.appendChild(para)
-       
-      // TODO: query the stylesheet directly to get the default width
-      innerDiv.style.left = 10+i*(80+10) + "px";
-      dragElement(innerDiv);
-     
-      // Add the new tile to the list of tiles
-      tileRack.appendChild(innerDiv);
+      tile.appendChild(para)
     }
      
     return tiles
 }
 </script>
  
-<div id="dropzone">
-  <p>Drop Here to Play</p>
-   
-  <!-- Add the board, and populate it -->
-  <div id="chessBoard"></div>
-  <script src="{{ url_for('.static', filename='board.js') }}"></script>
-</div>
 
-<script>
-
-function dragElement(elmnt) {
-  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  var crossingDropZone = false;
-  var dropZone = document.getElementById("dropzone");
-
-  elmnt.onmousedown = dragMouseDown;
-  
-  function dragMouseDown(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // get the mouse cursor position at startup:
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDragElement;
-    // call a function whenever the cursor moves:
-    document.onmousemove = elementDrag;
-  }
-
-  function elementDrag(e) {
-    e = e || window.event;
-    e.preventDefault();
-    // calculate the new cursor position:
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    // set the element's new position:
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    
-    var overlaps = overlapsDropZone(elmnt);
-    if( !crossingDropZone )
-    {
-      if( overlaps )
-      {
-      	// we weren't crossing, now are
-        crossingDropZone = true;
-        elmnt.style.backgroundColor = 'yellow';
-      }
-    }
-    else
-    {
-      if( !overlaps )
-      {
-        // we WERE crossing, but now aren't
-        crossingDropZone = false;
-        elmnt.style.backgroundColor = 'WhiteSmoke';
-      }
-    }
-  }
-  
-  function overlapsDropZone(tile) {
-    var rect1=tile.getBoundingClientRect();
-    var rect2=dropZone.getBoundingClientRect();
-    return !(rect1.right < rect2.left || 
-             rect1.left > rect2.right || 
-             rect1.bottom < rect2.top || 
-             rect1.top > rect2.bottom)
-  }
-
-  function closeDragElement() {
-    /* stop moving when mouse button is released:*/
-    document.onmouseup = null;
-    document.onmousemove = null;
-  }
-}
-</script>
 </body>
 </html>
