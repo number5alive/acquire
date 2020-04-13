@@ -1,22 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+  <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
 <style>
 body {
     font-family: 'Roboto';font-size: 22px;
-}
-.tile {
-  position: absolute;
-  z-index: 9;
-  cursor: move;
-  line-height: 30px;
-  height: 80px;
-  width: 80px;
-  background-color: WhiteSmoke;
-  text-align: center;
-  border: 1px solid #d3d3d3;
-  border-radius: 15px;
 }
 
 #dropzone {
@@ -44,9 +34,9 @@ body {
 <!-- debug messages may print here -->
 <div class="dbgpanel"></div>
 
-<div id="containerDiv"></div>
+<div id="tileRack"></div>
 <!-- (The above will dynamically be expanded to look like the following)
-<div id="containerDiv">
+<div id="tileRack">
   <div class="tile" id="tile1">
     <p>C5</p>
   </div>
@@ -54,11 +44,12 @@ body {
 -->
  
 <script>
-var containerDiv = document.getElementById("containerDiv");
+var tileRack = document.getElementById("tileRack");
 tiles=gettiles();
 async function gettiles()
 {
-    const response = await fetch(window.location.origin+'{{baseuri}}/tiles');
+    //const response = await fetch(window.location.origin+'{{baseuri}}/tiles');
+    const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
     const data = await response.json();
     tiles=data['tiles']
     //$(".dbgpanel").append("<br><br><br><br><br><br>" + tiles + "<br>");
@@ -81,7 +72,7 @@ async function gettiles()
       dragElement(innerDiv);
      
       // Add the new tile to the list of tiles
-      containerDiv.appendChild(innerDiv);
+      tileRack.appendChild(innerDiv);
     }
      
     return tiles
@@ -90,6 +81,10 @@ async function gettiles()
  
 <div id="dropzone">
   <p>Drop Here to Play</p>
+   
+  <!-- Add the board, and populate it -->
+  <div id="chessBoard"></div>
+  <script src="{{ url_for('.static', filename='board.js') }}"></script>
 </div>
 
 <script>

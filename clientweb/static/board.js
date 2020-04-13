@@ -1,17 +1,8 @@
 var x=12;
 var y=9;
-
-colNames="ABCEDFGHIJKLMNOPQRSTUVWXYZ";
+var colNames="ABCEDFGHIJKLMNOPQRSTUVWXYZ";
 
 drawBoard();
-
-placeTile("3D");
-placeTile("4D");
-placeTile("5E");
-placeTile("1A");
-placeTile("3F");
-placeTile("13G");
-placeTile("12I");
 
 function drawBoard(){
   var chessBoard = document.getElementById("chessBoard");
@@ -24,8 +15,8 @@ function drawBoard(){
         cell.setAttribute('id', cellname);
         cell.textContent = cellname;
          
-        //cell.setAttribute("onclick", "placeTile(cellname)");
-        cell.onclick = function() {placeTile(this.id);};
+        // Optional - let the user click around and set tiles
+        // cell.onclick = function() {placeTile(this.id);};
 
         row.appendChild(cell);
     }
