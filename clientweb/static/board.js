@@ -1,6 +1,6 @@
 var x=12;
 var y=9;
-var colNames="ABCEDFGHIJKLMNOPQRSTUVWXYZ";
+var colNames="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 function drawBoard(acquireBoard){
   for (var i=0; i<y; i++){

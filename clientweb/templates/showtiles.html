@@ -1,78 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- Include the Styles we'll want to use --> 
+  <!-- Include the Styles we'll want to use --> 
   <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
   <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
-<!-- Include our javascript helpers -->
-<script src="{{ url_for('.static', filename='board.js') }}"></script>
-<script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
-<!-- A bit of page-specific style -->
-<style>
-body {
-    font-family: 'Roboto';font-size: 22px;
-}
+   
+  <!-- Include our javascript helpers -->
+  <script src="{{ url_for('.static', filename='board.js') }}"></script>
+  <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
+   
+  <!-- A bit of page-specific style -->
+  <style>
+    body {
+        font-family: 'Roboto';font-size: 22px;
+    }
 
-#dropzone {
-  position: absolute;
-  bottom: 10px;
-  z-index: -5;
-  font-size: x-large;
-  line-height: 30px;
-  height: 30%;
-  width: 100%;
-  background-color: LightCyan;
-  text-align: center;
-  border: 1px solid #d3d3d3;
-  border-radius: 15px;
-}
-</style>
+    #dropzone {
+      position: absolute;
+      bottom: 10px;
+      z-index: -5;
+      font-size: x-large;
+      line-height: 30px;
+      height: 30%;
+      width: 100%;
+      background-color: LightCyan;
+      text-align: center;
+      border: 1px solid #d3d3d3;
+      border-radius: 15px;
+    }
+  </style>
 </head>
  
 <!-- Ahh, the meat of our page -->
 <body>
+  <h1>Your Tiles</h1>
 
-<h1>Your Tiles</h1>
-
-<p>Click-and-drag the tile you want to Play to the Play area</p>
- 
-<div id="tileRack"></div>
- 
-<div id="dropzone">
-  <p>Drop Here to Play</p>
+  <p>Click-and-drag the tile you want to Play to the Play area</p>
    
-  <!-- Add the board, and populate it -->
-  <div id="acquireBoard"></div>
-</div>
- 
-<script>
-var tileRack = document.getElementById("tileRack");
-drawTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
-drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
-
-tiles=gettiles();
-async function gettiles()
-{
-    const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
-    const data = await response.json();
-    tiles=data['tiles']
+  <div id="tileRack"></div>
+   
+  <div id="dropzone">
+    <p>Drop Here to Play</p>
      
-    for(var i=0;i<tiles.length;i++)
-    {
-      var tile = document.getElementById("tile" + i);
+    <!-- Add the board, and populate it -->
+    <div id="acquireBoard"></div>
+  </div>
+   
+  <script>
+  var tileRack = document.getElementById("tileRack");
+  drawTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
+   
+  dropzone.addEventListener('playtile', tileDropped);
+   
+  drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
+
+  tiles=gettiles();
+  async function gettiles()
+  {
+      const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
+      const data = await response.json();
+      tiles=data['tiles']
        
-      // Add the Text to the Tile element
-      var para = document.createElement("P"); // <p>
-      var t = document.createTextNode(tiles[i]); // "tile0"
-      para.appendChild(t);
-      tile.appendChild(para)
-    }
-     
-    return tiles
-}
-</script>
- 
+      for(var i=0;i<tiles.length;i++)
+      {
+        var tile = document.getElementById("tile" + i);
+        tile.innerText = tiles[i];
+      }
+       
+      return tiles
+  }
 
+  function tileDropped(e){
+    console.log(e);
+    tile=e.detail.tile;
+    placeTile(tile.innerText);
+    tile.innerText="";
+  }
+  </script>
 </body>
 </html>

@@ -101,5 +101,10 @@ function makeTileDragable(elmnt, dropzone=null){
     /* stop moving when mouse button is released:*/
     document.onmouseup = null;
     document.onmousemove = null;
+
+    if(dropzone != null && crossingDropZone ){
+      console.log("hold on to your butts!");
+      dropzone.dispatchEvent(new CustomEvent('playtile', {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
+    }
   }
 } 
