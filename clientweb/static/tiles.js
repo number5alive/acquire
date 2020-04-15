@@ -1,32 +1,89 @@
 const NUMTILES=7;
  
-function drawTileRack(rackelem, dropzone=null){
+function makeTileRack(rackelem, dropzone=null){
   for(var i=0;i<NUMTILES;i++)
   {
-    // Create a tile div so we can append to the list
-    var tile = document.createElement('div');
-    tile.className = 'tile';
-    tile.id = 'tile'+i;
-     
-    // TODO: query the stylesheet directly to get the default width
-    tile.style.left = 10+i*(80+10) + "px";
-
-    // Save us a step later, if a drop-zone is identified then we definitely
-    // want our tile to be dragable
-    if(dropzone != null){
-      makeTileDragable(tile, dropzone);
-    }
-   
-    // Add the new tile to the list of tiles
-    rackelem.appendChild(tile);
+    var ph=document.createElement('span');
+    ph.className='tilerack';
+    rackelem.appendChild(ph);
   }
+
+  window.addEventListener("resize", function(){sizeTiles(rackelem);});
+}
+
+function sizeTiles(rackelem) {
+  // Iterate through the objects on the rack, make all tiles movable
+  for (var i = 0; i < rackelem.childNodes.length; i++) {
+    if (rackelem.childNodes[i].childNodes.length != 0 &&
+        rackelem.childNodes[i].childNodes[0].className == "tile") {
+      sizeTile(rackelem.childNodes[i].childNodes[0],rackelem.childNodes[i]);
+    }
+  }
+}
+
+function sizeTile(tile, rackpos) {
+  tilesize=rackpos.clientWidth;
+  tilesize-=25;
+  tile.style.height = tilesize + 'px';
+  tile.style.minWidth = tilesize + 'px';
+}
+
+function setTiles(rackelem, tiles, dropzone=null, flush=false){
+  // if we're getting rid of existing tiles, loop through and remove them
+  if( flush ){
+  }
+
+  // loop through the tiles, make sure they don't exist, then add them
+  for(var i=0; i<tiles.length; i++){
+    // make sure the tile isn't in the list before trying to add it
+    if( null == document.getElementById('tile'+tiles[i]) )
+    {
+      addTile(rackelem, tiles[i], dropzone);
+    }
+  }
+   
+}
+
+// Add a single tile to the tile rack
+// it's text and id will be set to the value of the tile
+function addTile(rackelem, tilename, dropzone=null){
+  // Create a tile div so we can append to the list
+  var tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.id = 'tile'+tilename;
+  tile.innerText = tilename;
+
+  // find an empty spot in the rack for which to place it
+  var rackpos = null;
+  for (var i = 0; i < rackelem.childNodes.length; i++) {
+    if (rackelem.childNodes[i].childNodes.length == 0) {
+      rackpos = rackelem.childNodes[i];
+      break;
+    }
+  }
+   
+  if(rackpos != null)
+  {
+    sizeTile(tile, rackpos);
+    rackpos.appendChild(tile);
+  }
+
+  // Save us a step later, if a drop-zone is identified then we definitely
+  // want our tile to be dragable
+  if(dropzone != null){
+    makeTileDragable(tile, dropzone);
+  }
+ 
+  // Add the new tile to the list of tiles
+  //rackelem.appendChild(tile);
 }
  
 function makeTilesDragable(rackelem, dropzone) {
-  // Iterate through the objects on the rack, make all tiles movalbe
+  // Iterate through the objects on the rack, make all tiles movable
   for (var i = 0; i < rackelem.childNodes.length; i++) {
-    if (rackelem.childNodes[i].className == "tile") {
-      makeTileDragable(rackelem.childNodes[i], dropzone);
+    if (rackelem.childNodes[i].childNodes.length != 0 &&
+        rackelem.childNodes[i].childNodes[0].className == "tile") {
+      makeTileDragable(rackelem.childNodes[i].childNodes[0], dropzone);
     }
   }
 }
@@ -103,7 +160,6 @@ function makeTileDragable(elmnt, dropzone=null){
     document.onmousemove = null;
 
     if(dropzone != null && crossingDropZone ){
-      console.log("hold on to your butts!");
       dropzone.dispatchEvent(new CustomEvent('playtile', {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
     }
   }

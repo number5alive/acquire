@@ -17,11 +17,10 @@
     }
 
     #dropzone {
-      position: absolute;
       bottom: 10px;
       z-index: -5;
       font-size: x-large;
-      line-height: 30px;
+      line-height: 5px;
       height: 30%;
       width: 100%;
       background-color: LightCyan;
@@ -49,7 +48,7 @@
    
   <script>
   var tileRack = document.getElementById("tileRack");
-  drawTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
+  makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
    
   dropzone.addEventListener('playtile', tileDropped);
    
@@ -60,22 +59,24 @@
   {
       const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
       const data = await response.json();
-      tiles=data['tiles']
-       
+      tiles=data['tiles'];
+      setTiles(tileRack, tiles, dropzone);
+
+      /* 
       for(var i=0;i<tiles.length;i++)
       {
         var tile = document.getElementById("tile" + i);
         tile.innerText = tiles[i];
       }
+      */
        
       return tiles
   }
 
   function tileDropped(e){
-    console.log(e);
     tile=e.detail.tile;
     placeTile(tile.innerText);
-    tile.innerText="";
+    tile.parentNode.removeChild(tile);
   }
   </script>
 </body>

@@ -1,16 +1,36 @@
 
 .tilerack {
+  display: inline-block;
+  border: 2px thick brown;
+  width: 100%;
+  height: 30px;
+}
+
+span.tilerack{
+  vertical-align: middle;
+  align: middle;
+  border-bottom: 5px solid black;
+  min-width: 12%;
+  max-width: 12%;
+  height: 80px;
+  margin: 5px;
+}
+
+.blah{
+  position: absolute;
+  line-height: 30px;
 }
  
 .tile {
   position: absolute;
   z-index: 9;
   cursor: move;
-  line-height: 30px;
-  height: 80px;
-  width: 80px;
   background-color: WhiteSmoke;
+  margin: auto;
+  padding: 10px;
+  line-height: 50px;
   text-align: center;
+  vertical-align: middle;
   border: 1px solid #d3d3d3;
   border-radius: 15px;
 }
