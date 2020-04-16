@@ -1,16 +1,23 @@
 Just some playing round with Python and Web Stuff, using "make a python version of the boardgame Acquire" as an excuse.
 
-lobby - a REST interface for listing games and (eventually) asking to join them
-acquire - the python code that encapsulates the boardgame itself
+### File organization
+server.js - the flask web server, loading all the blueprints (sub-pages)
+restengine/lobby - a REST interface for listing games and (eventually) asking to join them
+games - the python code that encapsulates the games themselves
+games/acquire - what will hopefully, eventually, be the game acquire
 clientweb - a client that visits the lobby and can play/render the game
 clientlocal - a client that runs on the native machine
 
+### Running / Testing the code
+Create a virtual-env and install the dependencies
+(virtual-env) $ pip3 install -r requirements.txt
 NOTE: run these apps from the root folder via:
 (virtual-env) $ python3 -m server
+ - then launch a browser and point to: localhost:5000/test/tile
 
 # to test the acquire classes (unit tests)
-(virtual-env) $ python3 -m acquire.player
-(virtual-env) $ python3 -m acquire.tiles
-(virtual-env) $ python3 -m acquire.board
-(virtual-env) $ python3 -m acquire.game
+(virtual-env) $ python3 -m games.acquire.player
+(virtual-env) $ python3 -m game.tiles
+(virtual-env) $ python3 -m games.acquire.board
+(virtual-env) $ python3 -m games.acquire.game
  
