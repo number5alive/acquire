@@ -1,6 +1,6 @@
 from flask import render_template
 from flask import jsonify
-from restengine.lobbyrest import BASEURI
+from lobby.lobbyrest import BASEURI
  
 # Expose these routes to the main server application 
 from flask import Blueprint

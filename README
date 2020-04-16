@@ -2,7 +2,7 @@ Just some playing round with Python and Web Stuff, using "make a python version 
 
 ### File organization
 server.js - the flask web server, loading all the blueprints (sub-pages)
-restengine/lobby - a REST interface for listing games and (eventually) asking to join them
+lobby/lobbyrest - a REST interface for listing games and (eventually) asking to join them
 games - the python code that encapsulates the games themselves
 games/acquire - what will hopefully, eventually, be the game acquire
 clientweb - a client that visits the lobby and can play/render the game

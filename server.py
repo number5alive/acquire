@@ -1,5 +1,5 @@
 from flask import Flask
-from restengine.lobbyrest import lobbyrest_blueprint
+from lobby.lobbyrest import lobbyrest_blueprint
 from games.tilebag.tilebagrest import tilebagrest_blueprint, TILEBAGREST_URL
 from clientweb.test import testview_blueprint
 from clientweb.lobby import lobby_blueprint

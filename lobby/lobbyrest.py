@@ -2,7 +2,7 @@ from flask import Flask, render_template
 from flask import jsonify
 from flask import request, abort
 from flask import Response 
-from restengine import dataif as DataIf
+import dataif as DataIf
 from base import Game, Player
 from config import serverconfig, getGameInfo
 

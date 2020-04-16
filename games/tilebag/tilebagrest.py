@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import jsonify
 from flask import request, abort
-from restengine import dataif as DataIf
+import dataif as DataIf
 from games.tilebag.tilebag import TileBag, TileBagPlayer
  
 TILEBAGREST_URL=TileBag.starturl()
