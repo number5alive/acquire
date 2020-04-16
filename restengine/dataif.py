@@ -1,6 +1,6 @@
 from pydoc import locate
 from base import Game
-from config import gamesavail
+from config import getGameInfo
 
 # This version of the data interface just uses global variable
 # it is intended only to help development - the final version will
@@ -30,14 +30,16 @@ def updateGame(gameid):
 def createGame(gamename):
   global nGames 
   newGame=None
-  class_name=gamesavail[gamename] + '.' + gamename
-  game_class=locate(class_name)
-  print('looked for: ' + class_name)
-  print('found: ' + str(game_class))
-  if game_class:
-    newGame=game_class(nGames)
-    nGames+=1
-    games.append(newGame)
+  gameInfo=getGameInfo(gamename)
+  if gameInfo is not None:
+    class_name=gameInfo['class']
+    game_class=locate(class_name)
+    print('looked for: ' + class_name)
+    print('found: ' + str(game_class))
+    if game_class:
+      newGame=game_class(nGames)
+      nGames+=1
+      games.append(newGame)
   return newGame;
 
 # ----- Query Players -----

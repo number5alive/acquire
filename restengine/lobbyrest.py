@@ -4,7 +4,7 @@ from flask import request, abort
 from flask import Response 
 from restengine import dataif as DataIf
 from base import Game, Player
-from config import gamesavail
+from config import serverconfig, getGameInfo
 
 BASEURI="/gamelobby/v1"
  
@@ -13,6 +13,7 @@ from flask import Blueprint
 lobbyrest_blueprint = Blueprint('lobbyrest_blueprint', __name__)
 
 # GET / Confirm Server is running
+# TODO: return lobby REST endpoints
 @lobbyrest_blueprint.route(BASEURI + '/', methods=['GET'])
 def rest_lobby_hello():
     return jsonify({'message' : 'Hello, World!'})
@@ -20,8 +21,8 @@ def rest_lobby_hello():
 # get /gametypes list of existing types of games on the server
 @lobbyrest_blueprint.route(BASEURI + '/gametypes', methods=['get'])
 def rest_lobby_get_gametypes():
-  return jsonify({'gametypes' : list(gamesavail.keys())})
-   
+  return jsonify({'gametypes' : [{'name': game['name'], 'url': game['starturl']} for game in serverconfig['games']]})
+  
 # GET /games List of existing games on the server
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['GET'])
 def rest_lobby_get_games():
@@ -35,11 +36,11 @@ def rest_lobby_make_game():
     abort(404)
    
   req_gname=request.json['gamename']
-  if not req_gname in gamesavail:
+  if getGameInfo(req_gname) is None:
     print("asking for a game that doesn't exist")
     abort(404)
      
-  newGame=DataIf.createGame(request.json['gamename'])
+  newGame=DataIf.createGame(req_gname)
   if newGame:
     return Response(request.base_url + '/' + str(newGame.id), status=201)
   else:
@@ -89,7 +90,7 @@ def rest_lobby_start_game(gameid):
      
     # return the URL for the running game (maybe tilebag/<id>?)
     # TODO: We might want a different url pattern, with version?
-    return Response(request.host_url + req_game.name() + '/' + str(gameid), status=201)
+    return Response(request.host_url[:-1] + req_game.starturl() + '/' + str(gameid), status=201)
   # Or if they were on glue
   else:
     print("some keener tried to change started to something other than true")
