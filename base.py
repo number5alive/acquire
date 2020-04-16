@@ -1,64 +1,8 @@
 
  
-class Game:
-  _minPlayers=0
-  _maxPlayers=0
-  _name="None"
-   
-  def __init__(self, id, name="None"):
-    # initialize the game: board, tiles, players, stocks
-    self._id = id
-    self._started = False
-    self._players = []
-     
-  @property
-  def id(self):
-    return self._id
-     
-  @classmethod
-  def name(cls):
-    return cls._name
-
-  @classmethod
-  def minPlayers(cls):
-    return cls._minPlayers
-
-  @classmethod
-  def maxPlayers(cls):
-    return cls._maxPlayers
-
-  @property
-  def started(self):
-    return self._started
-
-  @property
-  def players(self):
-    return len(self._players), self._players
-
-  def addPlayer(self, player):
-    if self._started:
-      return False
-    else:
-      self._players.append(player)
-      return True
-
-  # child classes really need to override this puppy
-  def run(self):
-    return False
-   
-  def __repr__(self):
-    return 'Game ' + str(self._id) + ' (' + self._name + ')'
-     
-  def serialize(self):
-    return {
-        'id': self._id,
-        'name' : self._name,
-        'players' : len(self._players),
-        'started' : self._started,
-     }
- 
 class Player:
   def __init__(self, id, name=None):
+    print("base.Player")
     self.id=id
     if name is not None:
       self.name=name
@@ -92,3 +36,68 @@ if __name__ == "__main__":
   print(str(game.serialize()))
   print(player)
   print(str(player.serialize()))
+ 
+class Game:
+  _minPlayers=0
+  _maxPlayers=0
+  _name="None"
+  _playerClass=Player
+   
+  def __init__(self, id, name="None"):
+    # initialize the game: board, tiles, players, stocks
+    self._id = id
+    self._started = False
+    self._players = []
+     
+  @property
+  def id(self):
+    return self._id
+     
+  @classmethod
+  def name(cls):
+    return cls._name
+
+  @classmethod
+  def minPlayers(cls):
+    return cls._minPlayers
+
+  @classmethod
+  def maxPlayers(cls):
+    return cls._maxPlayers
+
+  @property
+  def started(self):
+    return self._started
+
+  @property
+  def players(self):
+    return len(self._players), self._players
+
+  @property
+  def newPlayer(self):
+    return self._playerClass
+
+  def addPlayer(self, player):
+    if self._started:
+      return False
+    else:
+      self._players.append(player)
+      return True
+
+  # child classes really need to override this puppy
+  def run(self):
+    self._started = True
+
+  def stop(self):
+    self._started = False;
+   
+  def __repr__(self):
+    return 'Game ' + str(self._id) + ' (' + self._name + ')'
+     
+  def serialize(self):
+    return {
+        'id': self._id,
+        'name' : self._name,
+        'players' : len(self._players),
+        'started' : self._started,
+     }

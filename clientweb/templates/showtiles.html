@@ -61,14 +61,6 @@
       const data = await response.json();
       tiles=data['tiles'];
       setTiles(tileRack, tiles, dropzone);
-
-      /* 
-      for(var i=0;i<tiles.length;i++)
-      {
-        var tile = document.getElementById("tile" + i);
-        tile.innerText = tiles[i];
-      }
-      */
        
       return tiles
   }

@@ -54,7 +54,7 @@ def rest_lobby_get_game_info(gameid):
   else:
     abort(404) #no such game
    
-# PATCH /games/id Start a specific game
+# PATCH /games/id Start or Stop a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['PATCH'])
 def rest_lobby_start_game(gameid):
   # make sure they're trying to set running : true
@@ -62,16 +62,22 @@ def rest_lobby_start_game(gameid):
   if not request.json or not 'started' in request.json:
     print("no json, or not asking to update the 'started' field")
     abort(400)
-
-  print(request.json['started'])
-  print(type(request.json['started']))
-  if not request.json['started'] == 'true':
-    print("some keener tried to change started to something other than true")
-    abort(400)
-   
+  
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
-  if req_game is not None:
+  if req_game is None:
+    print("some dummy just tried to twiddle with a non existent game")
+    abort(400)
+
+  # Find out if they want to stop a game
+  if request.json['started'] == 'false':
+    if not req_game.started:
+      abort(400) # game is not started, can't stop it
+    req_game.stop()
+    return jsonify({'success':True})
+    
+  # Or start one
+  elif request.json['started'] == 'true':
     # make sure there are enough players
     num_players, players=req_game.players
     if num_players < req_game.minPlayers() or num_players > req_game.maxPlayers():
@@ -84,7 +90,11 @@ def rest_lobby_start_game(gameid):
     # return the URL for the running game (maybe tilebag/<id>?)
     # TODO: We might want a different url pattern, with version?
     return Response(request.host_url + req_game.name() + '/' + str(gameid), status=201)
-     
+  # Or if they were on glue
+  else:
+    print("some keener tried to change started to something other than true")
+    abort(400)
+   
   abort(404) # Couldn't find the game
    
 # GET /games/<id>/players List all the players playing a specific game
@@ -131,7 +141,7 @@ def rest_lobby_join_game(gameid):
     print("cool cool, try to add this player to the game!")
     newPlayerId=(gameid<<8)+(num_players+1)
     print("newPlayerId == " + str(newPlayerId))
-    if req_game.addPlayer(Player(newPlayerId,newPlayerName)):
+    if req_game.addPlayer(req_game.newPlayer(newPlayerId,newPlayerName)):
       DataIf.updateGame(gameid)
       return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:
