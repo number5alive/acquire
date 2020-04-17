@@ -98,12 +98,14 @@ class Game:
   def __repr__(self):
     return 'Game ' + str(self._id) + ' (' + self._name + ')'
 
-  def serialize(self):
+  @classmethod
+  def serialize(self,cls):
     return {
-        'id': self._id,
-        'name' : self._name,
-        'players' : len(self._players),
-        'started' : self._started,
+        'id': cls._id,
+        'name' : cls._name,
+        'numplayers' : len(cls._players),
+        'players' : [p.serialize() for p in cls._players],
+        'started' : cls._started,
      }
       
 if __name__ == "__main__":
