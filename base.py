@@ -20,12 +20,19 @@ class Player:
 
   def __repr__(self):
     return 'Player ' + self.name
+
+  # child classes can override this to save player specific information
+  def savePlayerData(self):
+    return []
      
-  def serialize(self):
-    return {
+  def serialize(self, forsave=False):
+    serdata = {
         'id': self.id,
         'name': self.name,
      }
+    if forsave:
+      serdata['playerdata']=self.savePlayerData()
+    return serdata;
  
 # Base class for every game on this platform
 class Game:
@@ -88,9 +95,12 @@ class Game:
       self._players.append(player)
       return True
 
-  # child classes really need to override this puppy
+  # child classes will implement this method to start their game, only
+  # basic checks will happen in the base clase
   def run(self):
-    self._started = True
+    if len(self._players) >= self._minPlayers and len(self._players) <= self._maxPlayers:
+      self._started = True
+    return self._started;
 
   def stop(self):
     self._started = False;
@@ -98,15 +108,20 @@ class Game:
   def __repr__(self):
     return 'Game ' + str(self._id) + ' (' + self._name + ')'
 
-  @classmethod
-  def serialize(self,cls):
-    return {
-        'id': cls._id,
-        'name' : cls._name,
-        'numplayers' : len(cls._players),
-        'players' : [p.serialize() for p in cls._players],
-        'started' : cls._started,
-     }
+  def saveGameData(self):
+    return []
+
+  def serialize(self,forsave=False):
+    serdata = {
+        'id': self._id,
+        'name' : self._name,
+        'numplayers' : len(self._players),
+        'players' : [p.serialize(forsave) for p in self._players],
+        'started' : self._started,
+    }
+    if forsave:
+      serdata['gamedata']=self.saveGameData()
+    return serdata
       
 if __name__ == "__main__":
   game = Game(55, 'Snakes & Ladders')

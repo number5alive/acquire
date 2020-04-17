@@ -2,9 +2,9 @@ from flask import Flask
 from flask import jsonify
 from flask import request, abort
 import dataif as DataIf
-from games.tilebag.tilebag import TileBag, TileBagPlayer
+from games.tilebag.tilebag import TileBagGame, TileBagPlayer
  
-TILEBAGREST_URL=TileBag.starturl()
+TILEBAGREST_URL=TileBagGame.starturl()
 
 # Expose these routes to the main server application 
 from flask import Blueprint

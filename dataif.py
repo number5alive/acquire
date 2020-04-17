@@ -13,14 +13,14 @@ games = []
 _SAVEDSTATES='data.json'
 
 def _default(self, obj):
-  return getattr(obj.__class__, "serialize", _default.default)(obj)
+  return getattr(obj.__class__, "serialize", _default.default)(obj, forsave=True)
 
 _default.default = JSONEncoder.default #save default encoder
 JSONEncoder.default = _default         #replace it
  
 def saveGameStates():
   with open(_SAVEDSTATES, 'w') as f:
-    json.dump(games, f)
+    json.dump(games, f, indent=2)
 
 def readGameStates():
   global games

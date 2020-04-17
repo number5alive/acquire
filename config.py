@@ -1,11 +1,11 @@
-from games.tilebag.tilebag import TileBag
+from games.tilebag.tilebag import TileBagGame
  
 # TODO: query for game subclasses and presume they can be loaded
 # dictionary should be key=Class value=module
 serverconfig={ 
   "version": 1,
   "games": [
-    TileBag.config(),
+    TileBagGame.config(),
   ]
 }
 
