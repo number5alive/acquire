@@ -20,9 +20,17 @@ function drawBoard(acquireBoard){
   }
 } // drawBoard
 
-function placeTile(cellname)
-{
-  console.log("placeTile: " + cellname);
+function showOptions(tiles) {
+  for(var i=0; i<tiles.length; i++){
+    var cell=document.getElementById(tiles[i]);
+    if( cell != null)
+    {
+      cell.style.backgroundColor="#FFFFCC";
+    }
+  }
+}
+
+function placeTile(cellname) {
   var cell=document.getElementById(cellname);
   if( cell != null)
   {

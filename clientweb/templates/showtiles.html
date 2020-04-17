@@ -61,6 +61,7 @@
       const data = await response.json();
       tiles=data['tiles'];
       setTiles(tileRack, tiles, dropzone);
+      showOptions(tiles);
        
       return tiles
   }
