@@ -1,8 +1,15 @@
+from json import JSONEncoder
+ 
+def _default(self, obj):
+  return getattr(obj.__class__, "serialize", _default.default)(obj)
+
+_default.default = JSONEncoder().default #save default encoder
+JSONEncoder.default = _default         #replace it
+ 
 
 # Base class for a player in a game (non game-specific) 
 class Player:
   def __init__(self, id, name=None):
-    print("base.Player")
     self.id=id
     if name is not None:
       self._name=name
@@ -23,7 +30,7 @@ class Player:
     self._name=name
 
   def __repr__(self):
-    return 'Player ' + self._name
+    return self._name
 
   # child classes can override this to save player specific information
   def savePlayerData(self):
@@ -94,6 +101,7 @@ class Game:
 
   def addPlayer(self, player):
     if self._started:
+      print("Can't add a player to a running game!")
       return False
     else:
       self._players.append(player)

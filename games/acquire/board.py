@@ -1,13 +1,22 @@
 from games.tiles import Tile
 
 class Board:
-  def __init__(self, rows, cols, tiles=[]):
+  def __init__(self, rows, cols, tiles=[], initialState=None):
     self.rows=rows
     self.cols=cols
-    self.tiles=[[False for col in range(0,self.cols)] for row in range(0,self.rows)]
+    if initialState:
+      self.tiles=initialState
+    else:
+      self.tiles=[[False for col in range(0,self.cols)] for row in range(0,self.rows)]
     for tile in tiles:
       self.placeTile(tile)
 
+  @staticmethod
+  def loadFromSavedData(sd):
+    rows=len(sd)
+    cols=len(sd[0])
+    return Board(rows,cols,initialState=sd)
+     
   def boardrows(self):
     for row in self.tiles:
       yield row
@@ -22,6 +31,9 @@ class Board:
 
   def getBoardSize(self):
     return self.rows, self.cols
+
+  def serialize(self):
+    return self.tiles
      
   def __repr__(self):
     return str(self.tiles)

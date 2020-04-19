@@ -29,6 +29,14 @@ class TileBagPlayer(Player):
   def tiles(self):
     return self._tiles
 
+  def loadFromSavedData(self,sd):
+    self._name=sd['name']
+     
+    pd=sd['playerdata']
+    for tile in pd['tiles']:
+      t=Tile.newTileFromAlpha(tile)
+      self._tiles.append(t)
+     
   def savePlayerData(self):
     return {'tiles': self._tiles}
 
@@ -36,9 +44,10 @@ class TileBagGame(Game):
   _name='TileBag'
   _minPlayers=3
   _maxPlayers=5
-  _currPlayer=0
   _playerClass=TileBagPlayer
   _starturl='/tilebag/v1'
+   
+  _currPlayer=0
   board=[]
   tilebag=None;
    
@@ -100,46 +109,73 @@ class TileBagGame(Game):
     else:
       print("game isn't started, cannot make a move")
 
+  # Load (recreate) a version of this game from the JSON object
+  def loadFromSavedData(self,sd):
+    gd=sd['gamedata']
+     
+    # create the players
+    for player in sd['players']:
+      p=self.newPlayer(player['id'])
+      p.loadFromSavedData(player)
+      print("after load: {}".format(p))
+      self.addPlayer(p)
+      if player['id'] == gd['currPlayer']:
+        self._currPlayer=p
+
+    # restore the game state
+    self._started=sd['started']
+    print(self._players)
+    self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
+     
+    # restore the board and the tilebag
+    print(gd)
+    self.board=Board.loadFromSavedData(gd['board'])
+    rows, cols =self.board.getBoardSize()
+    self.tilebag = TileBag.loadFromSavedData(rows, cols, gd['bag'])
+    """
+    for tile in pd['tiles']:
+      t=Tile.newTileFromAlpha(tile)
+      self._tiles.append(t)
+    """
+   
+  # Saves the game to json format (using the JSONEncoder from elsewhere)
   def saveGameData(self):
     return { 
+      'currPlayer': self._currPlayer.getId(),
       'board': self.board,
       'bag': self.tilebag,
     }
 
+SAVEDGAME="game.json"
 if __name__ == "__main__":
-  # helper function to show the board state in the console
-  def printBoard(board):
-    i=1
-    print("{:^6}".format(""), end=' ')
-    print(*("{:^6}".format(chr(x+ord('A'))) for x in range(0,8)))
-    for row in currBoard.boardrows():
-      print("{:^4}: ".format(i), end=' ')
-      for col in row:
-        print("{:^6}".format(col), end=' ')
-      print()
-      i+=1
-       
-  print("name: " + TileBagGame.name())
-  print("min: " + str(TileBagGame.minPlayers()))
-  print("max: " + str(TileBagGame.maxPlayers()))
-  print("fullname: " + TileBagGame.fullname())
+  import os
+  import json
 
-  # Initialize a new game, with three players, and start it
-  tbg=TileBagGame(1)
-  tbg.addPlayer(tbg.newPlayer(1))
-  tbg.addPlayer(tbg.newPlayer(2))
-  tbg.addPlayer(tbg.newPlayer(3))
-  tbg.run()
+  if os.path.isfile(SAVEDGAME):
+    print("save file is there, let's give it a try")
+    with open(SAVEDGAME, 'r') as f:
+      sd=games = json.load(f)
+      tbg=TileBagGame(sd['id'])
+      tbg.loadFromSavedData(sd)
+      if str(sd) == str(tbg.serialize(True)):
+        print("SUCCESS - loaded game matches saved")
+      else:
+        print("FAIL - loaded game differs from saved")
+        print(tbg.serialize(True))
+        print("--vs--")
+        print(sd)
+         
+      # presume success, try things out
+      print("{} is the starting player".format(tbg.currPlayer.name))
 
-  currBoard = tbg.getBoard()
-  printBoard(currBoard)
-  print("{} is the starting player".format(tbg.currPlayer.name))
+      # simulate a bunch of turns
+      for i in range(0,40):
+        print("{} tiles: {}".format(tbg.currPlayer.name, tbg.currPlayer.tiles))
+        tile=tbg.currPlayer.selectRandomTile()
+        tbg.playTile(tbg.currPlayer.getId(), tile)
+         
+  else:
+    print("no saved state")
 
-  # simulate a bunch of turns
-  for i in range(0,40):
-    print("{} tiles: {}".format(tbg.currPlayer.name, tbg.currPlayer.tiles))
-    tile=tbg.currPlayer.selectRandomTile()
-    tbg.playTile(tbg.currPlayer.getId(), tile)
    
-  printBoard(currBoard)
    

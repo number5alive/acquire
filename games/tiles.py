@@ -21,6 +21,11 @@ class Tile:
     return row, col
 
   @staticmethod
+  def newTileFromAlpha(alpha):
+    row, col = Tile.fromAlpha(alpha)
+    return Tile(row, col)
+
+  @staticmethod
   def toAlpha(rowcol):
     row=rowcol[0]
     col=rowcol[1]
@@ -40,6 +45,9 @@ class Tile:
   def getTilePos(self):
     return self.row, self.col
 
+  def serialize(self):
+    return Tile.toAlpha((self.row, self.col))
+
   def __repr__(self):
     """
     Rebase tile to People-speak
@@ -54,9 +62,6 @@ class TileBag:
     self.bag = [Tile(row, col) for row in range(0,numRows) 
                                for col in range(0,numCols)]
     random.shuffle(self.bag)
-                                  
-  def __repr__(self):
-    return "Bag = " + str(self.bag)
 
   def isEmpty(self):
     return len(self.bag) == 0
@@ -66,6 +71,19 @@ class TileBag:
   """
   def takeTile(self):
     return self.bag.pop()
+
+  @staticmethod
+  def loadFromSavedData(rows, cols, sd):
+    tb=TileBag(rows, cols)
+    for tile in sd:
+      tb.bag.append(Tile.newTileFromAlpha(tile))
+    return tb
+
+  def serialize(self):
+    return self.bag
+
+  def __repr__(self):
+    return str(self.bag)
 
 if __name__ == "__main__":
   print("---- Testing basic tile and tilebag functionality ----")
