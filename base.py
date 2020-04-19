@@ -5,21 +5,25 @@ class Player:
     print("base.Player")
     self.id=id
     if name is not None:
-      self.name=name
+      self._name=name
     else:
-      self.name="NoName"+str(id)
+      self._name="NoName"+str(id)
  
   def getId(self):
     return self.id
 
   def getName(self):
-    return self.name
+    return self._name
+
+  @property
+  def name(self):
+    return self._name
 
   def setName(self, name):
-    self.name=name
+    self._name=name
 
   def __repr__(self):
-    return 'Player ' + self.name
+    return 'Player ' + self._name
 
   # child classes can override this to save player specific information
   def savePlayerData(self):
@@ -28,7 +32,7 @@ class Player:
   def serialize(self, forsave=False):
     serdata = {
         'id': self.id,
-        'name': self.name,
+        'name': self._name,
      }
     if forsave:
       serdata['playerdata']=self.savePlayerData()

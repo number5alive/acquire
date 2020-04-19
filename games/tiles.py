@@ -9,6 +9,34 @@ class Tile:
     self.row = row
     self.col = col
 
+  # returns the row/column when given an alpha representation
+  # presumes alpha will be in format [1-9]*[A-F]
+  # TODO add check to confirm alpha format
+  @staticmethod
+  def fromAlpha(alpha):
+    # somewhat annoyingly I've decided the alpha is col then row, so revered here
+    # AND the arrays start at Zero, but we show starting from One for ppl
+    col = int(alpha[0:-1])-1             # all except the last charater
+    row = (ord(alpha[-1]) - ord('A'))    # last character, rebased
+    return row, col
+
+  @staticmethod
+  def toAlpha(rowcol):
+    row=rowcol[0]
+    col=rowcol[1]
+    return str(col+1) + chr(row+65)
+
+  def __eq__(self, other):
+    return self.row == other.row and self.col == other.col
+
+  def __lt__(self, other):
+    return self.row < other.row or (self.row == other.row and self.col < other.col)
+  def __le__(self, other):
+    return self.__lt__(other) or self.__eq__(other)
+
+  def __gt__(self, other):
+    return self.row > other.row or (self.row == other.row and self.col > other.col)
+
   def getTilePos(self):
     return self.row, self.col
 
@@ -16,7 +44,7 @@ class Tile:
     """
     Rebase tile to People-speak
     """
-    return str(self.col+1) + chr(self.row+65)
+    return Tile.toAlpha((self.row, self.col))
 
 class TileBag:
   """
@@ -40,6 +68,7 @@ class TileBag:
     return self.bag.pop()
 
 if __name__ == "__main__":
+  print("---- Testing basic tile and tilebag functionality ----")
   bag = TileBag(5,5)
   print(bag)
 
@@ -48,3 +77,21 @@ if __name__ == "__main__":
    
   while not bag.isEmpty():
     t=bag.takeTile()
+
+  print("---- Testing Tile equivalences ----")
+  t1 = Tile(7,7)
+  t2 = Tile(7,7)
+  t3 = Tile(8,8)
+
+  print(t1 == t2)
+  print(t1 != t3)
+  print(t2 != t3)
+  print(t3 == Tile(8,8))
+
+  print("---- Testing tile transforms to/from its alpha representation ----")
+  testalpha=["1A", "1B", "12J", "5E", "9C"]
+  testpos=[(0,0), (0,1), (4,4), (9,11)]
+  print(*(x + " test " + str(x == str(Tile.toAlpha(Tile.fromAlpha(x)))) for x in testalpha), sep='\n')
+  print(*(str(x) + " test " + str(str(x) == str(Tile.fromAlpha(Tile.toAlpha(x)))) for x in testpos), sep='\n')
+  print("1B is " + str(Tile.fromAlpha("1B")))
+  print("1,0 is " + str(Tile.toAlpha((1,0))))

@@ -7,7 +7,6 @@ class TileBagPlayer(Player):
   tiles=[]
 
   def __init__(self, id, name=None):
-    print("init'ing a TileBag player")
     super().__init__(id)
     self.tiles = []
 
@@ -33,21 +32,39 @@ class TileBagGame(Game):
   def getBoard(self):
     return self.board
 
+  @property
+  def currPlayer(self):
+    return self._currPlayer
+
+  def getPlayerInfo(self, playerid):
+    pass
+
   def run(self):
     if not super().run():
       print("Unable to start the game - probably not enough players")
       return False;
        
+    # Initialize Components
     print("TileBagGame Started!")
     self.board = Board(10,8)
     self.tilebag = TileBag(10,8)
 
+    # Determine Start Order: draw a single tile for each player
+    self._currPlayer = None
+    lowestTile=Tile(10,8)
+    for player in self._players:
+      t=self.tilebag.takeTile()
+      print(t)
+      if t <= lowestTile:
+        print("{} is the current lowest".format(t))
+        lowestTile=t
+        self._currPlayer=player
+      self.board.placeTile(t)
+   
     # give each player seven tiles to start
     print(self._players)
     for player in self._players:
-      print("loop1")
       for i in range(0,7):
-        print("take tile")
         player.receiveTile(self.tilebag.takeTile())
 
   def saveGameData(self):
@@ -68,12 +85,20 @@ if __name__ == "__main__":
   tbg.addPlayer(tbg.newPlayer(2))
   tbg.addPlayer(tbg.newPlayer(3))
   tbg.run()
-  print(tbg.serialize(True))
 
-  """
+  def printBoard(board):
+    i=1
+    print("{:^6}".format(""), end=' ')
+    print(*("{:^6}".format(chr(x+ord('A'))) for x in range(0,8)))
+    for row in currBoard.boardrows():
+      print("{:^4}: ".format(i), end=' ')
+      for col in row:
+        #print("{:^6}".format('X' if col else 'Y'), end=' ')
+        print("{:^6}".format(col), end=' ')
+      print()
+      i+=1
+       
   currBoard = tbg.getBoard()
-  for row in currBoard:
-    for col in row:
-      print("{:^6}".format('X' if col else 'Y'), end=' ')
-    print()
-  """
+  printBoard(currBoard)
+  print("{} is the starting player".format(tbg.currPlayer.name))
+
