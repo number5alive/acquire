@@ -2,19 +2,35 @@ from base import Game
 from base import Player
 from games.tiles import Tile, TileBag
 from games.acquire.board import Board
+from itertools import cycle, islice
+from random import shuffle
 
 class TileBagPlayer(Player):
-  tiles=[]
+  _tiles=[]
 
   def __init__(self, id, name=None):
     super().__init__(id)
-    self.tiles = []
+    self._tiles = []
 
   def receiveTile(self, tile):
-    self.tiles.append(tile)
+    self._tiles.append(tile)
+
+  # this only exists to help program the tests
+  # We'll need a way for the user to specify which tile they're playing
+  # NOTE: We don't pop it, the game will do that if it's a valid move
+  def selectRandomTile(self):
+    shuffle(self._tiles)
+    return self._tiles[0]
+
+  def removeTile(self, tile):
+    self._tiles.remove(tile)
+
+  @property
+  def tiles(self):
+    return self._tiles
 
   def savePlayerData(self):
-    return {'tiles': self.tiles}
+    return {'tiles': self._tiles}
 
 class TileBagGame(Game):
   _name='TileBag'
@@ -44,7 +60,7 @@ class TileBagGame(Game):
       print("Unable to start the game - probably not enough players")
       return False;
        
-    # Initialize Components
+    # Initialize Game Components
     print("TileBagGame Started!")
     self.board = Board(10,8)
     self.tilebag = TileBag(10,8)
@@ -54,18 +70,35 @@ class TileBagGame(Game):
     lowestTile=Tile(10,8)
     for player in self._players:
       t=self.tilebag.takeTile()
-      print(t)
       if t <= lowestTile:
-        print("{} is the current lowest".format(t))
         lowestTile=t
         self._currPlayer=player
       self.board.placeTile(t)
+
+    # Now set the game order to the above
+    self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
    
     # give each player seven tiles to start
     print(self._players)
     for player in self._players:
       for i in range(0,7):
         player.receiveTile(self.tilebag.takeTile())
+
+  def playTile(self, playerId, tile):
+    if self._started:
+      if self._currPlayer.getId() == playerId:
+        if tile in self._currPlayer.tiles:
+          self.board.placeTile(tile)
+          # TODO: ensure the above succeeds and is a valid move
+          self._currPlayer.removeTile(tile)
+          self._currPlayer.receiveTile(self.tilebag.takeTile())
+          self._currPlayer=next(self._rotation)
+        else:
+          print("{} is not in {}".format(tile, self._currPlayer.tiles))
+      else:
+        print("{} is not the current player".format(playerId))
+    else:
+      print("game isn't started, cannot make a move")
 
   def saveGameData(self):
     return { 
@@ -74,18 +107,7 @@ class TileBagGame(Game):
     }
 
 if __name__ == "__main__":
-  print("name: " + TileBagGame.name())
-  print("min: " + str(TileBagGame.minPlayers()))
-  print("max: " + str(TileBagGame.maxPlayers()))
-  print("fullname: " + TileBagGame.fullname())
-
-  tbg=TileBagGame(1)
-  print(tbg.serialize(True))
-  tbg.addPlayer(tbg.newPlayer(1))
-  tbg.addPlayer(tbg.newPlayer(2))
-  tbg.addPlayer(tbg.newPlayer(3))
-  tbg.run()
-
+  # helper function to show the board state in the console
   def printBoard(board):
     i=1
     print("{:^6}".format(""), end=' ')
@@ -93,12 +115,31 @@ if __name__ == "__main__":
     for row in currBoard.boardrows():
       print("{:^4}: ".format(i), end=' ')
       for col in row:
-        #print("{:^6}".format('X' if col else 'Y'), end=' ')
         print("{:^6}".format(col), end=' ')
       print()
       i+=1
        
+  print("name: " + TileBagGame.name())
+  print("min: " + str(TileBagGame.minPlayers()))
+  print("max: " + str(TileBagGame.maxPlayers()))
+  print("fullname: " + TileBagGame.fullname())
+
+  # Initialize a new game, with three players, and start it
+  tbg=TileBagGame(1)
+  tbg.addPlayer(tbg.newPlayer(1))
+  tbg.addPlayer(tbg.newPlayer(2))
+  tbg.addPlayer(tbg.newPlayer(3))
+  tbg.run()
+
   currBoard = tbg.getBoard()
   printBoard(currBoard)
   print("{} is the starting player".format(tbg.currPlayer.name))
 
+  # simulate a bunch of turns
+  for i in range(0,40):
+    print("{} tiles: {}".format(tbg.currPlayer.name, tbg.currPlayer.tiles))
+    tile=tbg.currPlayer.selectRandomTile()
+    tbg.playTile(tbg.currPlayer.getId(), tile)
+   
+  printBoard(currBoard)
+   
