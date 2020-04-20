@@ -1,4 +1,5 @@
 import random
+import base
 
 class Tile:
   """
@@ -58,10 +59,15 @@ class TileBag:
   """
   A Bag of Tiles - Randomized from the start
   """
-  def __init__(self, numRows, numCols):
-    self.bag = [Tile(row, col) for row in range(0,numRows) 
+  def __init__(self, numRows, numCols, initialTiles=None):
+    if initialTiles is None:
+      self.bag = [Tile(row, col) for row in range(0,numRows) 
                                for col in range(0,numCols)]
-    random.shuffle(self.bag)
+      random.shuffle(self.bag)
+    else:
+      self.bag = []
+      for tile in initialTiles:
+        self.bag.append(Tile.newTileFromAlpha(tile))
 
   def isEmpty(self):
     return len(self.bag) == 0
@@ -70,20 +76,19 @@ class TileBag:
   The following is not safe... make sure callers check "isEmpty"
   """
   def takeTile(self):
-    return self.bag.pop()
-
-  @staticmethod
-  def loadFromSavedData(rows, cols, sd):
-    tb=TileBag(rows, cols)
-    for tile in sd:
-      tb.bag.append(Tile.newTileFromAlpha(tile))
-    return tb
+    if len(self.bag) > 0:
+      return self.bag.pop()
+    else:
+      return None
 
   def serialize(self):
+    print("Tile.serialize")
     return self.bag
-
+"""
   def __repr__(self):
+    print("Tile.__repr__")
     return str(self.bag)
+    """
 
 if __name__ == "__main__":
   print("---- Testing basic tile and tilebag functionality ----")

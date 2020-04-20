@@ -39,5 +39,6 @@ if __name__ == "__main__":
    
   print(tbg.serialize(True))
   import json
+  import base
   with open(SAVEDGAME, 'w') as f:
     json.dump(tbg.serialize(True), f, indent=2)
