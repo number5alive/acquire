@@ -143,6 +143,12 @@ class TileBagGame(Game):
       'board': self.board.serialize(),
       'bag': self.tilebag.serialize(),
     }
+     
+  def getPublicInformation(self):
+    return {
+      'currPlayer': self._currPlayer.name,
+      'board': self.board.serialize(),
+    }
 
 SAVEDGAME="game.json"
 if __name__ == "__main__":
@@ -150,6 +156,7 @@ if __name__ == "__main__":
   import json
   import base
 
+  print("---- Testing restoring state from json ----")
   if os.path.isfile(SAVEDGAME):
     print("save file is there, let's give it a try")
     with open(SAVEDGAME, 'r') as f:
@@ -171,7 +178,8 @@ if __name__ == "__main__":
       # presume success, try things out
       print("{} is the starting player".format(tbg.currPlayer.name))
 
-      # simulate a bunch of turns
+      # simulate a bunch of turns (to test game mechanics)
+      print("---- simulating some game mechanics to ensure load worked ----")
       for i in range(0,40):
         tile=tbg.currPlayer.selectRandomTile()
         if tile is None:
