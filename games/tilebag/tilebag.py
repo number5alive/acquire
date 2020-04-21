@@ -41,7 +41,6 @@ class TileBagPlayer(Player):
       self._tiles.append(t)
      
   def savePlayerData(self):
-    print("TileBagPlayer.savePlayerData()")
     return {'tiles': [t.serialize() for t in self._tiles]}
 
 class TileBagGame(Game):
@@ -66,7 +65,11 @@ class TileBagGame(Game):
     return self._currPlayer
 
   def getPlayerInfo(self, playerid):
-    pass
+    for player in self._players:
+      print(player.getId())
+      if player.getId() == playerid:
+        return player.serialize(True)
+    return None
 
   def run(self):
     if not super().run():
@@ -151,9 +154,8 @@ class TileBagGame(Game):
       return {}
      
   def getPublicInformation(self):
-    print("TBG.getPublicInformation")
     return {
-      'currPlayer': self._currPlayer.name,
+      'currPlayer': self._currPlayer.serialize(False),
       'board': self.board.serialize(),
     }
 

@@ -22,6 +22,18 @@ def rest_tilebag_hello():
 def rest_tilebag_get_game_info(gameid):
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
-    return jsonify({'game' : req_game.serialize(False)})
+    #TODO: check to see if a playerID token is embedded in this request (cookie)
+    #      use that to provide all the private player details 
+    ret={'game' : req_game.getPublicInformation()}
+    caller=request.args.get('playerid')
+    print("playerinfo={}".format(caller))
+    if caller:
+      pi=req_game.getPlayerInfo(int(caller))
+      if pi:
+        ret['playerid'] = pi
+      else:
+        abort(404) #invalid player id
+    return jsonify(ret)
   else:
     abort(404) #no such game
+
