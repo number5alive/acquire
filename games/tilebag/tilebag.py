@@ -66,7 +66,6 @@ class TileBagGame(Game):
 
   def getPlayerInfo(self, playerid):
     for player in self._players:
-      print(player.getId())
       if player.getId() == playerid:
         return player.serialize(True)
     return None
@@ -95,12 +94,14 @@ class TileBagGame(Game):
     self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
    
     # give each player seven tiles to start
-    print(self._players)
     for player in self._players:
       for i in range(0,7):
         player.receiveTile(self.tilebag.takeTile())
 
-  def playTile(self, playerId, tile):
+  def playTile(self, playerId, tile=None, alpha=None):
+    if tile is None and alpha is not None:
+      tile=Tile.newTileFromAlpha(alpha)
+       
     if self._started:
       if self._currPlayer.getId() == playerId:
         if tile in self._currPlayer.tiles:
@@ -113,12 +114,16 @@ class TileBagGame(Game):
           else:
             self._currPlayer.receiveTile(self.tilebag.takeTile())
           self._currPlayer=next(self._rotation)
+          return True
         else:
           print("{} is not in {}".format(tile, self._currPlayer.tiles))
       else:
         print("{} is not the current player".format(playerId))
     else:
       print("game isn't started, cannot make a move")
+
+    # if we get down here, we didn't succeed at playing the tile
+    return False
 
   # Load (recreate) a version of this game from the JSON object
   def loadFromSavedData(self,sd):
@@ -143,7 +148,6 @@ class TileBagGame(Game):
    
   # Saves the game to json format (using the JSONEncoder from elsewhere)
   def saveGameData(self):
-    print("saveGameData")
     if self._started:
       return { 
         'currPlayer': self._currPlayer.getId(),
@@ -157,6 +161,7 @@ class TileBagGame(Game):
     return {
       'currPlayer': self._currPlayer.serialize(False),
       'board': self.board.serialize(),
+      'players' : [x.serialize(False) for x in self._players],
     }
 
 SAVEDGAME="game.json"
@@ -195,7 +200,11 @@ if __name__ == "__main__":
           print("Player ran out of tiles, ending loop")
           break
         else:
-          tbg.playTile(tbg.currPlayer.getId(), tile)
+          # testing both ways of playing a tile (tile object, or string)
+          if i%2 == 0:
+            tbg.playTile(tbg.currPlayer.getId(), alpha=str(tile))
+          else:
+            tbg.playTile(tbg.currPlayer.getId(), tile)
   else:
     print("no saved state")
 
