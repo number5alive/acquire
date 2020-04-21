@@ -82,8 +82,9 @@ class TileBag:
       return None
 
   def serialize(self):
-    print("Tile.serialize")
-    return self.bag
+    print("TileBag.serialize")
+    return [t.serialize() for t in self.bag]
+     
 """
   def __repr__(self):
     print("Tile.__repr__")

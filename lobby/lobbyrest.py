@@ -129,6 +129,7 @@ def rest_lobby_join_game(gameid):
     print("something wrong with the json")
     abort(400)
   newPlayerName=request.json['name']
+  print("player name from json is {}".format(newPlayerName))
 
   # Find the game they want to join
   req_game=DataIf.getGameById(gameid)
@@ -142,7 +143,7 @@ def rest_lobby_join_game(gameid):
     print("cool cool, try to add this player to the game!")
     newPlayerId=(gameid<<8)+(num_players+1)
     print("newPlayerId == " + str(newPlayerId))
-    if req_game.addPlayer(req_game.newPlayer(newPlayerId,newPlayerName)):
+    if req_game.addPlayer(req_game.newPlayer(newPlayerId,name=newPlayerName)):
       DataIf.updateGame(gameid)
       return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:

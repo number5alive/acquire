@@ -9,7 +9,7 @@ class TileBagPlayer(Player):
   _tiles=[]
 
   def __init__(self, id, name=None):
-    super().__init__(id)
+    super().__init__(id, name=name)
     self._tiles = []
 
   def receiveTile(self, tile):
@@ -41,7 +41,8 @@ class TileBagPlayer(Player):
       self._tiles.append(t)
      
   def savePlayerData(self):
-    return {'tiles': self._tiles}
+    print("TileBagPlayer.savePlayerData()")
+    return {'tiles': [t.serialize() for t in self._tiles]}
 
 class TileBagGame(Game):
   _name='TileBag'
@@ -50,7 +51,7 @@ class TileBagGame(Game):
   _playerClass=TileBagPlayer
   _starturl='/tilebag/v1'
    
-  _currPlayer=0
+  _currPlayer=None
   board=[]
   tilebag=None;
    
@@ -103,6 +104,7 @@ class TileBagGame(Game):
           self.board.placeTile(tile)
           # TODO: ensure the above succeeds and is a valid move
           self._currPlayer.removeTile(tile)
+          print("Played Tile: {}".format(tile))
           if self.tilebag.isEmpty():
             print("Tilebag exhausted, trigger end-game state")
           else:
@@ -138,13 +140,18 @@ class TileBagGame(Game):
    
   # Saves the game to json format (using the JSONEncoder from elsewhere)
   def saveGameData(self):
-    return { 
-      'currPlayer': self._currPlayer.getId(),
-      'board': self.board.serialize(),
-      'bag': self.tilebag.serialize(),
-    }
+    print("saveGameData")
+    if self._started:
+      return { 
+        'currPlayer': self._currPlayer.getId(),
+        'board': self.board.serialize(),
+        'bag': self.tilebag.serialize(),
+      }
+    else:
+      return {}
      
   def getPublicInformation(self):
+    print("TBG.getPublicInformation")
     return {
       'currPlayer': self._currPlayer.name,
       'board': self.board.serialize(),

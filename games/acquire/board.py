@@ -33,7 +33,8 @@ class Board:
     return self.rows, self.cols
 
   def serialize(self):
-    return self.tiles
+    print("Board.serialize")
+    return self.tiles #actually a boolean array
      
   def __repr__(self):
     return str(self.tiles)
