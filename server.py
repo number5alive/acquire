@@ -3,7 +3,7 @@ from lobby.lobbyrest import lobbyrest_blueprint
 from games.tilebag.tilebagrest import tilebagrest_blueprint, TILEBAGREST_URL
 from clientweb.test import testview_blueprint
 from clientweb.lobby import lobby_blueprint
-from clientweb.tilebag import tilebag_blueprint
+from clientweb.tilebag import tilebag_blueprint, TILEBAG_URL
 import dataif
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ app.register_blueprint(tilebagrest_blueprint, url_prefix=TILEBAGREST_URL)
 # Client-side view of things
 app.register_blueprint(lobby_blueprint) # the lobby
 app.register_blueprint(testview_blueprint, url_prefix='/test') # for testing
-app.register_blueprint(tilebag_blueprint, url_prefix=TILEBAGREST_URL)
+app.register_blueprint(tilebag_blueprint, url_prefix=TILEBAG_URL)
    
 # Required since running Flask in debug modes kicks it off twice
 # this code will be run any time we have the first caller to our webserver

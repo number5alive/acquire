@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Include the Styles we'll want to use --> 
+  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+  <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
+   
+  <!-- Include our javascript helpers -->
+  <script src="{{ url_for('.static', filename='board.js') }}"></script>
+  <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
+   
+  <!-- A bit of page-specific style -->
+  <style>
+    body {
+        font-family: 'Roboto';font-size: 22px;
+    }
+
+    #dropzone {
+      bottom: 10px;
+      z-index: -5;
+      font-size: x-large;
+      line-height: 5px;
+      height: 30%;
+      width: 100%;
+      background-color: LightCyan;
+      text-align: center;
+      border: 1px solid #d3d3d3;
+      border-radius: 15px;
+    }
+  </style>
+</head>
+ 
+<!-- Ahh, the meat of our page -->
+<body>
+  <h1>Your Tiles</h1>
+
+  <p>Click-and-drag the tile you want to Play to the Play area</p>
+   
+  <div id="tileRack"></div>
+   
+  <div id="dropzone">
+    <p>Drop Here to Play</p>
+     
+    <!-- Add the board, and populate it -->
+    <div id="acquireBoard"></div>
+  </div>
+   
+  <script>
+  var tileRack = document.getElementById("tileRack");
+  makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
+   
+  dropzone.addEventListener('playtile', tileDropped);
+   
+  drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
+
+  tiles=gettiles();
+  async function gettiles()
+  {
+      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=userid) }}")
+      const data = await response.json();
+      // TODO: handle error case where player specific data isn't returned
+      console.log(data);
+      tiles=data['game']['you']['playerdata']['tiles'];
+      setTiles(tileRack, tiles, dropzone);
+      showOptions(tiles);
+       
+      return tiles
+  }
+
+  function tileDropped(e){
+    tile=e.detail.tile;
+    placeTile(tile.innerText);
+    tile.parentNode.removeChild(tile);
+  }
+  </script>
+</body>
+</html>

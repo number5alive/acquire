@@ -2,6 +2,7 @@ from flask import Flask
 from flask import jsonify
 from flask import request, abort
 import base
+import userif as UserIf
 import dataif as DataIf
 from games.tilebag.tilebag import TileBagGame, TileBagPlayer
  
@@ -15,9 +16,7 @@ tilebagrest_blueprint = Blueprint('tilebagrest_blueprint', __name__)
 def getCallingPlayerInfo(req_game):
   pinfo=None
    
-  #TODO: check to see if a playerID token is embedded in this request (cookie)
-  #      use that to provide all the private player details 
-  caller=request.args.get('playerid')
+  caller=UserIf.getCallingPlayerId()
   if caller:
     pinfo=req_game.getPlayerInfo(int(caller))
   return pinfo
@@ -38,7 +37,7 @@ def rest_tilebag_get_game_info(gameid):
     # add private player info for the one that called in (if any)
     pinfo=getCallingPlayerInfo(req_game)
     if pinfo:
-      ret['playerid'] = pinfo
+      ret['game']['you'] = pinfo
        
     return jsonify(ret)
   else:
