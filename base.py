@@ -1,7 +1,7 @@
 from json import JSONEncoder
  
-def _default(self, obj):
-  return getattr(obj.__class__, "serialize", _default.default)(obj)
+def _default(self, obj, forsave=False):
+  return getattr(obj.__class__, "serialize", _default.default)(obj, forsave=False)
 
 _default.default = JSONEncoder().default #save default encoder
 JSONEncoder.default = _default         #replace it
@@ -37,6 +37,7 @@ class Player:
     return []
      
   def serialize(self, forsave=False):
+    print("Player.serialize(forsave={})".format(forsave))
     serdata = {
         'id': self.id,
         'name': self._name,
@@ -101,7 +102,6 @@ class Game:
 
   def addPlayer(self, player):
     if self._started:
-      print("Can't add a player to a running game!")
       return False
     else:
       self._players.append(player)

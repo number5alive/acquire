@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import jsonify
 from flask import request, abort
+import base
 import dataif as DataIf
 from games.tilebag.tilebag import TileBagGame, TileBagPlayer
  
@@ -21,6 +22,6 @@ def rest_tilebag_hello():
 def rest_tilebag_get_game_info(gameid):
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
-    return jsonify({'game' : req_game.serialize()})
+    return jsonify({'game' : req_game.serialize(False)})
   else:
     abort(404) #no such game

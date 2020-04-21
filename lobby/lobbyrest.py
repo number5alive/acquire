@@ -51,7 +51,7 @@ def rest_lobby_make_game():
 def rest_lobby_get_game_info(gameid):
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
-    return jsonify({'game' : req_game.serialize(req_game)})
+    return jsonify({'game' : req_game.serialize(False)})
   else:
     abort(404) #no such game
    

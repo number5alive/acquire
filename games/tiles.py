@@ -82,7 +82,6 @@ class TileBag:
       return None
 
   def serialize(self):
-    print("TileBag.serialize")
     return [t.serialize() for t in self.bag]
      
 """
