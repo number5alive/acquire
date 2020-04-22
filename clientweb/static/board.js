@@ -1,6 +1,7 @@
 var colNames="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+var defaultBoard={'ncols':10, 'nrows':8, 'occupied': ["A1", "B2", "C3"]};
 
-function drawBoard(acquireBoard, boardinfo){
+function drawBoard(acquireBoard, boardinfo=defaultBoard){
   var x=boardinfo['ncols']
   var y=boardinfo['nrows']
 

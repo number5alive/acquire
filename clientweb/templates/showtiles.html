@@ -10,6 +10,9 @@
   <script src="{{ url_for('.static', filename='board.js') }}"></script>
   <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
    
+   <!-- And our WebSocket helper -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+   
   <!-- A bit of page-specific style -->
   <style>
     body {
@@ -33,9 +36,28 @@
  
 <!-- Ahh, the meat of our page -->
 <body>
+ 
+<script type="text/javascript" charset="utf-8">
+    // TODO: get URL from python
+    var socket = io.connect('http://localhost:5000');
+    socket.emit('join', {'room':'tilebag12345'});     
+    socket.on('connect', function() {
+        //socket.emit('my event', {data: 'I\'m connected!'});
+        console.log("*** Connected ***")
+    });
+
+    socket.on('update', function(data) {
+      console.log(data);
+      document.getElementById("gamestate").innerText=data['message'];
+    });
+     
+</script>
+ 
   <h1>Your Tiles</h1>
 
   <p>Click-and-drag the tile you want to Play to the Play area</p>
+   
+  <div id="gamestate"></div>
    
   <div id="tileRack"></div>
    

@@ -5,6 +5,7 @@ import json
 from base import Game
 from config import getGameInfo
 
+
 # This version of the data interface just uses global variable
 # it is intended only to help development - the final version will
 # swap this out for one that uses a datastore
@@ -30,10 +31,16 @@ def readGameStates():
     games=[Game(id) for id in range(0,2)]
     saveGameStates()
 
+def notifyPlayers(room):
+  import server.socketio as socketio
+  socketio.emit('update', {'message': message}, room=room)
+  pass
+
 # In this version of the dataif, the caller doesn't realize, but they've updated
 # a real object - in a database version, this will have to update the database
 def updateGame(gameid):
   saveGameStates()
+  notifyPlayers(str(gameid))
  
 # ----- Query Games -----
 # return details about a game

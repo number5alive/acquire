@@ -87,9 +87,9 @@ def rest_lobby_start_game(gameid):
        
     # if we got this far, they must have asked us to start the game
     req_game.run() # note, probably won't do anything
+    DataIf.updateGame(gameid)
      
     # return the URL for the running game (maybe tilebag/<id>?)
-    # TODO: We might want a different url pattern, with version?
     return Response(request.host_url[:-1] + req_game.starturl() + '/' + str(gameid), status=201)
   # Or if they were on glue
   else:
