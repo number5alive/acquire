@@ -4,18 +4,26 @@ class Board:
   def __init__(self, rows, cols, tiles=[], initialState=None):
     self.rows=rows
     self.cols=cols
+    self.tiles=[[False for col in range(0,self.cols)] for row in range(0,self.rows)]
     if initialState:
-      self.tiles=initialState
-    else:
-      self.tiles=[[False for col in range(0,self.cols)] for row in range(0,self.rows)]
+      for alpha in initialState:
+        self.placeTile(Tile.newTileFromAlpha(alpha))
+       
     for tile in tiles:
       self.placeTile(tile)
 
   @staticmethod
   def loadFromSavedData(sd):
-    rows=len(sd)
-    cols=len(sd[0])
-    return Board(rows,cols,initialState=sd)
+    return Board(sd['nrows'],sd['ncols'],initialState=sd['occupied'])
+
+  # Return a list of occupied rows (in alpha representation)
+  def getOccupied(self):
+    occupied=[]
+    for row in range(0,self.rows):
+      for col in range(0,self.cols):
+        if self.tiles[row][col]:
+          occupied.append(Tile.toAlpha((row,col)))
+    return occupied
      
   def boardrows(self):
     for row in self.tiles:
@@ -33,7 +41,11 @@ class Board:
     return self.rows, self.cols
 
   def serialize(self):
-    return self.tiles #actually a boolean array
+    return { 
+      'nrows' : self.rows,
+      'ncols' : self.cols,
+      'occupied' : self.getOccupied(),
+      }
      
   def __repr__(self):
     return str(self.tiles)
@@ -52,9 +64,16 @@ if __name__ == "__main__":
   print("placed Tile" + str(t))
   board.placeTile(t)
   print(board)
+  print("Occupied: {}".format(board.getOccupied()))
 
   print("---- Testing a Board with Tiles already placed")
   board = Board(8,5,tiles=[Tile(3,3), Tile(1,1), Tile(2,2)])
   print(board)
-#board = Board(12,5,tiles=[Tile.TileFromAlpha("1A"), Tile.TileFromAlpha("12E")])
-  print(board)
+  print("Occupied: {}".format(board.getOccupied()))
+
+  print("---- Testing Serialization and save/restore ----")
+  saved=board.serialize()
+  print("Serialized: {}".format(saved))
+  newboard=Board.loadFromSavedData(saved)
+  print("Restored == Saved?: {}".format(saved == newboard.serialize()))
+  newboard.placeTile(Tile(0,0))

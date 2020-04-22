@@ -37,7 +37,6 @@ class Player:
     return []
      
   def serialize(self, forsave=False):
-    print("Player.serialize(forsave={})".format(forsave))
     serdata = {
         'id': self.id,
         'name': self._name,

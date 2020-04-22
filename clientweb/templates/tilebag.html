@@ -33,9 +33,11 @@
  
 <!-- Ahh, the meat of our page -->
 <body>
-  <h1>Your Tiles</h1>
+  <h1>Your Tiles - {{userid}} </h1>
 
   <p>Click-and-drag the tile you want to Play to the Play area</p>
+
+  <div id="gamestate"></div>
    
   <div id="tileRack"></div>
    
@@ -52,15 +54,21 @@
    
   dropzone.addEventListener('playtile', tileDropped);
    
-  drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
 
-  tiles=gettiles();
-  async function gettiles()
+  rendergame();
+  async function rendergame()
   {
-      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=userid) }}")
+      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=userid) }}");
       const data = await response.json();
-      // TODO: handle error case where player specific data isn't returned
       console.log(data);
+
+      // Display the game state
+      document.getElementById("gamestate").innerText=data['game']['currPlayer']['id']
+
+      // Draw the board
+      drawBoard(document.getElementById("acquireBoard"),data['game']['board']); // from board.js - draws an empty board
+       
+      // TODO: handle error case where player specific data isn't returned
       tiles=data['game']['you']['playerdata']['tiles'];
       setTiles(tileRack, tiles, dropzone);
       showOptions(tiles);
@@ -70,8 +78,32 @@
 
   function tileDropped(e){
     tile=e.detail.tile;
-    placeTile(tile.innerText);
-    tile.parentNode.removeChild(tile);
+    makeGameMove(tile); // post the move to the game server
+  }
+
+  async function makeGameMove(tile)
+  {
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_take_game_action', gameid=gameid, playerid=userid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'placetile', 
+                                        'tile':tile.innerText})
+                },
+              );
+                 
+    await response.status;
+    if( response.status == 200 )
+    {
+      tile.parentNode.removeChild(tile);
+      rendergame()
+    }
+    else
+    {
+      // TODO: snap-back the tile and berrate the user
+    }
   }
   </script>
 </body>

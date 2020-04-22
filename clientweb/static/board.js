@@ -1,11 +1,16 @@
-var x=12;
-var y=9;
 var colNames="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-function drawBoard(acquireBoard){
-  for (var i=0; i<y; i++){
+function drawBoard(acquireBoard, boardinfo){
+  var x=boardinfo['ncols']
+  var y=boardinfo['nrows']
+
+  // flush an existing rendering of the board if it exists
+  acquireBoard.innerHTML='';
+   
+  // Create the board grid
+  for (var j=0; j<x; j++){
     var row = acquireBoard.appendChild(document.createElement("div"));
-    for (var j=0; j<x; j++){
+    for (var i=0; i<y; i++){
         var cellname=(j+1) + colNames.charAt(i);         
          
         var cell=document.createElement("span");
@@ -18,6 +23,13 @@ function drawBoard(acquireBoard){
         row.appendChild(cell);
     }
   }
+   
+  // place any tiles that are already occupied
+  for(var i=0; i<boardinfo['occupied'].length; i++)
+  {
+    placeTile(boardinfo['occupied'][i])
+  }
+
 } // drawBoard
 
 function showOptions(tiles) {
