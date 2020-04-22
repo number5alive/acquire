@@ -7,9 +7,7 @@ from clientweb.tilebag import tilebag_blueprint, TILEBAG_URL
 import dataif
 from flask_socketio import SocketIO, join_room, emit
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+from config import app, socketio
  
 # all the backend stuff that actually does stuff   
 app.register_blueprint(lobbyrest_blueprint)
@@ -28,7 +26,7 @@ def on_connect():
 def on_join(data):
     room = data['room']
     join_room(room)
-    print("user joined room '{}'".format(room))
+    print("user joined room {}".format(room))
 
 # This is just a test endpoint for sending messages via the websocket
 from flask import jsonify

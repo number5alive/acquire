@@ -73,5 +73,6 @@ def rest_tilebag_take_game_action(gameid):
       abort(400)
 
     if req_game.playTile(pinfo['id'], alpha=req_tile):
+      DataIf.updateGame(req_game.id)
       return jsonify({'success':True})
   abort(400)

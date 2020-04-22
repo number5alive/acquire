@@ -10,6 +10,9 @@
   <script src="{{ url_for('.static', filename='board.js') }}"></script>
   <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
    
+   <!-- And our WebSocket helper -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+   
   <!-- A bit of page-specific style -->
   <style>
     body {
@@ -48,12 +51,28 @@
     <div id="acquireBoard"></div>
   </div>
    
+  <!-- This bit configures the websocket so we'll know if the game updates -->
+  <script type="text/javascript" charset="utf-8">
+      // TODO: get URL from python
+      var socket = io.connect('{{ serverroot }}');
+      socket.emit('join', {'room':'{{ gameid }}'});     
+      socket.on('connect', function() {
+          console.log("*** Connected ***")
+      });
+
+      socket.on('update', function(data) {
+        console.log(data);
+        rendergame();
+      });
+       
+  </script>
+     
+  <!-- This bit renders the dynamic content on the page -->
   <script>
   var tileRack = document.getElementById("tileRack");
   makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
    
   dropzone.addEventListener('playtile', tileDropped);
-   
 
   rendergame();
   async function rendergame()

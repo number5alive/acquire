@@ -1,4 +1,11 @@
 from games.tilebag.tilebag import TileBagGame
+from flask import Flask
+from flask_socketio import SocketIO
+ 
+# Moving server config info here so we can get it from elsewhere too!
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
  
 # TODO: query for game subclasses and presume they can be loaded
 # dictionary should be key=Class value=module

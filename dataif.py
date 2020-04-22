@@ -3,8 +3,7 @@ import os.path
 from json import JSONEncoder
 import json
 from base import Game
-from config import getGameInfo
-
+from config import getGameInfo, socketio
 
 # This version of the data interface just uses global variable
 # it is intended only to help development - the final version will
@@ -32,9 +31,8 @@ def readGameStates():
     saveGameStates()
 
 def notifyPlayers(room):
-  import server.socketio as socketio
-  socketio.emit('update', {'message': message}, room=room)
-  pass
+  print("Notifying Players in room {}".format(room))
+  socketio.emit('update', {'message': 'update avail'}, room=room)
 
 # In this version of the dataif, the caller doesn't realize, but they've updated
 # a real object - in a database version, this will have to update the database
