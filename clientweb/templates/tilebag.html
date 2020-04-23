@@ -106,7 +106,7 @@
 
   async function makeGameMove(tile)
   {
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_take_game_action', gameid=gameid, playerid=userid) }}", {
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid=gameid, playerid=userid) }}", {
                 method: 'PATCH', 
                 headers: {
                   Accept: 'application/json',

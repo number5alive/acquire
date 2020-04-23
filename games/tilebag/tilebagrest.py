@@ -43,54 +43,64 @@ def rest_tilebag_get_game_info(gameid):
   else:
     abort(404) #no such game
 
-# PATCH /games/id used to take an action in the game
-@tilebagrest_blueprint.route('/<int:gameid>', methods=['PATCH'])
-def rest_tilebag_take_game_action(gameid):
-  actions=['placetile', 'buystock', 'movehotel']
-   
-  # make sure they've specified an action to take
-  if not request.json or not 'action' in request.json or not request.json['action'] in actions:
-    print("no json, no action, or invalid action")
-    abort(400)
-  req_action=request.json['action']
-
+# PATCH /games/<id>/board place a tile in the game
+@tilebagrest_blueprint.route('/<int:gameid>/board', methods=['PATCH'])
+def rest_tilebag_placetile(gameid):
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
-  if req_game is None:
+  if req_game is not None:
+    # Make sure the caller is someone playing this game!
+    pinfo=getCallingPlayerInfo(req_game)
+    if pinfo is not None:
+      # Get the tile they want to play
+      if 'tile' in request.json:
+        req_tile=request.json['tile']
+        # Pass the request into the game and see if it gets approved
+        if req_game.playTile(pinfo['id'], alpha=req_tile):
+          DataIf.updateGame(req_game.id)
+          return jsonify({'success':True})
+      else:
+        print("No tile specified")
+    else:
+      print("we're not going to let just anyone twiddle with the game!")
+  else:
     print("some dummy just tried to twiddle with a non existent game")
-    abort(400)
-
-  # Make sure the caller is someone playing this game!
-  pinfo=getCallingPlayerInfo(req_game)
-  if pinfo is None:
-    print("we're not going to let just anyone twiddle with the game!")
-    abort(400)
-    
-  if req_action == 'placetile':
-    if not 'tile' in request.json:
-      print("No tile specified")
-      abort(400)
-    req_tile=request.json['tile']
-
-    if req_game.playTile(pinfo['id'], alpha=req_tile):
-      DataIf.updateGame(req_game.id)
-      return jsonify({'success':True})
-
-  elif req_action == 'movehotel':
-    if not 'tile' in request.json or not 'hotel' in request.json:
-      print("No tile, or No hotel specified")
-      abort(400)
-       
-    req_tile=request.json['tile']
-    req_hotel=request.json['hotel']
      
-    # some json/python serialization fun, 
-    # "" will be equivalent to removing from the board
-    if req_tile == "":
-      req_tile=None
-
-    if req_game.moveHotel(pinfo['id'], req_hotel, req_tile):
-      DataIf.updateGame(req_game.id)
-      return jsonify({'success':True})
-       
   abort(400)
+   
+# PATCH /games/<id>/hotels place a hotel on/off the board
+@tilebagrest_blueprint.route('/<int:gameid>/board', methods=['PATCH'])
+def rest_tilebag_placehotel(gameid):
+  # Find the game they want to run
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    # Make sure the caller is someone playing this game!
+    pinfo=getCallingPlayerInfo(req_game)
+    if pinfo is not None:
+      if 'tile' in request.json and 'hotel' in request.json:
+        req_hotel=request.json['hotel']
+        req_tile=request.json['tile']
+        # some json/python serialization fun, 
+        # "" will be equivalent to removing from the board
+        if req_tile == "":
+          req_tile=None
+
+        if req_game.moveHotel(pinfo['id'], req_hotel, req_tile):
+          DataIf.updateGame(req_game.id)
+          return jsonify({'success':True})
+        else:
+          print("Game Engine refused the hotel move")
+      else:
+        print("No tile, or No hotel specified")
+      abort(400)
+    else:
+      print("we're not going to let just anyone twiddle with the game!")
+      abort(500)
+  else:
+    print("some dummy just tried to twiddle with a non existent game")
+  abort(404)
+
+# PATCH /games/<id>/stocks get or return stocks
+@tilebagrest_blueprint.route('/<int:gameid>/stocks', methods=['PATCH'])
+def rest_tilebag_stocks(gameid):
+  abort(404)
