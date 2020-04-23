@@ -91,6 +91,10 @@
       tiles=data['game']['you']['playerdata']['tiles'];
       setTiles(tileRack, tiles, dropzone);
       showOptions(tiles);
+
+      // Place the hotel tokens on the board
+      hotels=data['game']['hotels'];
+      showHotels(hotels);
        
       return tiles
   }

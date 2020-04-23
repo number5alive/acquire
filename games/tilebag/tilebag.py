@@ -44,15 +44,19 @@ class TileBagPlayer(Player):
     return {'tiles': [t.serialize() for t in self._tiles]}
 
 class TileBagGame(Game):
+  # Fixed Data about the Game
+  _HOTELS=["Worldwide", "Saxxon", "Festival", "Imperial", "American", "Continental", "Tower"]
   _name='TileBag'
   _minPlayers=3
   _maxPlayers=5
   _playerClass=TileBagPlayer
   _starturl='/tilebag/v1'
    
+  # Instance Specific Variables
   _currPlayer=None
   board=[]
   tilebag=None;
+  hotels={name : None for name in _HOTELS}
    
   def __init__(self, id):
     super().__init__(id)
@@ -97,6 +101,18 @@ class TileBagGame(Game):
     for player in self._players:
       for i in range(0,7):
         player.receiveTile(self.tilebag.takeTile())
+
+  # set alpha to None to remove it from the board
+  # set it to a tile position to place it on the board
+  # TODO: Validate that alpha is a position on the board
+  def moveHotel(self, playerId, hotel, alpha):
+    if self._started:
+      # NOTE: For now we're letting anyone move the hotels
+      #if self._currPlayer.getId() == playerId:
+      if hotel in TileBagGame._HOTELS:
+        self.hotels[hotel]=alpha
+        return True
+    return False
 
   def playTile(self, playerId, tile=None, alpha=None):
     if tile is None and alpha is not None:
@@ -147,21 +163,27 @@ class TileBagGame(Game):
     self.tilebag=TileBag(rows, cols, initialTiles=gd['bag'])
    
   # Saves the game to json format (using the JSONEncoder from elsewhere)
+  # Why is this different than getPublicInformation? Because I'm super lazy!
+  # TODO: find a cute way to merge these
   def saveGameData(self):
     if self._started:
       return { 
         'currPlayer': self._currPlayer.getId(),
         'board': self.board.serialize(),
         'bag': self.tilebag.serialize(),
+        'hotels': [{'name':key, 'tile':self.hotels[key]} for key in self.hotels.keys()]
       }
     else:
       return {}
      
+  # Get the information you'd see if you were looking at this game on a table
   def getPublicInformation(self):
+    import json
     return {
       'currPlayer': self._currPlayer.serialize(False),
       'board': self.board.serialize(),
       'players' : [x.serialize(False) for x in self._players],
+      'hotels': [{'name':key, 'tile':self.hotels[key]} for key in self.hotels.keys()]
     }
 
 SAVEDGAME="game.json"

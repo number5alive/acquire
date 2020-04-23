@@ -46,7 +46,7 @@ def rest_tilebag_get_game_info(gameid):
 # PATCH /games/id used to take an action in the game
 @tilebagrest_blueprint.route('/<int:gameid>', methods=['PATCH'])
 def rest_tilebag_take_game_action(gameid):
-  actions=['placetile', 'buystock']
+  actions=['placetile', 'buystock', 'movehotel']
    
   # make sure they've specified an action to take
   if not request.json or not 'action' in request.json or not request.json['action'] in actions:
@@ -60,19 +60,37 @@ def rest_tilebag_take_game_action(gameid):
     print("some dummy just tried to twiddle with a non existent game")
     abort(400)
 
-  # Make sure the callers is someone playing this game!
+  # Make sure the caller is someone playing this game!
   pinfo=getCallingPlayerInfo(req_game)
   if pinfo is None:
     print("we're not going to let just anyone twiddle with the game!")
     abort(400)
     
   if req_action == 'placetile':
-    req_tile=request.json['tile']
-    if req_tile is None:
+    if not 'tile' in request.json:
       print("No tile specified")
       abort(400)
+    req_tile=request.json['tile']
 
     if req_game.playTile(pinfo['id'], alpha=req_tile):
       DataIf.updateGame(req_game.id)
       return jsonify({'success':True})
+
+  elif req_action == 'movehotel':
+    if not 'tile' in request.json or not 'hotel' in request.json:
+      print("No tile, or No hotel specified")
+      abort(400)
+       
+    req_tile=request.json['tile']
+    req_hotel=request.json['hotel']
+     
+    # some json/python serialization fun, 
+    # "" will be equivalent to removing from the board
+    if req_tile == "":
+      req_tile=None
+
+    if req_game.moveHotel(pinfo['id'], req_hotel, req_tile):
+      DataIf.updateGame(req_game.id)
+      return jsonify({'success':True})
+       
   abort(400)

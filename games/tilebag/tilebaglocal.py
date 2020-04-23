@@ -36,8 +36,20 @@ if __name__ == "__main__":
     tbg.playTile(tbg.currPlayer.getId(), tile)
    
   printBoard(currBoard)
+
+  # stress the serialization functions
+  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
+  print(">>> saveGameData: {}".format(tbg.saveGameData()))
+  print(">>> serialize: {}".format(tbg.serialize(True)))
+
+  print("---- Testing the hotel movement functionality ----")
+  print("Adding hotel: {}".format(tbg.moveHotel(1,"American","A1")))
+  print("Adding hotel: {}".format(tbg.moveHotel(1,"Tower","B2")))
+  print("Invalid hotel: {}".format(not tbg.moveHotel(1,"Arbuckle","B7")))
+  print("Removing hotel: {}".format(tbg.moveHotel(1,"American",None)))
+  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
    
-  print(tbg.serialize(True))
+  # Save the game to a file
   import json
   import base
   with open(SAVEDGAME, 'w') as f:
