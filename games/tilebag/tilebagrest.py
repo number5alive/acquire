@@ -69,7 +69,7 @@ def rest_tilebag_placetile(gameid):
   abort(400)
    
 # PATCH /games/<id>/hotels place a hotel on/off the board
-@tilebagrest_blueprint.route('/<int:gameid>/board', methods=['PATCH'])
+@tilebagrest_blueprint.route('/<int:gameid>/hotels', methods=['PATCH'])
 def rest_tilebag_placehotel(gameid):
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
@@ -103,4 +103,29 @@ def rest_tilebag_placehotel(gameid):
 # PATCH /games/<id>/stocks get or return stocks
 @tilebagrest_blueprint.route('/<int:gameid>/stocks', methods=['PATCH'])
 def rest_tilebag_stocks(gameid):
+  # Find the game they want to run
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    # Make sure the caller is someone playing this game!
+    pinfo=getCallingPlayerInfo(req_game)
+    if pinfo is not None:
+      # make sure we have the name of a stock and the amount
+      if 'hotel' in request.json and 'amount' in request.json:
+        # all good, make the appropriate call to the game engine
+        req_hotel=request.json['hotel']
+        req_amount=request.json['amount']
+        if req_game.stockAction(pinfo['id'], req_hotel, req_amount):
+          DataIf.updateGame(req_game.id)
+          return jsonify({'success':True})
+        else:
+          print("Game engine refused the request")
+          abort(401)
+      else:
+        print("no 'hotel' and/or no 'amount' in {} stock action".format(request.json['action']))
+      abort(400)
+    else:
+      print("we're not going to let just anyone twiddle with the game!")
+      abort(500)
+  else:
+    print("some dummy just tried to twiddle with a non existent game")
   abort(404)

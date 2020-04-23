@@ -2,18 +2,19 @@ from base import Game
 from base import Player
 from games.tiles import Tile, TileBag
 from games.acquire.board import Board
+from games.acquire.hotels import Hotel, Stock
 from itertools import cycle, islice
 from random import shuffle
 
 class TileBagPlayer(Player):
   _tiles=[]
+  _stocks=[]
 
-  def __init__(self, id, name=None):
+  def __init__(self, id, name=None, money=6000):
     super().__init__(id, name=name)
     self._tiles = []
-
-  def receiveTile(self, tile):
-    self._tiles.append(tile)
+    self._stocks = []
+    self._money = money
 
   # this only exists to help program the tests
   # We'll need a way for the user to specify which tile they're playing
@@ -25,8 +26,17 @@ class TileBagPlayer(Player):
     else:
       return None
 
+  def receiveTile(self, tile):
+    self._tiles.append(tile)
+
   def removeTile(self, tile):
     self._tiles.remove(tile)
+
+  def receiveStock(self, stock):
+    self._stock.append(stock)
+
+  def removeStock(self, sname):
+    pass
 
   @property
   def tiles(self):
@@ -56,7 +66,7 @@ class TileBagGame(Game):
   _currPlayer=None
   board=[]
   tilebag=None;
-  hotels={name : None for name in _HOTELS}
+  hotels=[Hotel(name) for name in _HOTELS]
    
   def __init__(self, id):
     super().__init__(id)
@@ -102,6 +112,32 @@ class TileBagGame(Game):
       for i in range(0,7):
         player.receiveTile(self.tilebag.takeTile())
 
+  # return or take stocks from the pile
+  def stockAction(self, playerId, hotel, amount):
+    print("takeStock")
+    if type(amount) is int:
+      for h in self.hotels:
+        if h.name == hotel:
+          if amount < 0:
+            return self._takeStocks(playerId, h, -amount)
+          elif amount > 0:
+            return self._returnStocks(playerId, h, amount)
+          break
+    return False
+
+  def _takeStocks(self, playerId, h, amount):
+    print("takeStocks {}".format(amount))
+    if h.stocksRemaining() >= amount:
+      for i in range(0,amount):
+        s=h.takeStock()
+        #TODO give this to the player
+      return True
+    return False
+       
+  def _returnStocks(self, playerId, h, amount):
+    print("returnStocks")
+    return True
+             
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
   # TODO: Validate that alpha is a position on the board
@@ -109,9 +145,10 @@ class TileBagGame(Game):
     if self._started:
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
-      if hotel in TileBagGame._HOTELS:
-        self.hotels[hotel]=alpha
-        return True
+      for h in self.hotels:
+        if h.name == hotel:
+          h.setPosition(alpha)
+          return True
     return False
 
   def playTile(self, playerId, tile=None, alpha=None):
@@ -171,19 +208,18 @@ class TileBagGame(Game):
         'currPlayer': self._currPlayer.getId(),
         'board': self.board.serialize(),
         'bag': self.tilebag.serialize(),
-        'hotels': [{'name':key, 'tile':self.hotels[key]} for key in self.hotels.keys()]
+        'hotels': [h.serialize() for h in self.hotels]
       }
     else:
       return {}
      
   # Get the information you'd see if you were looking at this game on a table
   def getPublicInformation(self):
-    import json
     return {
       'currPlayer': self._currPlayer.serialize(False),
       'board': self.board.serialize(),
       'players' : [x.serialize(False) for x in self._players],
-      'hotels': [{'name':key, 'tile':self.hotels[key]} for key in self.hotels.keys()]
+      'hotels': [h.serialize() for h in self.hotels]
     }
 
 SAVEDGAME="game.json"

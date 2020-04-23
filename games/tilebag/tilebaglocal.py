@@ -48,6 +48,14 @@ if __name__ == "__main__":
   print("Invalid hotel: {}".format(not tbg.moveHotel(1,"Arbuckle","B7")))
   print("Removing hotel: {}".format(tbg.moveHotel(1,"American",None)))
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
+
+  print("---- Testing the stock mechanics -----")
+  print("Taking stock: {}".format(tbg.stockAction(1,"American",-3)))
+  print("Taking stock: {}".format(tbg.stockAction(1,"Tower",-1)))
+  print("Invalid stock: {}".format(not tbg.stockAction(1,"Arbuckle",1)))
+  print("Invalid amount: {}".format(not tbg.stockAction(1,"American","a")))
+  print("Returning stock: {}".format(tbg.stockAction(1,"American",2)))
+  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
    
   # Save the game to a file
   import json
