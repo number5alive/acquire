@@ -32,11 +32,25 @@ class TileBagPlayer(Player):
   def removeTile(self, tile):
     self._tiles.remove(tile)
 
-  def receiveStock(self, stock):
-    self._stock.append(stock)
+  def numStocks(self, hname=None):
+    if hname is None:
+      return len(self._stocks)
+    else:
+      count=0
+      for s in self._stocks:
+        if s.name == hname:
+          count+=1
+      return count
 
-  def removeStock(self, sname):
-    pass
+  def receiveStock(self, stock):
+    self._stocks.append(stock)
+
+  def returnStock(self, sname):
+    for s in self._stocks:
+      if s.name == sname:
+        self._stocks.remove(s)
+        return s
+    return None
 
   @property
   def tiles(self):
@@ -51,7 +65,13 @@ class TileBagPlayer(Player):
       self._tiles.append(t)
      
   def savePlayerData(self):
-    return {'tiles': [t.serialize() for t in self._tiles]}
+    # recover unique names in our list of stocks
+    snames={s.name for s in self._stocks}
+    return {
+      'tiles': [t.serialize() for t in self._tiles],
+      'money': self._money,
+      'stocks': { s : sum(x.name == s for x in self._stocks) for s in snames},
+      }
 
 class TileBagGame(Game):
   # Fixed Data about the Game
@@ -78,10 +98,16 @@ class TileBagGame(Game):
   def currPlayer(self):
     return self._currPlayer
 
-  def getPlayerInfo(self, playerid):
+  def _getPlayer(self, playerid):
     for player in self._players:
       if player.getId() == playerid:
-        return player.serialize(True)
+        return player
+    return None
+
+  def getPlayerInfo(self, playerid):
+    player=self._getPlayer(playerid)
+    if player:
+      return player.serialize(True)
     return None
 
   def run(self):
@@ -115,28 +141,34 @@ class TileBagGame(Game):
   # return or take stocks from the pile
   def stockAction(self, playerId, hotel, amount):
     print("takeStock")
-    if type(amount) is int:
-      for h in self.hotels:
-        if h.name == hotel:
-          if amount < 0:
-            return self._takeStocks(playerId, h, -amount)
-          elif amount > 0:
-            return self._returnStocks(playerId, h, amount)
-          break
+    if self._started:
+      player=self._getPlayer(playerId)
+      if player and type(amount) is int:
+        for h in self.hotels:
+          if h.name == hotel:
+            if amount < 0:
+              return self._takeStocks(player, h, -amount)
+            elif amount > 0:
+              return self._returnStocks(player, h, amount)
+            break
     return False
 
-  def _takeStocks(self, playerId, h, amount):
+  def _takeStocks(self, player, h, amount):
     print("takeStocks {}".format(amount))
     if h.stocksRemaining() >= amount:
       for i in range(0,amount):
         s=h.takeStock()
-        #TODO give this to the player
+        player.receiveStock(s)
       return True
     return False
        
-  def _returnStocks(self, playerId, h, amount):
+  def _returnStocks(self, player, h, amount):
     print("returnStocks")
-    return True
+    if player.numStocks(hname=h.name) >= amount:
+      for i in range(0,amount):
+        s=player.returnStock(h.name)
+        return h.returnStock(s)
+    return False
              
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board

@@ -1,4 +1,4 @@
-from games.tilebag.tilebag import TileBagGame, SAVEDGAME
+from games.tilebag.tilebag import TileBagGame, TileBagPlayer, SAVEDGAME
 
 if __name__ == "__main__":
   # helper function to show the board state in the console
@@ -20,6 +20,8 @@ if __name__ == "__main__":
 
   # Initialize a new game, with three players, and start it
   tbg=TileBagGame(1)
+  p=TileBagPlayer(100, "Stan", money=7000)
+  tbg.addPlayer(p)
   tbg.addPlayer(tbg.newPlayer(1))
   tbg.addPlayer(tbg.newPlayer(2))
   tbg.addPlayer(tbg.newPlayer(3))
@@ -50,12 +52,18 @@ if __name__ == "__main__":
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
 
   print("---- Testing the stock mechanics -----")
-  print("Taking stock: {}".format(tbg.stockAction(1,"American",-3)))
-  print("Taking stock: {}".format(tbg.stockAction(1,"Tower",-1)))
-  print("Invalid stock: {}".format(not tbg.stockAction(1,"Arbuckle",1)))
-  print("Invalid amount: {}".format(not tbg.stockAction(1,"American","a")))
-  print("Returning stock: {}".format(tbg.stockAction(1,"American",2)))
+  print("Taking stock: {}".format(tbg.stockAction(100,"American",-3)))
+  print("Taking stock: {}".format(tbg.stockAction(100,"Tower",-1)))
+  print("Taking stock: {}".format(tbg.stockAction(100,"Continental",-5)))
+  print("Invalid stock: {}".format(not tbg.stockAction(100,"Arbuckle",1)))
+  print("Invalid amount: {}".format(not tbg.stockAction(100,"American","a")))
+  print("Returning stock: {}".format(tbg.stockAction(100,"American",2)))
+  print("Returning invalid amount: {}".format(not tbg.stockAction(100,"Saxxon",2)))
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
+
+  print("---- Testing TileBagPlayer functionality ----")
+  print("savePlayerData: {}".format(p.savePlayerData()))
+  print(">>> serialize: {}".format(tbg.serialize(True)))
    
   # Save the game to a file
   import json
