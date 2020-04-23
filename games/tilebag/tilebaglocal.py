@@ -45,9 +45,10 @@ if __name__ == "__main__":
   print(">>> serialize: {}".format(tbg.serialize(True)))
 
   print("---- Testing the hotel movement functionality ----")
-  print("Adding hotel: {}".format(tbg.moveHotel(1,"American","A1")))
-  print("Adding hotel: {}".format(tbg.moveHotel(1,"Tower","B2")))
-  print("Invalid hotel: {}".format(not tbg.moveHotel(1,"Arbuckle","B7")))
+  print("Adding hotel: {}".format(tbg.moveHotel(1,"American","1A")))
+  print("Adding hotel: {}".format(tbg.moveHotel(1,"Tower","2B")))
+  print("Invalid hotel position: {}".format(not tbg.moveHotel(1,"Tower","B2")))
+  print("Invalid hotel: {}".format(not tbg.moveHotel(1,"Arbuckle","7B")))
   print("Removing hotel: {}".format(tbg.moveHotel(1,"American",None)))
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
 
@@ -61,6 +62,14 @@ if __name__ == "__main__":
   print("Returning invalid amount: {}".format(not tbg.stockAction(100,"Saxxon",2)))
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
 
+  print("---- Testing TileBagPlayer money functionality ----")
+  print("valid + Money: {}".format(tbg.moneyAction(100, 100)))
+  print("valid - Money: {}".format(tbg.moneyAction(100, -200)))
+  print("invalid Money: {}".format(not tbg.moneyAction(100, "$10" )))
+  print("too much - Money: {}".format(not tbg.moneyAction(100, -100000 )))
+
+  print("savePlayerData: {}".format(p.savePlayerData()))
+   
   print("---- Testing TileBagPlayer functionality ----")
   print("savePlayerData: {}".format(p.savePlayerData()))
   print(">>> serialize: {}".format(tbg.serialize(True)))

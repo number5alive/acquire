@@ -14,7 +14,7 @@ class TileBagPlayer(Player):
     super().__init__(id, name=name)
     self._tiles = []
     self._stocks = []
-    self._money = money
+    self.money = money
 
   # this only exists to help program the tests
   # We'll need a way for the user to specify which tile they're playing
@@ -69,7 +69,7 @@ class TileBagPlayer(Player):
     snames={s.name for s in self._stocks}
     return {
       'tiles': [t.serialize() for t in self._tiles],
-      'money': self._money,
+      'money': self.money,
       'stocks': { s : sum(x.name == s for x in self._stocks) for s in snames},
       }
 
@@ -138,9 +138,20 @@ class TileBagGame(Game):
       for i in range(0,7):
         player.receiveTile(self.tilebag.takeTile())
 
+  def moneyAction(self, playerId, amount):
+    if self._started:
+      player=self._getPlayer(playerId)
+      if player and type(amount) is int:
+        if amount > 0 or player.money >= -amount:
+          player.money += amount
+          return True
+        else:
+          print("moneyAction: Subtracting more than the player has")
+
+    return False
+
   # return or take stocks from the pile
   def stockAction(self, playerId, hotel, amount):
-    print("takeStock")
     if self._started:
       player=self._getPlayer(playerId)
       if player and type(amount) is int:
@@ -154,7 +165,6 @@ class TileBagGame(Game):
     return False
 
   def _takeStocks(self, player, h, amount):
-    print("takeStocks {}".format(amount))
     if h.stocksRemaining() >= amount:
       for i in range(0,amount):
         s=h.takeStock()
@@ -163,7 +173,6 @@ class TileBagGame(Game):
     return False
        
   def _returnStocks(self, player, h, amount):
-    print("returnStocks {}".format(amount))
     if player.numStocks(hname=h.name) >= amount:
       for i in range(0,amount):
         s=player.returnStock(h.name)
@@ -180,11 +189,12 @@ class TileBagGame(Game):
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
 
-      if self._board.alphaIsValid(alpha):
+      if alpha is None or self.board.alphaIsValid(alpha):
         for h in self.hotels:
           if h.name == hotel:
             h.setPosition(alpha)
             return True
+        print("Invalid Hotel")
       else:
         print("Invalid Hotel Alpha / or Move")
     return False

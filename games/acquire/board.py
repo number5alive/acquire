@@ -59,15 +59,9 @@ class Board:
 if __name__ == "__main__":
   board = Board(8,5)
    
-  print("---- Testing getBoardSize ----")
-  print(board.getBoardSize())
-
-  print("---- Testing checkTile(2,2) ----")
-  print(board.checkTile(2,2))
-
-  print("---- Testing alphaIsValid ----")
-  print("isValid: {}".format(board.alphaIsValid("1A")))
-  print("isValid: {}".format(not board.alphaIsValid("A1")))
+  print("---- Testing board helper functions ----")
+  print("getsize: {}".format(board.getBoardSize()))
+  print("checkTile(2,2): {}".format(not board.checkTile(2,2)))
 
   print("---- Testing Placing a tile ----")
   t=Tile(2,2)
@@ -75,6 +69,11 @@ if __name__ == "__main__":
   board.placeTile(t)
   print(board)
   print("Occupied: {}".format(board.getOccupied()))
+
+  print("---- Testing alphaIsValid ----")
+  print("isValid: {}".format(board.alphaIsValid("1A")))
+  print("isInvalid: {}".format(not board.alphaIsValid("A1")))
+  print("isInvalid: {}".format(not board.alphaIsValid("9I")))
 
   print("---- Testing a Board with Tiles already placed")
   board = Board(8,5,tiles=[Tile(3,3), Tile(1,1), Tile(2,2)])
