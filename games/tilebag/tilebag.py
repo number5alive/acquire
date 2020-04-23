@@ -163,11 +163,13 @@ class TileBagGame(Game):
     return False
        
   def _returnStocks(self, player, h, amount):
-    print("returnStocks")
+    print("returnStocks {}".format(amount))
     if player.numStocks(hname=h.name) >= amount:
       for i in range(0,amount):
         s=player.returnStock(h.name)
-        return h.returnStock(s)
+        if not h.returnStock(s):
+          return False
+      return True
     return False
              
   # set alpha to None to remove it from the board
@@ -177,10 +179,14 @@ class TileBagGame(Game):
     if self._started:
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
-      for h in self.hotels:
-        if h.name == hotel:
-          h.setPosition(alpha)
-          return True
+
+      if self._board.alphaIsValid(alpha):
+        for h in self.hotels:
+          if h.name == hotel:
+            h.setPosition(alpha)
+            return True
+      else:
+        print("Invalid Hotel Alpha / or Move")
     return False
 
   def playTile(self, playerId, tile=None, alpha=None):

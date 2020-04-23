@@ -40,9 +40,18 @@
 
   <p>Click-and-drag the tile you want to Play to the Play area</p>
 
-  <div id="gamestate"></div>
+  <div id="gamestate">
+    CurrPlayer: <span id="currplayer"></span>
+  </div>
    
-  <div id="tileRack"></div>
+  <div id="playerinfo">
+    <div id=info>
+      Cash: <span id=money></span>
+      Stocks: <span id=stocks></span>
+    </div>
+    <div id="tileRack"></div>
+  </div>
+   
    
   <div id="dropzone">
     <p>Drop Here to Play</p>
@@ -82,19 +91,32 @@
       console.log(data);
 
       // Display the game state
-      document.getElementById("gamestate").innerText=data['game']['currPlayer']['id']
+      document.getElementById("currplayer").innerText=data['game']['currPlayer']['id']
 
-      // Draw the board
+      // BOARD: Draw the board
       drawBoard(document.getElementById("acquireBoard"),data['game']['board']); // from board.js - draws an empty board
-       
-      // TODO: handle error case where player specific data isn't returned
-      tiles=data['game']['you']['playerdata']['tiles'];
-      setTiles(tileRack, tiles, dropzone);
-      showOptions(tiles);
 
-      // Place the hotel tokens on the board
+      // HOTELS: Place the hotel tokens on the board
       hotels=data['game']['hotels'];
       showHotels(hotels);
+       
+      // see if we have a player or a spectator
+      if( !data['game']['you'] )
+      {
+        // TODO: some fancy spectator display
+      }
+      else
+      {
+        pinfo=data['game']['you']['playerdata'];
+        // PLAYER MONEY and STOCKS
+        document.getElementById("money").innerText=pinfo['money'];
+        document.getElementById("stocks").innerText=JSON.stringify(pinfo['stocks']);
+
+        // PLAYER TILE RACK
+        tiles=data['game']['you']['playerdata']['tiles'];
+        setTiles(tileRack, tiles, dropzone);
+        showOptions(tiles);
+      }
        
       return tiles
   }

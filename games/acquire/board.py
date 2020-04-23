@@ -34,6 +34,12 @@ class Board:
     row, col = tile.getTilePos()
     self.tiles[row][col] = True
 
+  def alphaIsValid(self, alpha):
+    row, col = Tile.fromAlpha(alpha)
+    if row < 0 or row >= self.rows or col < 0 or col > self.cols:
+      return False
+    return True
+
   def checkTile(self, row, col):
     return self.tiles[row][col]
 
@@ -53,13 +59,17 @@ class Board:
 if __name__ == "__main__":
   board = Board(8,5)
    
-  print("---- Testing getBoardSize")
+  print("---- Testing getBoardSize ----")
   print(board.getBoardSize())
 
-  print("---- Testing checkTile(2,2)")
+  print("---- Testing checkTile(2,2) ----")
   print(board.checkTile(2,2))
 
-  print("---- Testing Placing a tile")
+  print("---- Testing alphaIsValid ----")
+  print("isValid: {}".format(board.alphaIsValid("1A")))
+  print("isValid: {}".format(not board.alphaIsValid("A1")))
+
+  print("---- Testing Placing a tile ----")
   t=Tile(2,2)
   print("placed Tile" + str(t))
   board.placeTile(t)

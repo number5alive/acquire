@@ -17,6 +17,13 @@ class Tile:
   def fromAlpha(alpha):
     # somewhat annoyingly I've decided the alpha is col then row, so revered here
     # AND the arrays start at Zero, but we show starting from One for ppl
+     
+    # Validate the alpha fits the pattern
+    colpart=alpha[0:-1]
+    rowpart=alpha[-1]
+    if not colpart.isnumeric() or not rowpart.isupper():
+      return -1, -1
+       
     col = int(alpha[0:-1])-1             # all except the last charater
     row = (ord(alpha[-1]) - ord('A'))    # last character, rebased
     return row, col

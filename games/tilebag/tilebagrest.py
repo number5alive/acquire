@@ -30,6 +30,7 @@ def rest_tilebag_hello():
 # GET /games/id Get details about a specific game
 @tilebagrest_blueprint.route('/<int:gameid>', methods=['GET'])
 def rest_tilebag_get_game_info(gameid):
+  print("Picking up Changes?")
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
     ret={'game' : req_game.getPublicInformation()}
@@ -46,6 +47,7 @@ def rest_tilebag_get_game_info(gameid):
 # PATCH /games/<id>/board place a tile in the game
 @tilebagrest_blueprint.route('/<int:gameid>/board', methods=['PATCH'])
 def rest_tilebag_placetile(gameid):
+  print("tilebagrest: Update Board")
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -91,7 +93,7 @@ def rest_tilebag_placehotel(gameid):
         else:
           print("Game Engine refused the hotel move")
       else:
-        print("No tile, or No hotel specified")
+        print("No tile, or No hotel in hotel action")
       abort(400)
     else:
       print("we're not going to let just anyone twiddle with the game!")
@@ -121,7 +123,7 @@ def rest_tilebag_stocks(gameid):
           print("Game engine refused the request")
           abort(401)
       else:
-        print("no 'hotel' and/or no 'amount' in {} stock action".format(request.json['action']))
+        print("no 'hotel' and/or no 'amount' in stock request")
       abort(400)
     else:
       print("we're not going to let just anyone twiddle with the game!")
