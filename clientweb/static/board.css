@@ -1,3 +1,27 @@
+@font-face{
+  font-family: eagleAcquire;
+  src: url(eaglebook.otf);
+}
+ 
+.page{
+  font-family: eagleAcquire;
+  background-color: black;
+  color: grey;
+}
+ 
+#dropzone {
+  bottom: 10px;
+  z-index: -5;
+  font-size: x-large;
+  line-height: 5px;
+  height: 30%;
+  width: 100%;
+  background-color: LightCyan;
+  text-align: center;
+  border: 1px solid #d3d3d3;
+  border-radius: 15px;
+}
+ 
 #acquireBoard{
     display: inline-block;
     border: 2px outset lightGray;
@@ -8,23 +32,53 @@
     line-height: 32px;
 }
 
+    /*
 #acquireBoard span{
     display: inline-block;
     width: 32px;
     height: 32px;
     vertical-align: middle;
     text-align: center;
-    font-size: small;
+    font-family: eagleAcquire;
+    font-size: medium;
     background-size: contain;
+    background-color: black;
+    border: 1px solid rgb(160,160,255);
+}
+    */
+
+.acquireCell {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    text-align: center;
+    font-family: eagleAcquire;
+    font-size: medium;
+    background-size: contain;
+    background-color: black;
+    border: 1px solid rgb(160,160,255);
+    color: white;
+      /*
+    */
+}
+ 
+.occupied {
+  background-color: grey;
+  color: black;
+  background-image: url("tile.png");
 }
 
-
-#acquireBoard div:nth-child(odd) span:nth-child(even),
-#acquireBoard div:nth-child(even) span:nth-child(odd){
-    background-color: grey;
+.highlighted {
+  border-color: darkblue;
+  color: white;
+  opacity: 0.9;
 }
-#acquireBoard div:nth-child(even) span:nth-child(even),
-#acquireBoard div:nth-child(odd) span:nth-child(odd){
-    background-color: snow;
+
+ctext {
+}
+
+rtext {
+  font-size: 70%;
 }
 

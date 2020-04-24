@@ -1,25 +1,33 @@
-var colNames="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-var defaultBoard={'ncols':10, 'nrows':8, 'occupied': ["A1", "B2", "C3"]};
+var rowNames="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+var defaultBoard={'ncols':12, 'nrows':9, 'occupied': ["1A", "2B", "3C"]};
 
 function drawBoard(acquireBoard, boardinfo=defaultBoard){
-  var x=boardinfo['ncols']
-  var y=boardinfo['nrows']
+  var x=boardinfo['nrows']
+  var y=boardinfo['ncols']
 
   // flush an existing rendering of the board if it exists
   acquireBoard.innerHTML='';
    
   // Create the board grid
-  for (var j=0; j<x; j++){
+  for (var r=0; r<x; r++){
     var row = acquireBoard.appendChild(document.createElement("div"));
-    for (var i=0; i<y; i++){
-        var cellname=(j+1) + colNames.charAt(i);         
+    for (var c=0; c<y; c++){
+        var cellname=(c+1) + rowNames.charAt(r);         
          
         var cell=document.createElement("span");
-        cell.setAttribute('id', cellname);
-        cell.textContent = cellname;
+        cell.id=cellname;
+        cell.className='acquireCell';
          
         // Optional - let the user click around and set tiles
         // cell.onclick = function() {placeTile(this.id);};
+         
+        // Add the column/row text as individual elements so we can resize
+        var ctext=document.createElement("ctext");
+        ctext.textContent = cellname.slice(0,-1) // column NUMBER
+        cell.appendChild(ctext)
+        var rtext=document.createElement("rtext");
+        rtext.textContent = cellname.slice(-1) // row LETTER
+        cell.appendChild(rtext)
 
         row.appendChild(cell);
     }
@@ -38,7 +46,7 @@ function showOptions(tiles) {
     var cell=document.getElementById(tiles[i]);
     if( cell != null)
     {
-      cell.style.backgroundColor="#FFFFCC";
+      cell.className+=" highlighted";
     }
   }
 }
@@ -62,8 +70,12 @@ function placeTile(cellname) {
   var cell=document.getElementById(cellname);
   if( cell != null)
   {
-    cell.style.backgroundColor="black";
+  /*
+    cell.style.backgroundColor="grey";
     cell.style.color="white";
     cell.style.backgroundImage="url('static/tile.png')"
+  */
+    cell.className=cell.className.replace(" highlighted", "");
+    cell.className+=" occupied";
   }
 }

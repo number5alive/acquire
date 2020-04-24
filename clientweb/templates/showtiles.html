@@ -2,7 +2,6 @@
 <html>
 <head>
   <!-- Include the Styles we'll want to use --> 
-  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
   <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
    
@@ -13,30 +12,13 @@
    <!-- And our WebSocket helper -->
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
    
-  <!-- A bit of page-specific style -->
-  <style>
-    body {
-        font-family: 'Roboto';font-size: 22px;
-    }
-
-    #dropzone {
-      bottom: 10px;
-      z-index: -5;
-      font-size: x-large;
-      line-height: 5px;
-      height: 30%;
-      width: 100%;
-      background-color: LightCyan;
-      text-align: center;
-      border: 1px solid #d3d3d3;
-      border-radius: 15px;
-    }
-  </style>
 </head>
  
 <!-- Ahh, the meat of our page -->
 <body>
  
+<div class="page">
+<!-- (disabled for testing)
 <script type="text/javascript" charset="utf-8">
     // TODO: get URL from python
     var socket = io.connect('http://localhost:5000');
@@ -52,6 +34,7 @@
     });
      
 </script>
+-->
  
   <h1>Your Tiles</h1>
 
@@ -65,7 +48,10 @@
     <p>Drop Here to Play</p>
      
     <!-- Add the board, and populate it -->
-    <div id="acquireBoard"></div>
+    <div class="row">
+      <div class="aquireBoard" id="acquireBoard"></div>
+    </div>
+     
   </div>
    
   <script>
@@ -94,5 +80,6 @@
     tile.parentNode.removeChild(tile);
   }
   </script>
+</div>
 </body>
 </html>
