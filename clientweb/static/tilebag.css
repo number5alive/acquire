@@ -63,6 +63,36 @@ body {
   background-color: #f1f1f1;
   padding-left: 10px;
 }
+ 
+/* Basically a "row" */
+.tilerack {
+  border-radius: 5px;
+  background-color: #C79758;
+  margin-left: 15%; /* occupy no more than 70% of the container */
+  margin-right: 15%;
+  padding-left: 2%; /* adjust math for individual tile container */
+}
+
+/* Space for Individual tiles - Math presumes 7 tiles total */
+/* border: 1px solid red; */
+.tilespace{
+  float: left;
+  width: 12%;
+  min-height: 50px;
+  padding-top: 12%;
+  margin-left: 1%;
+  margin-right: 1%;
+  border-bottom: 3px solid black;
+  padding-bottom: 3px;
+}
+
+/* Clear floats after the columns */
+.tilerack:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 
 /* For the hotels part of the game board */
 .hotelslist {
