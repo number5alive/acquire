@@ -1,68 +1,86 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Include the Styles we'll want to use --> 
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
-  <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
    
   <!-- Include our javascript helpers -->
   <script src="{{ url_for('.static', filename='board.js') }}"></script>
-  <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
-   
-   <!-- And our WebSocket helper -->
-  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
-   
+<style>
+</style>
 </head>
- 
-<!-- Ahh, the meat of our page -->
 <body>
- 
-<div class="page">
-<!-- (disabled for testing)
-<script type="text/javascript" charset="utf-8">
-    // TODO: get URL from python
-    var socket = io.connect('http://localhost:5000');
-    socket.emit('join', {'room':'2'});     
-    socket.on('connect', function() {
-        //socket.emit('my event', {data: 'I\'m connected!'});
-        console.log("*** Connected ***")
-    });
 
-    socket.on('update', function(data) {
-      console.log(data);
-      document.getElementById("gamestate").innerText=data['message'];
-    });
-     
-</script>
--->
- 
-  <h1>Your Tiles</h1>
+<div class="header">
+  <h1>TileBag!</h1>
+  <p>Resize the browser window to see the effect.</p>
+</div>
 
-  <p>Click-and-drag the tile you want to Play to the Play area</p>
-   
-  <div id="gamestate"></div>
-   
-  <div id="tileRack"></div>
-   
-  <div id="dropzone">
-    <p>Drop Here to Play</p>
-     
-    <!-- Add the board, and populate it -->
-    <div class="row">
-      <div class="aquireBoard" id="acquireBoard"></div>
+<div class="topnav">
+  <a href="#">Link</a>
+  <a href="#">Link</a>
+  <a href="#">Link</a>
+  <a href="#" style="float:right">CURRENT PLAYER: <span id='currplayer'>Norm</span></a>
+</div>
+<div class="messages">MESSAGES</div>
+
+<div class="row">
+  <div class="infocolumn">
+    <div class="card">
+      <h2>PLAYER INFO</h2>
+      <p>Your Money</p>
+      <p>Your Stocks</p>
     </div>
-     
+    <div class="card">
+      <h3>STOCK MARKET</h3>
+      <div class="fakeimg"><p>STOCK Buttons</p></div>
+    </div>
+    <div class="card">
+      <h3>BANK</h3>
+      <div class="fakeimg"><p>MONEY Buttons</p></div>
+    </div>
   </div>
-   
+  <div class="maincolumn">
+    <div class="card">
+      <h2>TILES</h2>
+      <div class="fakeimg" style="height:100px;">TILERACK</div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <div class="hotelcolumn">
+          <h2>HOTELS</h2>
+          <div class="hotelslist">American</div>
+          <div class="hotelslist">Tower</div>
+          <div class="hotelslist">Continental</div>
+          <div class="hotelslist">Saxxon</div>
+          <div class="hotelslist">Worldwide</div>
+          <div class="hotelslist">Festival</div>
+          <div class="hotelslist">Imperial</div>
+          <div class="hotelslist">STOCK CHART - LINK</div>
+        </div>
+        <div class="boardcolumn">
+          <h2>BOARD</h2>
+          <div class="aquireBoard" style="height:300px;" id="acquireBoard"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <h2>Footer</h2>
+</div>
+
+ 
   <script>
-  var tileRack = document.getElementById("tileRack");
-  makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
+  //var tileRack = document.getElementById("tileRack");
+  //makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
    
-  dropzone.addEventListener('playtile', tileDropped);
+  //dropzone.addEventListener('playtile', tileDropped);
    
   drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
 
-  tiles=gettiles();
+  /*tiles=gettiles();
   async function gettiles()
   {
       const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
@@ -79,7 +97,11 @@
     placeTile(tile.innerText);
     tile.parentNode.removeChild(tile);
   }
+  */
   </script>
-</div>
+  
+   
+    
 </body>
 </html>
+
