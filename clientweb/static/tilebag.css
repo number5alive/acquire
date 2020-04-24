@@ -1,6 +1,11 @@
 * {
   box-sizing: border-box;
 }
+ 
+@font-face{
+  font-family: eagleAcquire;
+  src: url(eaglebook.otf);
+}
 
 body {
   font-family: Arial;
@@ -56,6 +61,10 @@ body {
   float: left;
   width: 75%;
 }
+ 
+.boardcolumn {
+  font-family: eagleAcquire;
+}
 
 .infocolumn, .hotelcolumn {
   float: left;
@@ -67,23 +76,66 @@ body {
 /* Basically a "row" */
 .tilerack {
   border-radius: 5px;
-  background-color: #C79758;
+  background-color: #A08050;
   margin-left: 15%; /* occupy no more than 70% of the container */
   margin-right: 15%;
   padding-left: 2%; /* adjust math for individual tile container */
+  font-family: eagleAcquire;
 }
 
 /* Space for Individual tiles - Math presumes 7 tiles total */
-/* border: 1px solid red; */
-.tilespace{
+/* 
+border: 1px solid red; 
+*/
+.rackspace{
+  /* Make tilespaces so they can contain tiles */
+  /*
+  border: 1px solid red; 
+  */
+  position: relative;
+  height: 0;
+  overflow: hidden;
+  padding-top: 12%;
+   
+  font-size: 2.8vw;
+   
+  /* Set up so 7 tiles display nicely */
   float: left;
   width: 12%;
   min-height: 50px;
-  padding-top: 12%;
+  margin-bottom:3px;
+  margin-top:3px;
   margin-left: 1%;
   margin-right: 1%;
   border-bottom: 3px solid black;
-  padding-bottom: 3px;
+}
+
+.tile {
+  /* Make the tile take up the whole container */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+     
+  /* Centre the text horizontally and vertically */
+  text-align: center;
+  padding-top: 20%;
+   
+  font-size: 1em; /* 1x the parent size */
+  
+  /* Stylize the Tile */
+  border: 1px solid green; 
+  border-radius: 3px;
+  background-color: grey;
+  background-image: url("tile.png");
+  background-size: contain;
+}
+ 
+.tile rtext {
+  font-size: 70%;
+}
+.tile ctext {
 }
 
 /* Clear floats after the columns */
@@ -92,7 +144,6 @@ body {
   display: table;
   clear: both;
 }
-
 
 /* For the hotels part of the game board */
 .hotelslist {

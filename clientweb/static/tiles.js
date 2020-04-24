@@ -28,7 +28,7 @@ function sizeTile(tile, rackpos) {
   tile.style.minWidth = tilesize + 'px';
 }
 
-function setTiles(rackelem, tiles, dropzone=null, flush=false){
+function setTiles(rack, tiles, dropzone=null, flush=false){
   // if we're getting rid of existing tiles, loop through and remove them
   if( flush ){
   }
@@ -38,44 +38,53 @@ function setTiles(rackelem, tiles, dropzone=null, flush=false){
     // make sure the tile isn't in the list before trying to add it
     if( null == document.getElementById('tile'+tiles[i]) )
     {
-      addTile(rackelem, tiles[i], dropzone);
+      addTile(rack, tiles[i], dropzone);
     }
   }
-   
 }
 
-// Add a single tile to the tile rack
-// it's text and id will be set to the value of the tile
-function addTile(rackelem, tilename, dropzone=null){
+function createTile(tilename, dropzone){
   // Create a tile div so we can append to the list
   var tile = document.createElement('div');
   tile.className = 'tile';
   tile.id = 'tile'+tilename;
-  tile.innerText = tilename;
 
+  // Add the column/row text as individual elements so we can resize
+  var ctext=document.createElement("ctext");
+  ctext.textContent = tilename.slice(0,-1); // column NUMBER
+  tile.appendChild(ctext);
+  var rtext=document.createElement("rtext");
+  rtext.textContent = tilename.slice(-1); // row LETTER
+  tile.appendChild(rtext);
+
+  return tile;
+}
+
+// Add a single tile to the tile rack
+// it's text and id will be set to the value of the tile
+function addTile(rackname, tilename, dropzone=null){
+  var tile = createTile(tilename);
+   
   // find an empty spot in the rack for which to place it
   var rackpos = null;
-  for (var i = 0; i < rackelem.childNodes.length; i++) {
-    if (rackelem.childNodes[i].childNodes.length == 0) {
-      rackpos = rackelem.childNodes[i];
+  var rackspots = document.getElementsByClassName(rackname);
+  for (var i = 0; i < rackspots.length; i++) {
+    if (rackspots[i].childNodes.length == 0) {
+      rackpos = rackspots[i];
       break;
     }
   }
    
   if(rackpos != null)
   {
-    sizeTile(tile, rackpos);
     rackpos.appendChild(tile);
   }
 
   // Save us a step later, if a drop-zone is identified then we definitely
   // want our tile to be dragable
   if(dropzone != null){
-    makeTileDragable(tile, dropzone);
+//    makeTileDragable(tile, dropzone);
   }
- 
-  // Add the new tile to the list of tiles
-  //rackelem.appendChild(tile);
 }
  
 function makeTilesDragable(rackelem, dropzone) {
