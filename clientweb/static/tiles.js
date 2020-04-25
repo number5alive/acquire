@@ -83,7 +83,7 @@ function addTile(rackname, tilename, dropzone=null){
   // Save us a step later, if a drop-zone is identified then we definitely
   // want our tile to be dragable
   if(dropzone != null){
-//    makeTileDragable(tile, dropzone);
+    makeTileDragable(tile, dropzone);
   }
 }
  
@@ -98,6 +98,8 @@ function makeTilesDragable(rackelem, dropzone) {
 }
 
 function makeTileDragable(elmnt, dropzone=null){
+  var origx = 0, origy = 0;
+  var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var crossingDropZone = false;
 
@@ -109,6 +111,9 @@ function makeTileDragable(elmnt, dropzone=null){
     // get the mouse cursor position at startup:
     pos3 = e.clientX;
     pos4 = e.clientY;
+    origx = elmnt.offsetLeft;
+    origy = elmnt.offsetTop;
+    origbg = elmnt.style.backgroundColor;
     document.onmouseup = closeDragElement;
     // call a function whenever the cursor moves:
     document.onmousemove = elementDrag;
@@ -149,7 +154,7 @@ function makeTileDragable(elmnt, dropzone=null){
       {
         // we WERE crossing, but now aren't
         crossingDropZone = false;
-        elmnt.style.backgroundColor = 'WhiteSmoke';
+        elmnt.style.backgroundColor = origbg;
       }
     }
   }
@@ -169,7 +174,13 @@ function makeTileDragable(elmnt, dropzone=null){
     document.onmousemove = null;
 
     if(dropzone != null && crossingDropZone ){
+      console.log("DROPZONE!");
       dropzone.dispatchEvent(new CustomEvent('playtile', {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
     }
+
+    // snap-back to the original position
+    elmnt.style.top = (origy) + "px";
+    elmnt.style.left = (origx) + "px";
+    elmnt.style.backgroundColor = origbg;
   }
 } 

@@ -83,6 +83,7 @@
 </div>
 
   <script>
+  // For TILERACK
   var tileRack = document.getElementById("tilerack");
   // Dynamically create the spots for the tiles
   // <div class="rackspace"></div>
@@ -91,11 +92,11 @@
     rs.className="rackspace";
     tileRack.append(rs);
   }
-  //makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
    
-  //dropzone.addEventListener('playtile', tileDropped);
-   
-  drawBoard(document.getElementById("acquireBoard")); // from board.js - draws an empty board
+  // For BOARD
+  var boardDiv=document.getElementById("acquireBoard")
+  drawBoard(boardDiv); // from board.js - draws an empty board
+  boardDiv.addEventListener('playtile', tileDropped);
 
   tiles=gettiles();
   async function gettiles()
@@ -111,7 +112,7 @@
 
   function tileDropped(e){
     tile=e.detail.tile;
-    //placeTile(tile.innerText);
+    placeTile(tile.innerText);
     tile.parentNode.removeChild(tile);
   }
   </script>
