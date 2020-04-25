@@ -28,16 +28,24 @@
 
 <div class="row">
   <div class="infocolumn">
-    <div class="card">
-      <h2>PLAYER INFO</h2>
-      <p>Your Stocks</p>
-    </div>
+    <h2>PLAYER INFO</h2>
     <div class="card">
       <h3>STOCK MARKET</h3>
-      <div class="fakeimg"><p>STOCK Buttons</p></div>
+      <div class="stockrack">
+        <!-- The following will dynamically be populated with
+        <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
+        -->
+        <div class="stockspace"></div>
+        <div class="stockspace"></div>
+        <div class="stockspace"></div>
+        <div class="stockspace"></div>
+        <div class="stockspace"></div>
+        <div class="stockspace"></div>
+        <div class="stockspace"></div>
+      </div>
     </div>
     <div class="card">
-      <h3>BANK - Your Money: {{ money }}</h3>
+      <h3>BANK $$$$$ {{ money }}</h3>
       <div class="moneycontainer">
         <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
         <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
@@ -71,13 +79,7 @@
       <div class="row">
         <div class="hotelcolumn">
           <h2>HOTELS</h2>
-          <div class="hotelslist">American</div>
-          <div class="hotelslist">Tower</div>
-          <div class="hotelslist">Continental</div>
-          <div class="hotelslist">Saxxon</div>
-          <div class="hotelslist">Worldwide</div>
-          <div class="hotelslist">Festival</div>
-          <div class="hotelslist">Imperial</div>
+          <div class="hotelslist" id="hlist"></div>
           <div class="hotelslist">STOCK CHART - LINK</div>
         </div>
         <div class="boardcolumn">
@@ -93,7 +95,6 @@
   <h2>Footer</h2>
 </div>
 
- 
   <script>
   var tileRack = document.getElementById("tilerack");
   //makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
@@ -121,7 +122,7 @@
   }
   </script>
   
-  <script>
+  <script> /* For MONEY */
   var moneyvalelmt=document.getElementById('moneyval');
   function mvalClick(inc) {
     var startVal=parseInt(moneyvalelmt.value);
@@ -137,6 +138,33 @@
   }
   </script>
     
+  <script> /* For HOTELS */
+  let hotels = [
+       {name: "Worldwide", short: "W", color: "#7b359c"},
+       {name: "Saxxon", short: "S", color: "#e01919"},
+       {name: "American", short: "A", color: "#4244db"},
+       {name: "Festival", short: "F", color: "#1d7a2b"},
+       {name: "Imperial", short: "I", color: "#b3b329"},
+       {name: "Continental", short: "C", color: "#ed3434"},
+       {name: "Tower", short: "T", color: "#615d5b"},
+   ];
+
+  const buildHotelName = function(hotel){
+    div = document.createElement('div');
+    p = document.createElement('button');
+    
+    const body = document.getElementById("hlist");
+    body.append(div);
+    div.append(p);
+    p.innerText=hotel.name;
+    //p.style.color=hotel.color;
+    p.style.backgroundColor=hotel.color;
+  }
+
+  hotels.forEach(h => buildHotelName(h));
+
+  </script>
+ 
 </body>
 </html>
 
