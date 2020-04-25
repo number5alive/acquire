@@ -171,16 +171,27 @@
   /* for STOCKS */ 
   // Dynamically add the "buy/sell" stocks widgets to the page
   const buildStockWidget = function(hotel){
-    div = document.createElement('div');
-    div.className="stockspace";
-    p = document.createElement('button');
-    
-    const body = document.getElementById("el_stockrack");
-    body.append(div);
-    div.append(p);
-    p.innerText=hotel.short;
-    //p.style.color=hotel.color;
-    p.style.backgroundColor=hotel.color;
+    // First Create the space for the stock item
+    var ss=document.createElement('div');
+    ss.className="stockspace";
+    el_stockrack.append(ss);
+     
+    // Then create the individual stock and put it in that space
+    si = document.createElement('div');
+    si.className="stockitem";
+    si.id = "st_" + hotel.name;
+    si.style.backgroundColor=hotel.color;
+    ss.append(si);
+     
+    sia = document.createElement('div');
+    sib = document.createElement('div');
+    sia.id=si.id + "_cnt";
+    sia.innerText=0;
+    sib.innerText=hotel.short;
+    si.append(sia);
+    si.append(sib);
+     
+    makeTileDragable(si, el_hotellist, 'playstock');
   }
   hotels.forEach(h => buildStockWidget(h));
    
