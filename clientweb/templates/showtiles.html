@@ -179,7 +179,7 @@
     // Then create the individual stock and put it in that space
     si = document.createElement('div');
     si.className="stockitem";
-    si.id = "st_" + hotel.name;
+    si.id = "st_" + hotel.short;
     si.style.backgroundColor=hotel.color;
     ss.append(si);
      
@@ -195,15 +195,23 @@
   }
   hotels.forEach(h => buildStockWidget(h));
    
-  el_stockrack.addEventListener('playstock', stockDropped);
-  function stockDropped(e){
+  el_stockrack.addEventListener('playstock', buyStock);
+  el_hotellist.addEventListener('playstock', sellStock);
+  function buyStock(e){
+    // called with a hotelitem object, innertext will work here (sloppy)
     hotel=e.detail.tile;
     stockAction(hotel.innerText, +1);
   }
+  function sellStock(e){
+    // called with a stockitem object, will need to translate innertext
+    si=e.detail.tile;
+    hotshort=si.id.split('_').pop();
+    let h=hotels.find(o => o.short === hotshort);
+    stockAction(h.name, -1);
+  }
    
   async function stockAction(hname, amt){
-    let h=hotels.find(o => o.name === hname);
-    console.log("Hotel: " + h);
+    console.log("Hotel: " + hname);
      
     // make REST call to change player hotel amounts by this
     // TODO: replace the '7's with gameid and playerid
@@ -214,7 +222,7 @@
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ 'action':'buystocks', 
-                                      'hotel' : h.name,
+                                      'hotel' : hname,
                                       'amount' : amt,
                                     })
                 },
