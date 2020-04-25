@@ -30,7 +30,6 @@
   <div class="infocolumn">
     <div class="card">
       <h2>PLAYER INFO</h2>
-      <p>Your Money</p>
       <p>Your Stocks</p>
     </div>
     <div class="card">
@@ -38,8 +37,18 @@
       <div class="fakeimg"><p>STOCK Buttons</p></div>
     </div>
     <div class="card">
-      <h3>BANK</h3>
-      <div class="fakeimg"><p>MONEY Buttons</p></div>
+      <h3>BANK - Your Money: {{ money }}</h3>
+      <div class="moneycontainer">
+        <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
+        <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
+        <button class="plusbutton" onclick="mvalClick(100)" id="plus100">+100</button>
+        <button class="plusbutton" onclick="mvalClick(1000)" id="plus1k">+1K</button>
+      </div>
+      <div>
+        <button onclick="mrstClick()" id="resetmoney">Reset</button>
+        <input id="moneyval" type="number" value=0></input>
+        <button onclick="msetClick()" id="submitmoney">Submit</button>
+      </div>
     </div>
   </div>
   <div class="maincolumn">
@@ -112,7 +121,21 @@
   }
   </script>
   
-   
+  <script>
+  var moneyvalelmt=document.getElementById('moneyval');
+  function mvalClick(inc) {
+    var startVal=parseInt(moneyvalelmt.value);
+    var newVal=startVal + inc;
+    moneyvalelmt.value = newVal;
+  }
+  function mrstClick() {
+    moneyvalelmt.value = 0;
+  }
+  function msetClick() {
+    // TODO: Submit the REST request for the moneyTransaction
+    moneyvalelmt.value = 0;
+  }
+  </script>
     
 </body>
 </html>
