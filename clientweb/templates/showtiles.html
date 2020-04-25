@@ -190,10 +190,24 @@
     stockAction(hotel.innerText, +1);
   }
    
-  function stockAction(hname, amt){
+  async function stockAction(hname, amt){
     let h=hotels.find(o => o.name === hname);
     console.log("Hotel: " + h);
-    // TODO, make REST call to change player hotel amounts by this
+     
+    // make REST call to change player hotel amounts by this
+    // TODO: replace the '7's with gameid and playerid
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid='7', playerid='7') }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'buystocks', 
+                                      'hotel' : h.name,
+                                      'amount' : amt,
+                                    })
+                },
+              );
   }
   
   </script>
