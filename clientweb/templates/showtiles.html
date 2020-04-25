@@ -31,17 +31,9 @@
     <h2>PLAYER INFO</h2>
     <div class="card">
       <h3>STOCK MARKET</h3>
-      <div class="stockrack">
+      <div class="stockrack" id="stockrack">
         <!-- The following will dynamically be populated with
-        <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
-        -->
-        <div class="stockspace"></div>
-        <div class="stockspace"></div>
-        <div class="stockspace"></div>
-        <div class="stockspace"></div>
-        <div class="stockspace"></div>
-        <div class="stockspace"></div>
-        <div class="stockspace"></div>
+        <div class="stockspace">M</div> -->
       </div>
     </div>
     <div class="card">
@@ -160,8 +152,23 @@
     //p.style.color=hotel.color;
     p.style.backgroundColor=hotel.color;
   }
-
   hotels.forEach(h => buildHotelName(h));
+
+  /* for STOCKS */ 
+  const buildStockWidget = function(hotel){
+    div = document.createElement('div');
+    div.className="stockspace";
+    p = document.createElement('button');
+    
+    const body = document.getElementById("stockrack");
+    body.append(div);
+    div.append(p);
+    p.innerText=hotel.short;
+    //p.style.color=hotel.color;
+    p.style.backgroundColor=hotel.color;
+  }
+  hotels.forEach(h => buildStockWidget(h));
+
 
   </script>
  
