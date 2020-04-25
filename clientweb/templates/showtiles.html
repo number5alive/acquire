@@ -56,15 +56,10 @@
       <h2>TILES</h2>
       <div class="tilerack" id="tilerack">
         <!-- The following will dynamically be populated with
+        <div class="rackspace"></div>
+             And each will eventually get populated with
         <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
         -->
-        <div class="rackspace"></div>
-        <div class="rackspace"></div>
-        <div class="rackspace"></div>
-        <div class="rackspace"></div>
-        <div class="rackspace"></div>
-        <div class="rackspace"></div>
-        <div class="rackspace"></div>
       </div>
     </div>
     <div class="card">
@@ -89,6 +84,13 @@
 
   <script>
   var tileRack = document.getElementById("tilerack");
+  // Dynamically create the spots for the tiles
+  // <div class="rackspace"></div>
+  for(var i=0; i<7; i++){
+    var rs=document.createElement('div');
+    rs.className="rackspace";
+    tileRack.append(rs);
+  }
   //makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
    
   //dropzone.addEventListener('playtile', tileDropped);
@@ -141,6 +143,7 @@
        {name: "Tower", short: "T", color: "#615d5b"},
    ];
 
+  // Dynamically add the Hotel tokens to the page
   const buildHotelName = function(hotel){
     div = document.createElement('div');
     p = document.createElement('button');
@@ -155,6 +158,7 @@
   hotels.forEach(h => buildHotelName(h));
 
   /* for STOCKS */ 
+  // Dynamically add the "buy/sell" stocks widgets to the page
   const buildStockWidget = function(hotel){
     div = document.createElement('div');
     div.className="stockspace";
@@ -168,7 +172,6 @@
     p.style.backgroundColor=hotel.color;
   }
   hotels.forEach(h => buildStockWidget(h));
-
 
   </script>
  
