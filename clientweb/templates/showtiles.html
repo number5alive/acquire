@@ -31,7 +31,7 @@
     <h2>PLAYER INFO</h2>
     <div class="card">
       <h3>STOCK MARKET</h3>
-      <div class="stockrack" id="stockrack">
+      <div class="stockrack" id="el_stockrack">
         <!-- The following will dynamically be populated with
         <div class="stockspace">M</div> -->
       </div>
@@ -66,8 +66,8 @@
       <div class="row">
         <div class="hotelcolumn">
           <h2>HOTELS</h2>
-          <div class="hotelslist" id="hlist"></div>
-          <div class="hotelslist">STOCK CHART - LINK</div>
+          <div class="hotellist" id="el_hotellist"></div>
+          <div class="hotellist">STOCK CHART - LINK</div>
         </div>
         <div class="boardcolumn">
           <h2>BOARD</h2>
@@ -94,9 +94,9 @@
   }
    
   // For BOARD
-  var boardDiv=document.getElementById("acquireBoard")
-  drawBoard(boardDiv); // from board.js - draws an empty board
-  boardDiv.addEventListener('playtile', tileDropped);
+  const el_gameboard=document.getElementById("acquireBoard")
+  drawBoard(el_gameboard); // from board.js - draws an empty board
+  el_gameboard.addEventListener('playtile', tileDropped);
 
   tiles=gettiles();
   async function gettiles()
@@ -143,18 +143,28 @@
        {name: "Continental", short: "C", color: "#ed3434"},
        {name: "Tower", short: "T", color: "#615d5b"},
    ];
+    
+  // The main window components we'll reference the most
+  const el_hotellist = document.getElementById("el_hotellist");
+  const el_stockrack = document.getElementById("el_stockrack");
 
   // Dynamically add the Hotel tokens to the page
   const buildHotelName = function(hotel){
-    div = document.createElement('div');
-    p = document.createElement('button');
-    
-    const body = document.getElementById("hlist");
-    body.append(div);
-    div.append(p);
-    p.innerText=hotel.name;
-    //p.style.color=hotel.color;
-    p.style.backgroundColor=hotel.color;
+    // First Create the space for the hotel item
+    var hs=document.createElement('div');
+    hs.className="hotelspace";
+    el_hotellist.append(hs);
+     
+    // Then create the individual hotel and put it in that space
+    hi = document.createElement('div');
+    hi.className="hotelitem";
+    hi.id = hotel.name;
+    hs.append(hi);
+     
+    hi.innerText=hotel.name;
+    hi.style.backgroundColor=hotel.color;
+     
+    makeTileDragable(hi, el_stockrack, 'playstock');
   }
   hotels.forEach(h => buildHotelName(h));
 
@@ -165,7 +175,7 @@
     div.className="stockspace";
     p = document.createElement('button');
     
-    const body = document.getElementById("stockrack");
+    const body = document.getElementById("el_stockrack");
     body.append(div);
     div.append(p);
     p.innerText=hotel.short;
@@ -173,7 +183,19 @@
     p.style.backgroundColor=hotel.color;
   }
   hotels.forEach(h => buildStockWidget(h));
-
+   
+  el_stockrack.addEventListener('playstock', stockDropped);
+  function stockDropped(e){
+    hotel=e.detail.tile;
+    stockAction(hotel.innerText, +1);
+  }
+   
+  function stockAction(hname, amt){
+    let h=hotels.find(o => o.name === hname);
+    console.log("Hotel: " + h);
+    // TODO, make REST call to change player hotel amounts by this
+  }
+  
   </script>
  
 </body>

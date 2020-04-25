@@ -87,17 +87,7 @@ function addTile(rackname, tilename, dropzone=null){
   }
 }
  
-function makeTilesDragable(rackelem, dropzone) {
-  // Iterate through the objects on the rack, make all tiles movable
-  for (var i = 0; i < rackelem.childNodes.length; i++) {
-    if (rackelem.childNodes[i].childNodes.length != 0 &&
-        rackelem.childNodes[i].childNodes[0].className == "tile") {
-      makeTileDragable(rackelem.childNodes[i].childNodes[0], dropzone);
-    }
-  }
-}
-
-function makeTileDragable(elmnt, dropzone=null){
+function makeTileDragable(elmnt, dropzone=null, dropevent='playtile'){
   var origx = 0, origy = 0;
   var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -127,6 +117,7 @@ function makeTileDragable(elmnt, dropzone=null){
     pos2 = pos4 - e.clientY;
     pos3 = e.clientX;
     pos4 = e.clientY;
+     
     // set the element's new position:
     elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
     elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
@@ -174,8 +165,8 @@ function makeTileDragable(elmnt, dropzone=null){
     document.onmousemove = null;
 
     if(dropzone != null && crossingDropZone ){
-      console.log("DROPZONE!");
-      dropzone.dispatchEvent(new CustomEvent('playtile', {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
+      console.log("DROPZONE!" + elmnt.innerText);
+      dropzone.dispatchEvent(new CustomEvent(dropevent, {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
     }
 
     // snap-back to the original position
