@@ -127,8 +127,21 @@
   function mrstClick() {
     moneyvalelmt.value = 0;
   }
-  function msetClick() {
-    // TODO: Submit the REST request for the moneyTransaction
+  async function msetClick() {
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_money', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'money', 
+                                      'amount' : moneyvalelmt.value,
+                                    })
+                },
+              );
+               
+    // Reset the value in the widget for the next call
     moneyvalelmt.value = 0;
   }
   </script>
@@ -214,8 +227,7 @@
     console.log("Hotel: " + hname);
      
     // make REST call to change player hotel amounts by this
-    // TODO: replace the '7's with gameid and playerid
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid='7', playerid='7') }}", {
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid=gameid, playerid=playerid) }}", {
                 method: 'PATCH', 
                 headers: {
                   Accept: 'application/json',
