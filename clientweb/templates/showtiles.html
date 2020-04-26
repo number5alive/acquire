@@ -32,24 +32,24 @@
   <div class="infocolumn">
     <h2>PLAYER INFO</h2>
     <div class="card">
-      <h3>STOCK MARKET</h3>
-      <div class="stockrack" id="el_stockrack">
-        <!-- The following will dynamically be populated with
-        <div class="stockspace">M</div> -->
-      </div>
-    </div>
-    <div class="card">
-      <h3>BANK <span id="playermoney">$$$$$</span></h3>
+      <h3 style="display:inline">BANK  </h3><span id="playermoney">$$$$$</span>
       <div class="moneycontainer">
         <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
         <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
         <button class="plusbutton" onclick="mvalClick(100)" id="plus100">+100</button>
         <button class="plusbutton" onclick="mvalClick(1000)" id="plus1k">+1K</button>
       </div>
-      <div>
+      <div class="moneyaction">
         <button onclick="mrstClick()" id="resetmoney">Reset</button>
         <input id="moneyval" type="number" value=0></input>
         <button onclick="msetClick()" id="submitmoney">Submit</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>STOCK MARKET</h3>
+      <div class="stockrack" id="el_stockrack">
+        <!-- The following will dynamically be populated with
+        <div class="stockspace">M</div> -->
       </div>
     </div>
   </div>
@@ -258,7 +258,7 @@
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ 'action':'money', 
-                                      'amount' : el_moneyval.value,
+                                      'amount' : parseInt(el_moneyval.value),
                                     })
                 },
               );
