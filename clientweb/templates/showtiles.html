@@ -25,7 +25,8 @@
 <div class="mstick">
   <div class="messages">
     <div class="gamemessage" id="el_gamemessage"></div>
-    <div class="staticmessage">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
+    <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
+    <div class="staticmessage" id="playername">style="float:middle">Norm</div>
   </div>
 </div>
 
@@ -93,9 +94,9 @@
   let HOTELS = [
        {name: "Worldwide", short: "WW", color: "#7b359c"},
        {name: "Saxxon", short: "SX", color: "rgba(199, 140, 68, 1)"},
-       {name: "American", short: "AM", color: "#4244db"},
        {name: "Festival", short: "FV", color: "#1d7a2b"},
        {name: "Imperial", short: "IM", color: "#b3b329"},
+       {name: "American", short: "AM", color: "#4244db"},
        {name: "Continental", short: "CN", color: "#ed3434"},
        {name: "Tower", short: "TW", color: "#615d5b"},
    ];
@@ -108,6 +109,7 @@
   const el_gameboard=document.getElementById("acquireBoard")
   const el_pmoney=document.getElementById('playermoney');
   const el_moneyval=document.getElementById('moneyval'); // the widget
+  const el_thisplayer=document.getElementById('playername');
   const el_currplayer=document.getElementById('el_currplayer');
   const el_gamemessage=document.getElementById('el_gamemessage');
    
@@ -293,9 +295,9 @@
     console.log(message);
     el_gamemessage.innerText=message;
     if( error === undefined || error == true ) {
-      el_gamemessage.color = "red";
+      el_gamemessage.style.color = "red";
     } else {
-      el_gamemessage.color = "white";
+      el_gamemessage.style.color = "white";
     }
     el_gamemessage.className="gamemessage";
     setTimeout(function(){
@@ -303,15 +305,27 @@
       }, 2500);
   }
      
-  function showHotel(hotelonb) {
-    if( hotelonb['tile'] != null) {
-      var cell=document.getElementById(hotelonb['tile']);
+  function showHotel(dhotel) {
+    let h=HOTELS.find(o => o.name === dhotel['name']);
+    let hel=document.getElementById(dhotel['name']);
+
+    // If it's on the board, show it on the board
+    if( dhotel['tile'] != null) {
+      var cell=document.getElementById(dhotel['tile']);
       if( cell != null)
       {
-        let h=HOTELS.find(o => o.name === hotelonb['name']);
         cell.style.backgroundColor=h.color;
       }
     }
+     
+    // Grey out the widget based on how many stocks are left
+    st=parseInt(dhotel['stocks']);
+    var decksize = st / 25;
+    console.log(st + "= " + decksize + "%");
+    if(st > 0){
+      decksize += 0.5;
+    }
+    hel.style.opacity=decksize + 0.2;
   }
 
   // game info only includes stocks we have, the rest are Zero
@@ -360,6 +374,7 @@
     }
      
     // Display the game state
+    el_thisplayer.innerText=data['game']['currPlayer']['name'];
     el_currplayer.innerText=data['game']['currPlayer']['name'] + " (" + data['game']['currPlayer']['id'] + ") ";
      
     // Show All the players and their names
