@@ -21,9 +21,10 @@
 </div>
 
 <div class="topnav" id="topnav">
-  <a href="#" style="float:right">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></a>
 </div>
-<div class="messages">MESSAGES</div>
+<div class="messages">
+  CURRENT PLAYER: <span id='el_currplayer'>Norm</span></a>
+</div>
 
 <div class="row">
   <div class="infocolumn">
@@ -199,10 +200,13 @@
               );
                  
     await response.status;
-    if( response.status != 200 )
-    {
+    if( response.status == 200 ) {
+      tile.parentNode.removeChild(tile);
+    } else {
       console.log("Game Engine denied Move");
     }
+
+
   }
    
   /* For STOCKS */
@@ -316,7 +320,9 @@
     }
      
     // Display the game state
-    el_currplayer.innerText=data['game']['currPlayer']['id'];
+    el_currplayer.innerText=data['game']['currPlayer']['name'] + " (" + data['game']['currPlayer']['id'] + ") ";
+     
+    // Show All the players and their names
     data['game']['players'].forEach(pdata => showPlayers(pdata));
 
     // BOARD: Draw the board
