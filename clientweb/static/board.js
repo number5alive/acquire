@@ -52,6 +52,10 @@ function showOptions(tiles) {
 }
 
 var lastclicked=null;
+function getLastClicked() {
+  return lastclicked;
+}
+
 function boardClick(cellname) {
   var cell=document.getElementById(cellname);
   if( cell != null)

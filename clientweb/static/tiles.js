@@ -87,14 +87,16 @@ function addTile(rackname, tilename, dropzone=null){
   }
 }
  
-function makeTileDragable(elmnt, dropzone=null, dropevent='playtile'){
+function makeTileDragable(elmnt, dropz){
   var origx = 0, origy = 0;
   var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var crossingDropZone = false;
 
   elmnt.onmousedown = dragMouseDown;
-   
+  var dropzone=dropz[0][0];
+  var dropevent=dropz[0][1];
+    
   function dragMouseDown(e) {
     e = e || window.event;
     e.preventDefault();
@@ -122,37 +124,32 @@ function makeTileDragable(elmnt, dropzone=null, dropevent='playtile'){
     elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
     elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
     
-    if( dropzone != null){
-      watchDropZone();
-    }
+    watchDropZones();
   }
   
-  function watchDropZone()
+  function watchDropZones()
   {
-    var overlaps = overlapsDropZone(elmnt);
-    if( !crossingDropZone )
+    var overlaps = false;
+    for( var i=0; i<dropz.length && !overlaps; i++)
     {
-      if( overlaps )
-      {
-        // we weren't crossing, now are
-        crossingDropZone = true;
-        elmnt.style.backgroundColor = 'yellow';
-      }
+      overlaps = overlapsDropZone(elmnt, dropz[i][0]);
     }
-    else
+
+    // Change how it displays if it's crossing into an area
+    if( overlaps && !elmnt.className.includes(" overlap") )
     {
-      if( !overlaps )
-      {
-        // we WERE crossing, but now aren't
-        crossingDropZone = false;
-        elmnt.style.backgroundColor = origbg;
-      }
+      elmnt.className = elmnt.className + " overlap";
+    }
+    else if( !overlaps && elmnt.className.includes(" overlap") )
+    {
+      elmnt.className=elmnt.className.replace(" overlaps", "");
     }
   }
    
-  function overlapsDropZone(tile) {
+  // returns true if tile element overlaps dz element
+  function overlapsDropZone(tile, dz) {
     var rect1=tile.getBoundingClientRect();
-    var rect2=dropzone.getBoundingClientRect();
+    var rect2=dz.getBoundingClientRect();
     return !(rect1.right < rect2.left || 
              rect1.left > rect2.right || 
              rect1.bottom < rect2.top || 
@@ -164,14 +161,19 @@ function makeTileDragable(elmnt, dropzone=null, dropevent='playtile'){
     document.onmouseup = null;
     document.onmousemove = null;
 
-    if(dropzone != null && crossingDropZone ){
-      console.log("DROPZONE!" + elmnt.innerText);
-      dropzone.dispatchEvent(new CustomEvent(dropevent, {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
+    for( var i=0; i<dropz.length; i++)
+    {
+      if( overlapsDropZone(elmnt, dropz[i][0]) )
+      {
+        dropz[i][0].dispatchEvent(new CustomEvent(dropz[i][1], {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
+        break;
+      }
     }
 
     // snap-back to the original position
     elmnt.style.top = (origy) + "px";
     elmnt.style.left = (origx) + "px";
     elmnt.style.backgroundColor = origbg;
+    elmnt.className=elmnt.className.replace(" overlaps", "");
   }
 } 

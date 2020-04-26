@@ -25,6 +25,13 @@ def readGameStates():
       # TODO: recreate server state from the info in the file
       #games = json.load(f)
       games=[Game(id) for id in range(0,2)]
+      from games.tilebag.tilebag import TileBagGame, TileBagPlayer
+      tbg=createGame("TileBag")
+      tbg.addPlayer( TileBagPlayer(513, "Colleen", money=5000) )
+      tbg.addPlayer( TileBagPlayer(514, "Geoff", money=5000) )
+      tbg.addPlayer( TileBagPlayer(515, "Higgs", money=5000) )
+      tbg.addPlayer( TileBagPlayer(516, "FS&SnB", money=5000) )
+      tbg.run()
   else:
     print("no saved state, create one")
     games=[Game(id) for id in range(0,2)]

@@ -141,8 +141,9 @@
     hi.innerText=hotel.name;
     hi.style.backgroundColor=hotel.color;
      
-    makeTileDragable(hi, el_stockrack, 'playstock');
-    //makeTileDragable(hi, el_gameboard, 'playhotel');
+    // drop hotel on stocks to buy stock, on board to place hotel
+    makeTileDragable(hi, [[el_stockrack, 'playstock'],
+                          [el_gameboard, 'placehotel']]);
   }
   HOTELS.forEach(h => buildHotelName(h));
 
@@ -169,7 +170,7 @@
     si.append(sia);
     si.append(sib);
      
-    makeTileDragable(si, el_hotellist, 'playstock');
+    makeTileDragable(si, [[el_hotellist, 'playstock']]);
   }
   HOTELS.forEach(h => buildStockWidget(h));
   </script>
@@ -179,9 +180,10 @@
 <!-- ################################################################### --> 
   <script>
   el_gameboard.addEventListener('playtile', tileDropped);
+  el_gameboard.addEventListener('placehotel', placeHotel);
   el_stockrack.addEventListener('playstock', buyStock);
   el_hotellist.addEventListener('playstock', sellStock);
-      
+
   /* For TILES */
   function tileDropped(e){
     tile=e.detail.tile;
@@ -229,6 +231,33 @@
     hotshort=si.id.split('_').pop();
     let h=HOTELS.find(o => o.short === hotshort);
     stockAction(h.name, -1);
+  }
+   
+  async function placeHotel(e){
+    console.log("!!!!placeHotel - listener");
+    hel=e.detail.tile;
+    var tgt=getLastClicked();
+    if( tgt != null )
+    {
+      // make REST call to change player hotel amounts by this
+      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
+                  method: 'PATCH', 
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ 'action':'placeHotel', 
+                                        'hotel' : hel.innerText,
+                                        'tile' : tgt.id,
+                                      })
+                  },
+                );
+                 
+      await response.status;
+      if( response.status != 200 ) {
+        sendGameMessage("Invalid Hotel Action");
+      }
+    }
   }
    
   async function stockAction(hname, amt){
@@ -321,7 +350,6 @@
     // Grey out the widget based on how many stocks are left
     st=parseInt(dhotel['stocks']);
     var decksize = st / 25;
-    console.log(st + "= " + decksize + "%");
     if(st > 0){
       decksize += 0.5;
     }
@@ -392,7 +420,7 @@
     } else {
       pinfo=data['game']['you']['playerdata'];
        
-      el_thisplayer.innerText=pinfo['name'];
+      el_thisplayer.innerText=data['game']['you']['name'];
        
       // PLAYER MONEY
       el_pmoney.innerText=pinfo['money'];
@@ -403,7 +431,7 @@
 
       // PLAYER TILE RACK
       tiles=pinfo['tiles'];
-      setTiles("rackspace", tiles, el_gameboard);
+      setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
       showOptions(tiles);
     }
      
@@ -450,7 +478,7 @@
         const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
         const data = await response.json();
         tiles=data['tiles'];
-        setTiles("rackspace", tiles, acquireBoard);
+        setTiles("rackspace", tiles, [[acquireBoard,'playtile']]);
         showOptions(tiles);
          
         return tiles

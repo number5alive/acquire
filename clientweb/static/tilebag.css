@@ -365,6 +365,10 @@ border: 1px solid red;
   clear: both;
 }
 
+.overlaps {
+  background-color: yellow;
+}
+
 /* Footer */
 .footer {
   padding: 20px;
