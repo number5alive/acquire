@@ -374,7 +374,6 @@
     }
      
     // Display the game state
-    el_thisplayer.innerText=data['game']['currPlayer']['name'];
     el_currplayer.innerText=data['game']['currPlayer']['name'] + " (" + data['game']['currPlayer']['id'] + ") ";
      
     // Show All the players and their names
@@ -392,6 +391,8 @@
       // TODO: some fancy spectator display
     } else {
       pinfo=data['game']['you']['playerdata'];
+       
+      el_thisplayer.innerText=pinfo['name'];
        
       // PLAYER MONEY
       el_pmoney.innerText=pinfo['money'];
