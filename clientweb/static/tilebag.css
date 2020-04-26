@@ -37,15 +37,35 @@ body {
   background-color: #333;
 }
  
-div.messages {
+div.mstick {
   z-index: 10;
   position: -webkit-sticky;
   position: sticky; 
   top: 0;
   overflow: hidden;
-  text-align: center;
+  text-align: right;
   background-color: #333;
   color: white;
+}
+
+div.messages {
+  float: left;
+  background-color: #333;
+  width: 100%;
+}
+ 
+.gamemessage {
+  float: left;
+  opacity:1;
+  transition: opacity 500ms;
+}
+
+.gamemessage.waa {
+  opacity:0;
+}
+
+.staticmessage {
+  float: right:
 }
 
 /* Style the topnav links */

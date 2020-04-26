@@ -19,7 +19,7 @@ function drawBoard(acquireBoard, boardinfo=defaultBoard){
         cell.className='acquireCell';
          
         // Optional - let the user click around and set tiles
-        // cell.onclick = function() {placeTile(this.id);};
+        cell.onclick = function() {boardClick(this.id);};
          
         // Add the column/row text as individual elements so we can resize
         var ctext=document.createElement("ctext");
@@ -51,6 +51,27 @@ function showOptions(tiles) {
   }
 }
 
+var lastclicked=null;
+function boardClick(cellname) {
+  var cell=document.getElementById(cellname);
+  if( cell != null)
+  {
+    // only let them select an occupied cell
+    if( cell.className.includes(" occupied") )
+    {
+      // unselect the last clicked
+      if( lastclicked != null )
+      {
+        console.log("clearing previous click");
+        lastclicked.className=lastclicked.className.replace(" selected", "");
+      }
+      // make the new one the last clicked
+      console.log(cellname + " is the new lastclicked");
+      cell.className=cell.className + " selected";
+      lastclicked=cell;
+    }
+  }
+}
 
 function placeTile(cellname) {
   var cell=document.getElementById(cellname);

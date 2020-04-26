@@ -22,8 +22,11 @@
 
 <div class="topnav" id="topnav">
 </div>
-<div class="messages">
-  CURRENT PLAYER: <span id='el_currplayer'>Norm</span></a>
+<div class="mstick">
+  <div class="messages">
+    <div class="gamemessage" id="el_gamemessage"></div>
+    <div class="staticmessage">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
+  </div>
 </div>
 
 <div class="row">
@@ -88,13 +91,13 @@
   <script>
   /* The hotel constants */
   let HOTELS = [
-       {name: "Worldwide", short: "W", color: "#7b359c"},
-       {name: "Saxxon", short: "S", color: "rgba(199, 140, 68, 1)"},
-       {name: "American", short: "A", color: "#4244db"},
-       {name: "Festival", short: "F", color: "#1d7a2b"},
-       {name: "Imperial", short: "I", color: "#b3b329"},
-       {name: "Continental", short: "C", color: "#ed3434"},
-       {name: "Tower", short: "T", color: "#615d5b"},
+       {name: "Worldwide", short: "WW", color: "#7b359c"},
+       {name: "Saxxon", short: "SX", color: "rgba(199, 140, 68, 1)"},
+       {name: "American", short: "AM", color: "#4244db"},
+       {name: "Festival", short: "FV", color: "#1d7a2b"},
+       {name: "Imperial", short: "IM", color: "#b3b329"},
+       {name: "Continental", short: "CN", color: "#ed3434"},
+       {name: "Tower", short: "TW", color: "#615d5b"},
    ];
     
   // The main window components we'll reference the most
@@ -106,6 +109,7 @@
   const el_pmoney=document.getElementById('playermoney');
   const el_moneyval=document.getElementById('moneyval'); // the widget
   const el_currplayer=document.getElementById('el_currplayer');
+  const el_gamemessage=document.getElementById('el_gamemessage');
    
   // For TILERACK
   // Dynamically create the spots for the tiles
@@ -136,6 +140,7 @@
     hi.style.backgroundColor=hotel.color;
      
     makeTileDragable(hi, el_stockrack, 'playstock');
+    //makeTileDragable(hi, el_gameboard, 'playhotel');
   }
   HOTELS.forEach(h => buildHotelName(h));
 
@@ -202,11 +207,11 @@
     await response.status;
     if( response.status == 200 ) {
       tile.parentNode.removeChild(tile);
+    } else if( response.status == 400 ) {
+      sendGameMessage("Not your turn");
     } else {
-      console.log("Game Engine denied Move");
+      sendGameMessage("Invalid Game Move");
     }
-
-
   }
    
   /* For STOCKS */
@@ -239,6 +244,11 @@
                                     })
                 },
               );
+               
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Stock Action");
+    }
   }
    
   /* For MONEY */
@@ -264,6 +274,11 @@
                 },
               );
                
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Banking Action");
+    }
+               
     // Reset the value in the widget for the next call
     el_moneyval.value = 0;
   }
@@ -273,6 +288,21 @@
 <!-- ## Javascript for Dynamic Game Effects from Server Messages -->
 <!-- ################################################################### --> 
   <script>
+
+  function sendGameMessage(message, error) {
+    console.log(message);
+    el_gamemessage.innerText=message;
+    if( error === undefined || error == true ) {
+      el_gamemessage.color = "red";
+    } else {
+      el_gamemessage.color = "white";
+    }
+    el_gamemessage.className="gamemessage";
+    setTimeout(function(){
+          el_gamemessage.className = 'gamemessage waa';
+      }, 2500);
+  }
+     
   function showHotel(hotelonb) {
     if( hotelonb['tile'] != null) {
       var cell=document.getElementById(hotelonb['tile']);
@@ -284,12 +314,15 @@
     }
   }
 
+  // game info only includes stocks we have, the rest are Zero
   function updateStocks(h, pstocks) {
+    var stockval=0;
+    var si=document.getElementById("st_" + h.short + "_cnt");
     if( pstocks[h.name] != undefined )
     {
-      si=document.getElementById("st_" + h.short + "_cnt");
-      si.innerText=pstocks[h.name];
+      stockval=pstocks[h.name];
     }
+    si.innerText=stockval;
   }
 
   function showPlayers(pdata) {
@@ -316,6 +349,13 @@
     // For testing, we may have called this function with data
     if( data === undefined ) {
       const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}");
+       
+      await response.status;
+      if( response.status != 200 ) {
+        sendGameMessage("Unable to get game state ?");
+        return;
+      }
+       
       data = await response.json();
     }
      
@@ -365,6 +405,8 @@
   } else {
     loadForReal();
   }
+  sendGameMessage("Welcome!", false);
+  
 
   function setupWebSocket() {
       var socket = io.connect('{{ serverroot }}');
