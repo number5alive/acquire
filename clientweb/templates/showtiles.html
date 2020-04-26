@@ -8,8 +8,10 @@
   <!-- Include our javascript helpers -->
   <script src="{{ url_for('.static', filename='board.js') }}"></script>
   <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
-<style>
-</style>
+    
+   <!-- And our WebSocket helper -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+   
 </head>
 <body>
 
@@ -22,7 +24,7 @@
   <a href="#">Link</a>
   <a href="#">Link</a>
   <a href="#">Link</a>
-  <a href="#" style="float:right">CURRENT PLAYER: <span id='currplayer'>Norm</span></a>
+  <a href="#" style="float:right">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></a>
 </div>
 <div class="messages">MESSAGES</div>
 
@@ -37,7 +39,7 @@
       </div>
     </div>
     <div class="card">
-      <h3>BANK $$$$$ {{ money }}</h3>
+      <h3>BANK <span id="playermoney">$$$$$</span></h3>
       <div class="moneycontainer">
         <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
         <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
@@ -82,71 +84,11 @@
   <h2>Footer</h2>
 </div>
 
+<!-- ################################################################### --> 
+<!-- ## Javascript for Rendering Game Components on the Screen -->
+<!-- ################################################################### --> 
   <script>
-  // For TILERACK
-  var tileRack = document.getElementById("tilerack");
-  // Dynamically create the spots for the tiles
-  // <div class="rackspace"></div>
-  for(var i=0; i<7; i++){
-    var rs=document.createElement('div');
-    rs.className="rackspace";
-    tileRack.append(rs);
-  }
-   
-  // For BOARD
-  const el_gameboard=document.getElementById("acquireBoard")
-  drawBoard(el_gameboard); // from board.js - draws an empty board
-  el_gameboard.addEventListener('playtile', tileDropped);
-
-  tiles=gettiles();
-  async function gettiles()
-  {
-      const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
-      const data = await response.json();
-      tiles=data['tiles'];
-      setTiles("rackspace", tiles, acquireBoard);
-//      showOptions(tiles);
-       
-      return tiles
-  }
-
-  function tileDropped(e){
-    tile=e.detail.tile;
-    placeTile(tile.innerText);
-    tile.parentNode.removeChild(tile);
-  }
-  </script>
-  
-  <script> /* For MONEY */
-  var moneyvalelmt=document.getElementById('moneyval');
-  function mvalClick(inc) {
-    var startVal=parseInt(moneyvalelmt.value);
-    var newVal=startVal + inc;
-    moneyvalelmt.value = newVal;
-  }
-  function mrstClick() {
-    moneyvalelmt.value = 0;
-  }
-  async function msetClick() {
-    // make REST call to change player hotel amounts by this
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_money', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action':'money', 
-                                      'amount' : moneyvalelmt.value,
-                                    })
-                },
-              );
-               
-    // Reset the value in the widget for the next call
-    moneyvalelmt.value = 0;
-  }
-  </script>
-    
-  <script> /* For HOTELS */
+  /* The hotel constants */
   let hotels = [
        {name: "Worldwide", short: "W", color: "#7b359c"},
        {name: "Saxxon", short: "S", color: "#e01919"},
@@ -160,8 +102,25 @@
   // The main window components we'll reference the most
   const el_hotellist = document.getElementById("el_hotellist");
   const el_stockrack = document.getElementById("el_stockrack");
-
-  // Dynamically add the Hotel tokens to the page
+  const el_tilerack = document.getElementById("tilerack");
+  const el_gameboard=document.getElementById("acquireBoard")
+  const el_pmoney=document.getElementById('playermoney');
+  const el_moneyval=document.getElementById('moneyval'); // the widget
+  const el_currplayer=document.getElementById('el_currplayer');
+   
+  // For TILERACK
+  // Dynamically create the spots for the tiles
+  // <div class="rackspace"></div>
+  for(var i=0; i<7; i++){
+    var rs=document.createElement('div');
+    rs.className="rackspace";
+    el_tilerack.append(rs);
+  }
+   
+  // Draw the BOARD
+  drawBoard(el_gameboard); // from board.js - draws an empty board
+   
+  // Dynamically add the HOTELS tokens to the page
   const buildHotelName = function(hotel){
     // First Create the space for the hotel item
     var hs=document.createElement('div');
@@ -181,8 +140,7 @@
   }
   hotels.forEach(h => buildHotelName(h));
 
-  /* for STOCKS */ 
-  // Dynamically add the "buy/sell" stocks widgets to the page
+  // Dynamically add the "buy/sell" STOCKS widgets to the page
   const buildStockWidget = function(hotel){
     // First Create the space for the stock item
     var ss=document.createElement('div');
@@ -207,9 +165,48 @@
     makeTileDragable(si, el_hotellist, 'playstock');
   }
   hotels.forEach(h => buildStockWidget(h));
-   
+  </script>
+      
+<!-- ################################################################### --> 
+<!-- ## Javascript for Dynamic Game Effects from User actions -->
+<!-- ################################################################### --> 
+  <script>
+  el_gameboard.addEventListener('playtile', tileDropped);
   el_stockrack.addEventListener('playstock', buyStock);
   el_hotellist.addEventListener('playstock', sellStock);
+      
+  /* For TILES */
+  function tileDropped(e){
+    tile=e.detail.tile;
+    tile.parentNode.removeChild(tile);
+    if( {{debug}}  ) {
+      placeTile(tile.innerText);
+    } else {
+      makeGameMove(tile); // post the move to the game server
+    }
+  }
+     
+  async function makeGameMove(tile)
+  {
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'placetile', 
+                                        'tile':tile.innerText})
+                },
+              );
+                 
+    await response.status;
+    if( response.status != 200 )
+    {
+      console.log("Game Engine denied Move");
+    }
+  }
+   
+  /* For STOCKS */
   function buyStock(e){
     // called with a hotelitem object, innertext will work here (sloppy)
     hotel=e.detail.tile;
@@ -239,6 +236,120 @@
                                     })
                 },
               );
+  }
+   
+  /* For MONEY */
+  function mvalClick(inc) {
+    var startVal=parseInt(el_moneyval.value);
+    var newVal=startVal + inc;
+    el_moneyval.value = newVal;
+  }
+  function mrstClick() {
+    el_moneyval.value = 0;
+  }
+  async function msetClick() {
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_money', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'money', 
+                                      'amount' : el_moneyval.value,
+                                    })
+                },
+              );
+               
+    // Reset the value in the widget for the next call
+    el_moneyval.value = 0;
+  }
+  </script>
+   
+<!-- ################################################################### --> 
+<!-- ## Javascript for Dynamic Game Effects from Server Messages -->
+<!-- ################################################################### --> 
+  <script>
+  async function rendergame(data)
+  {
+    // For testing, we may have called this function with data
+    if( data === undefined ) {
+      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=userid) }}");
+      const data = await response.json();
+    }
+    console.log(data);
+
+    // Display the game state
+    el_currplayer.innerText=data['game']['currPlayer']['id'];
+
+    // BOARD: Draw the board
+    drawBoard(el_gameboard,data['game']['board']); // from board.js
+
+    // HOTELS: Place the hotel tokens on the board
+    hotels=data['game']['hotels'];
+    showHotels(hotels);
+     
+    // see if we have a player or a spectator
+    if( !data['game']['you'] ) {
+      // TODO: some fancy spectator display
+    } else {
+      pinfo=data['game']['you']['playerdata'];
+      // PLAYER MONEY and STOCKS
+      el_pmoney.innerText=pinfo['money'];
+      document.getElementById("stocks").innerText=JSON.stringify(pinfo['stocks']);
+
+      // PLAYER TILE RACK
+      tiles=data['game']['you']['playerdata']['tiles'];
+      setTiles(tileRack, tiles, dropzone);
+      showOptions(tiles);
+    }
+     
+    return tiles
+  }
+  </script>
+         
+          
+<!-- ################################################################### --> 
+<!-- ## Javascript for loading / initializing the game (or demo) -->
+<!-- ################################################################### --> 
+  <script>
+  if( {{debug}} ) {
+    loadForDebug();
+  } else {
+    loadForReal();
+  }
+
+  function setupWebSocket() {
+      var socket = io.connect('{{ serverroot }}');
+      socket.emit('join', {'room':'{{ gameid }}'});     
+      socket.on('connect', function() {
+          console.log("*** WS:Connected ***")
+      });
+
+      socket.on('update', function(data) {
+        console.log("WS:Update");
+        rendergame()
+      });
+  }
+  
+  function loadForReal(){
+    setupWebSocket();
+    rendergame();
+  }
+   
+  // When loading for twiddling with the client layout (no server to help)
+  function loadForDebug(){
+    tiles=gettiles();
+    async function gettiles()
+    {
+        const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
+        const data = await response.json();
+        tiles=data['tiles'];
+        setTiles("rackspace", tiles, acquireBoard);
+        showOptions(tiles);
+         
+        return tiles
+    }
   }
   
   </script>
