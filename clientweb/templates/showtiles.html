@@ -20,10 +20,7 @@
   <p>Resize the browser window to see the effect.</p>
 </div>
 
-<div class="topnav">
-  <a href="#">Link</a>
-  <a href="#">Link</a>
-  <a href="#">Link</a>
+<div class="topnav" id="topnav">
   <a href="#" style="float:right">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></a>
 </div>
 <div class="messages">MESSAGES</div>
@@ -100,6 +97,7 @@
    ];
     
   // The main window components we'll reference the most
+  const el_topnav = document.getElementById("topnav");
   const el_hotellist = document.getElementById("el_hotellist");
   const el_stockrack = document.getElementById("el_stockrack");
   const el_tilerack = document.getElementById("tilerack");
@@ -223,7 +221,6 @@
   }
    
   async function stockAction(hname, amt){
-    console.log("Hotel: " + hname);
      
     // make REST call to change player hotel amounts by this
     const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid=gameid, playerid=playerid) }}", {
@@ -286,24 +283,41 @@
   function updateStocks(h, pstocks) {
     if( pstocks[h.name] != undefined )
     {
-      console.log("updating stock counts " + h.name);
       si=document.getElementById("st_" + h.short + "_cnt");
       si.innerText=pstocks[h.name];
     }
   }
+
+  function showPlayers(pdata) {
+    var pdid=pdata['id'];         // Shorthand for this function
+    var pdname=pdata['name'];
+    var pdelid="playernav_"+pdid;
+
+    // See if an element with this id already exists, if not add it to the nav
+    var pdel=document.getElementById(pdelid);
+    if( pdel === null ) {
+      // New player! yay Friends!
+       
+      // For now, each player will be a link to their page <a href="#">Link</a>
+      var name = document.createElement('a');
+      name.id=pdelid;
+      name.innerText=pdname + " (" + pdid + ")";
+      name.href="{{gameid}}?playerid=" + pdid;
+      el_topnav.appendChild(name);
+    }
+  }
+
    
-  async function rendergame(data)
-  {
+  async function rendergame(data) {
     // For testing, we may have called this function with data
     if( data === undefined ) {
       const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}");
       data = await response.json();
     }
      
-    console.log(data);
-
     // Display the game state
     el_currplayer.innerText=data['game']['currPlayer']['id'];
+    data['game']['players'].forEach(pdata => showPlayers(pdata));
 
     // BOARD: Draw the board
     drawBoard(el_gameboard,data['game']['board']); // from board.js
