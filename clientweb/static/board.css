@@ -71,6 +71,7 @@
 
 .highlighted {
   border-color: darkblue;
+  background-color: darkblue;
   color: white;
   opacity: 0.9;
 }

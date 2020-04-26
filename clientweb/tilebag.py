@@ -3,6 +3,7 @@ from flask import jsonify
 from flask import request
 from games.tiles import TileBag, Tile
 import userif as UserIf
+import json
  
 """
 This file contains the "client" portion of the tilebag game
@@ -23,6 +24,6 @@ def get_tilebag_api():
 
 @tilebag_blueprint.route('/<int:gameid>', methods=['GET'])
 def get_tilebag_clientif(gameid):
-  userid=UserIf.getCallingPlayerId()
-  return render_template('tilebag.html', gameid=gameid, userid=userid, serverroot=request.url_root)
+  playerid=UserIf.getCallingPlayerId()
+  return render_template('showtiles.html', gameid=gameid, playerid=playerid, serverroot=request.url_root, debug=json.dumps(False))
    

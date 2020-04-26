@@ -117,8 +117,8 @@ class TileBagGame(Game):
        
     # Initialize Game Components
     print("TileBagGame Started!")
-    self.board = Board(10,8)
-    self.tilebag = TileBag(10,8)
+    self.board = Board(9,12)
+    self.tilebag = TileBag(9,12)
 
     # Determine Start Order: draw a single tile for each player
     self._currPlayer = None
@@ -157,11 +157,12 @@ class TileBagGame(Game):
       if player and type(amount) is int:
         for h in self.hotels:
           if h.name == hotel:
-            if amount < 0:
-              return self._takeStocks(player, h, -amount)
-            elif amount > 0:
-              return self._returnStocks(player, h, amount)
+            if amount > 0:
+              return self._takeStocks(player, h, amount)
+            elif amount < 0:
+              return self._returnStocks(player, h, -amount)
             break
+    print("playerid {}, hotel {}, amount {}".format(playerId, hotel, amount))
     return False
 
   def _takeStocks(self, player, h, amount):

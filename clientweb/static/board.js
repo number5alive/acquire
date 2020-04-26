@@ -51,20 +51,6 @@ function showOptions(tiles) {
   }
 }
 
-function showHotels(hotels) {
-  for(var i=0; i<hotels.length; i++){
-    var tile=hotels[i]['tile'];
-    if( tile != null)
-    {
-      console.log("Placing Hotel " + hotels[i]['name']);
-      var cell=document.getElementById(tile)
-      if( cell != null)
-      {
-        cell.style.backgroundColor="#00FFCC";
-      }
-    }
-  }
-}
 
 function placeTile(cellname) {
   var cell=document.getElementById(cellname);
