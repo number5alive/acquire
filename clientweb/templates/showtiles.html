@@ -67,7 +67,6 @@
         <div class="hotelcolumn">
           <h2>HOTELS</h2>
           <div class="hotellist" id="el_hotellist"></div>
-          <div class="hotellist">STOCK CHART - LINK</div>
         </div>
         <div class="boardcolumn">
           <h2>BOARD</h2>
@@ -79,6 +78,7 @@
 </div>
 
 <div class="footer">
+  <div class="hotellist"><img src="{{ url_for('.static', filename='stockchart.jpg') }}" alt="STOCK CHART" ></img></div>
   <h2>Footer</h2>
 </div>
 
@@ -89,7 +89,7 @@
   /* The hotel constants */
   let HOTELS = [
        {name: "Worldwide", short: "W", color: "#7b359c"},
-       {name: "Saxxon", short: "S", color: "#e01919"},
+       {name: "Saxxon", short: "S", color: "rgba(199, 140, 68, 1)"},
        {name: "American", short: "A", color: "#4244db"},
        {name: "Festival", short: "F", color: "#1d7a2b"},
        {name: "Imperial", short: "I", color: "#b3b329"},
