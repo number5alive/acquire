@@ -344,8 +344,17 @@
       if( cell != null)
       {
         cell.style.backgroundColor=h.color;
+        cell.className = cell.className + " withhotel";
       }
     }
+    /*
+    // Obviously we can't clear where it WAS, since we don't have that
+    // value right now... TODO: fix that
+    else {
+      // Clear the formatting if it exists
+      cell.className=cell.className.replace(" withhotel", "");
+    }
+    */
      
     // Grey out the widget based on how many stocks are left
     st=parseInt(dhotel['stocks']);

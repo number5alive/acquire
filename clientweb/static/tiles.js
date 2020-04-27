@@ -94,8 +94,6 @@ function makeTileDragable(elmnt, dropz){
   var crossingDropZone = false;
 
   elmnt.onmousedown = dragMouseDown;
-  var dropzone=dropz[0][0];
-  var dropevent=dropz[0][1];
     
   function dragMouseDown(e) {
     e = e || window.event;

@@ -85,7 +85,7 @@ def rest_tilebag_placehotel(gameid):
         if req_tile == "":
           req_tile=None
 
-        if req_game.moveHotel(pinfo['id'], req_hotel, req_tile):
+        if req_game.placeHotel(pinfo['id'], req_hotel, req_tile):
           DataIf.updateGame(req_game.id)
           return jsonify({'success':True})
         else:

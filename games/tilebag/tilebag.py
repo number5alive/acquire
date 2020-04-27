@@ -181,25 +181,45 @@ class TileBagGame(Game):
           return False
       return True
     return False
-             
+
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
   # TODO: Validate that alpha is a position on the board
-  def moveHotel(self, playerId, hotel, alpha):
+  def placeHotel(self, playerId, hotel, alpha):
     if self._started:
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
 
       if alpha is None or self.board.alphaIsValid(alpha):
+
+        # Make sure there are two tiles side by side, or no bueno
+        r, c = Tile.fromAlpha(alpha)
+        conn = self.board.findConnected(None, r, c)
+        print("Connected to {} is: {}".format(alpha, conn))
+      
         for h in self.hotels:
           if h.name == hotel:
-            h.setPosition(alpha)
+            h.setPosition(alpha, occupies=conn)
             return True
         print("Invalid Hotel")
       else:
         print("Invalid Hotel Alpha / or Move")
     return False
 
+  def updateConnections(self, tile):
+    conn=self.board.checkNeighbours(tile.row, tile.col)
+    if not len(conn) == 0:
+      # We're adjacent to *something*, see if it's more than one hotel!
+      print("{} has occupied neighbour(s) {}".format(tile, conn))
+      for h in self.hotels:
+        tmp = [o for o in conn if o in h.occupies]
+        if len(tmp) > 0:
+          print("new tile at {} is adjacent to {}".format(tile, h.name))
+          h.setOccupies(self.board.findConnected(None, tile.row, tile.col))
+
+      # It's already on the board, so we can't check if it's between two
+      # hotels - I'll have to fix that
+       
   def playTile(self, playerId, tile=None, alpha=None):
     if tile is None and alpha is not None:
       tile=Tile.newTileFromAlpha(alpha)
@@ -215,6 +235,7 @@ class TileBagGame(Game):
             print("Tilebag exhausted, trigger end-game state")
           else:
             self._currPlayer.receiveTile(self.tilebag.takeTile())
+          self.updateConnections(tile)
           self._currPlayer=next(self._rotation)
           return True
         else:

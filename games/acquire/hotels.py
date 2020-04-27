@@ -14,6 +14,7 @@ class Hotel:
   def __init__(self, name):
     self._name=name
     self._tile=None
+    self._occupies=[]
     self._stocks=[Stock(name)]*25
 
   @property
@@ -24,8 +25,17 @@ class Hotel:
   def tile(self):
     return self._tile
 
-  def setPosition(self, alpha):
+  @property
+  def occupies(self):
+    return self._occupies
+
+  def setPosition(self, alpha, occupies=None):
     self._tile=alpha
+    if occupies is not None:
+      self._occupies=occupies
+
+  def setOccupies(self, occupies):
+    self._occupies=occupies
 
   def stocksRemaining(self):
     return len(self._stocks)
@@ -46,12 +56,14 @@ class Hotel:
     return {
       'name' : self._name,
       'tile' : self._tile,
+      'occupies' : self._occupies,
       'stocks' : len(self._stocks)
     }
      
 if __name__ == "__main__":
   h=Hotel("SteveHotel")
 
+  print("---- Testing Stock interactions with Hotel ----")
   print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
   s=h.takeStock()
   print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
@@ -61,5 +73,13 @@ if __name__ == "__main__":
   print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
   print("takeStock: {}".format(h.takeStock()))
   print("takeStock: {}".format(h.takeStock()))
-     
+
+  print("---- Testing Hotel occupation ----")
+  h.setPosition("A1")
+  h.setPosition("B2", ['B2', 'B3', 'C3'])
+  h.setPosition("B2", occupies=['B2', 'B3', 'C3'])
+  h.setOccupies(['D2', 'D3', 'E3'])
+   
+  print("---- Testing Hotel Serialization ----")
   print("serialized: {}".format(h.serialize()))
+    

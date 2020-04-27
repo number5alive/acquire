@@ -7,8 +7,16 @@ class Tile:
   """
 
   def __init__(self, row, col):
-    self.row = row
-    self.col = col
+    self._row = row
+    self._col = col
+
+  @property
+  def row(self):
+    return self._row
+
+  @property 
+  def col(self):
+    return self._col
 
   # returns the row/column when given an alpha representation
   # presumes alpha will be in format [1-9]*[A-F]
@@ -40,27 +48,27 @@ class Tile:
     return str(col+1) + chr(row+65)
 
   def __eq__(self, other):
-    return self.row == other.row and self.col == other.col
+    return self._row == other.row and self._col == other.col
 
   def __lt__(self, other):
-    return self.row < other.row or (self.row == other.row and self.col < other.col)
+    return self._row < other.row or (self._row == other.row and self._col < other.col)
   def __le__(self, other):
     return self.__lt__(other) or self.__eq__(other)
 
   def __gt__(self, other):
-    return self.row > other.row or (self.row == other.row and self.col > other.col)
+    return self._row > other.row or (self._row == other.row and self._col > other.col)
 
   def getTilePos(self):
-    return self.row, self.col
+    return self._row, self._col
 
   def serialize(self):
-    return Tile.toAlpha((self.row, self.col))
+    return Tile.toAlpha((self._row, self._col))
 
   def __repr__(self):
     """
     Rebase tile to People-speak
     """
-    return Tile.toAlpha((self.row, self.col))
+    return Tile.toAlpha((self._row, self._col))
 
 class TileBag:
   """
@@ -104,6 +112,7 @@ if __name__ == "__main__":
 
   t=bag.takeTile()
   print(str(t.getTilePos()) + ' ' + str(t))
+  print("Tile {} is ({},{})".format(t, t.row, t.col))
    
   while not bag.isEmpty():
     t=bag.takeTile()
