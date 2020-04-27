@@ -26,7 +26,7 @@
   <div class="messages">
     <div class="gamemessage" id="el_gamemessage"></div>
     <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
-    <div class="staticmessage" id="playername">style="float:middle">Norm</div>
+    <div class="staticmessage" id="playername" style="float:middle">Guest? Click your Name Above</div>
   </div>
 </div>
 
@@ -340,11 +340,17 @@
 
     // If it's on the board, show it on the board
     if( dhotel['tile'] != null) {
-      var cell=document.getElementById(dhotel['tile']);
-      if( cell != null)
+      for( var i=0; i<dhotel['occupies'].length; i++)
       {
-        cell.style.backgroundColor=h.color;
-        cell.className = cell.className + " withhotel";
+        var t = dhotel['occupies'][i];
+        console.log(h.name + " on tile " + t);
+        var cell=document.getElementById(t);
+        if( cell != null)
+        {
+          console.log("setting colour");
+          cell.style.backgroundColor=h.color;
+          cell.className = cell.className + " withhotel";
+        }
       }
     }
     /*

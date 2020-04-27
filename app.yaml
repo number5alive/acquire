@@ -4,7 +4,7 @@ env: flex
 handlers:
   # This configures Google App Engine to serve the files in the app's static
   # directory.
-- url: games/tilebag/static
+- url: /games/tilebag/static
   static_dir: clientweb/static
 
   # This handler routes all requests not caught above to your main app. It is
