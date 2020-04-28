@@ -552,7 +552,7 @@
   function setupWebSocket() {
 
       var url=location.protocol + '//{{ serverroot }}';
-      var socket = io.connect(url);
+      var socket = io.connect(url, {transports: ['websocket']});
       socket.emit('join', {'room':'{{ gameid }}'});     
       socket.on('connect', function() {
           console.log("*** WS:Connected: " + url);
