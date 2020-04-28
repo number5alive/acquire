@@ -87,7 +87,7 @@ function addTile(rackname, tilename, dropzone=null){
   }
 }
  
-function makeTileDragable(elmnt, dropz){
+function makeTileDragable(elmnt, dropz, onDragAction=null){
   var origx = 0, origy = 0;
   var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -107,6 +107,10 @@ function makeTileDragable(elmnt, dropz){
     document.onmouseup = closeDragElement;
     // call a function whenever the cursor moves:
     document.onmousemove = elementDrag;
+    if( onDragAction )
+    {
+      onDragAction(elmnt, false);
+    }
   }
 
   function elementDrag(e) {
@@ -134,11 +138,11 @@ function makeTileDragable(elmnt, dropz){
     }
 
     // Change how it displays if it's crossing into an area
-    if( overlaps && !elmnt.className.includes(" overlap") )
+    if( overlaps && !elmnt.className.includes(" overlaps") )
     {
-      elmnt.className = elmnt.className + " overlap";
+      elmnt.className = elmnt.className + " overlaps";
     }
-    else if( !overlaps && elmnt.className.includes(" overlap") )
+    else if( !overlaps && elmnt.className.includes(" overlaps") )
     {
       elmnt.className=elmnt.className.replace(" overlaps", "");
     }
@@ -158,6 +162,10 @@ function makeTileDragable(elmnt, dropz){
     /* stop moving when mouse button is released:*/
     document.onmouseup = null;
     document.onmousemove = null;
+    if( onDragAction )
+    {
+      onDragAction(elmnt, true);
+    }
 
     for( var i=0; i<dropz.length; i++)
     {

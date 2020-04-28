@@ -309,7 +309,7 @@ border: 1px solid red;
   padding-bottom: 1px;
 }
 
-.hotelspace{
+.hotelspace, .rmhotelzone{
   position: relative;
   height: 30px;
   margin: 10px;
@@ -367,8 +367,19 @@ border: 1px solid red;
   clear: both;
 }
 
+/* For the hotel widget when it's on the board */
+.honboard {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5%,
+    #ccc 8%
+  );
+}
+
+/* For any dragable item when it overlaps its drop zone */
 .overlaps {
-  background-color: yellow;
+  background-color: yellow !important;
 }
 
 /* Footer */
@@ -377,6 +388,29 @@ border: 1px solid red;
   text-align: center;
   background: #ddd;
   margin-top: 20px;
+}
+
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
 }
 
 /* Responsive layout - when the screen is less than 800px wide, make the two columns stack on top of each other instead of next to each other */

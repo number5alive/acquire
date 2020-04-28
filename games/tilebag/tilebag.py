@@ -189,13 +189,17 @@ class TileBagGame(Game):
     if self._started:
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
-
+   
+      # make sure it's a remove, or a valid add action
       if alpha is None or self.board.alphaIsValid(alpha):
-
-        # Make sure there are two tiles side by side, or no bueno
-        r, c = Tile.fromAlpha(alpha)
-        conn = self.board.findConnected(None, r, c)
-        print("Connected to {} is: {}".format(alpha, conn))
+        conn = None
+         
+        if alpha is not None:
+          # find the full list of connected tiles
+          r, c = Tile.fromAlpha(alpha)
+          conn = self.board.findConnected(None, r, c)
+          print("Connected to {} is: {}".format(alpha, conn))
+          # TODO: make sure there are at least two connected tiles
       
         for h in self.hotels:
           if h.name == hotel:

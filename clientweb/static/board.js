@@ -66,11 +66,9 @@ function boardClick(cellname) {
       // unselect the last clicked
       if( lastclicked != null )
       {
-        console.log("clearing previous click");
         lastclicked.className=lastclicked.className.replace(" selected", "");
       }
       // make the new one the last clicked
-      console.log(cellname + " is the new lastclicked");
       cell.className=cell.className + " selected";
       lastclicked=cell;
     }

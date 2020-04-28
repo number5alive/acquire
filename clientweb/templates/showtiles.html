@@ -17,7 +17,6 @@
 
 <div class="header">
   <h1>TileBag!</h1>
-  <p>Resize the browser window to see the effect.</p>
 </div>
 
 <div class="topnav" id="topnav">
@@ -70,7 +69,11 @@
       <div class="row">
         <div class="hotelcolumn">
           <h2>HOTELS</h2>
-          <div class="hotellist" id="el_hotellist"></div>
+          <div class="hotellist" id="el_hotellist">
+            <div class="rmhotelzone">
+              <div class="hotelitem" id="rmhotelzone" style="cursor: auto">Drag Hotels</div>
+            </div>
+          </div>
         </div>
         <div class="boardcolumn">
           <h2>BOARD</h2>
@@ -82,8 +85,24 @@
 </div>
 
 <div class="footer">
+  <div class="card">
+  <button type="button" class="collapsible">Instructions</button>
+  <div class="content">
+    <p>Instruction: All game actions are completed by dragging elements</p>
+    <ul style="text-align:left">
+      <li>Place a Tile - Drag tile to the board</li>
+      <li>Buy a Stock - Drag hotel to the stock market</li>
+      <li>Sell a Stock - Drag stock to the hotel area</li>
+      <li>Place a Hotel - Click a tile on the board, Drag hotel to the board</li>
+      <li>Remove a Hotel - Drag hotel to the "Remove" area</li>
+    </ul>
+    <p>Note: you are responsible for all game mechanics and logic beyond this (for now). I.e. you will have to determine the price of stocks, pay that from your wallet, and reconcile any hotel mergers. This logic might make it into the next version, so stay tuned!</p>
+  </div>
+  </div>
+  <div class="card">
   <div class="hotellist"><img src="{{ url_for('.static', filename='stockchart.jpg') }}" alt="STOCK CHART" ></img></div>
   <h2>Footer</h2>
+  </div>
 </div>
 
 <!-- ################################################################### --> 
@@ -102,10 +121,11 @@
    ];
     
   // The main window components we'll reference the most
-  const el_topnav = document.getElementById("topnav");
-  const el_hotellist = document.getElementById("el_hotellist");
-  const el_stockrack = document.getElementById("el_stockrack");
-  const el_tilerack = document.getElementById("tilerack");
+  const el_topnav=document.getElementById("topnav");
+  const el_hotellist=document.getElementById("el_hotellist");
+  const el_rmhotelzone=document.getElementById("rmhotelzone");
+  const el_stockrack=document.getElementById("el_stockrack");
+  const el_tilerack=document.getElementById("tilerack");
   const el_gameboard=document.getElementById("acquireBoard")
   const el_pmoney=document.getElementById('playermoney');
   const el_moneyval=document.getElementById('moneyval'); // the widget
@@ -126,25 +146,38 @@
   // Draw the BOARD
   drawBoard(el_gameboard); // from board.js - draws an empty board
    
+  // Called when a hotel tile starts or stops being dragged
+  function onHotelDrag(hotel, done=false) {
+    // TODO: See if the hotel is on the board or not
+    if( !done ) {
+      el_rmhotelzone.innerText = "REMOVE";
+    }
+    else {
+      el_rmhotelzone.innerText = "Drop Zone";
+    }
+  }
+   
   // Dynamically add the HOTELS tokens to the page
   const buildHotelName = function(hotel){
     // First Create the space for the hotel item
     var hs=document.createElement('div');
     hs.className="hotelspace";
-    el_hotellist.append(hs);
+    //el_hotellist.appendChild(hs);
+    el_hotellist.insertBefore(hs, el_rmhotelzone.parentNode);
      
     // Then create the individual hotel and put it in that space
     hi = document.createElement('div');
     hi.className="hotelitem";
     hi.id = hotel.name;
-    hs.append(hi);
+    hs.appendChild(hi);
      
     hi.innerText=hotel.name;
-    hi.style.backgroundColor=hotel.color;
+    hi.style.backgroundColor=hi.style.backgroundColor + " " +  hotel.color;
      
     // drop hotel on stocks to buy stock, on board to place hotel
-    makeTileDragable(hi, [[el_stockrack, 'playstock'],
-                          [el_gameboard, 'placehotel']]);
+    makeTileDragable(hi, [[el_stockrack, 'buystock'],
+                          [el_gameboard, 'placehotel'],
+                          [el_rmhotelzone, 'rmhotel']], onHotelDrag);
   }
   HOTELS.forEach(h => buildHotelName(h));
 
@@ -171,9 +204,27 @@
     si.append(sia);
     si.append(sib);
      
-    makeTileDragable(si, [[el_hotellist, 'playstock']]);
+    makeTileDragable(si, [[el_hotellist, 'sellstock']]);
   }
   HOTELS.forEach(h => buildStockWidget(h));
+   
+  enableCollapsables();
+  function enableCollapsables() {
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    }
+  }
   </script>
       
 <!-- ################################################################### --> 
@@ -182,8 +233,9 @@
   <script>
   el_gameboard.addEventListener('playtile', tileDropped);
   el_gameboard.addEventListener('placehotel', placeHotel);
-  el_stockrack.addEventListener('playstock', buyStock);
-  el_hotellist.addEventListener('playstock', sellStock);
+  el_stockrack.addEventListener('buystock', buyStock);
+  el_hotellist.addEventListener('sellstock', sellStock);
+  el_rmhotelzone.addEventListener('rmhotel', removeHotel);
 
   /* For TILES */
   function tileDropped(e){
@@ -219,23 +271,8 @@
     }
   }
    
-  /* For STOCKS */
-  function buyStock(e){
-    // called with a hotelitem object, innertext will work here (sloppy)
-    hotel=e.detail.tile;
-    stockAction(hotel.innerText, +1);
-  }
-  function sellStock(e){
-    console.log("selling a Stock");
-    // called with a stockitem object, will need to translate innertext
-    si=e.detail.tile;
-    hotshort=si.id.split('_').pop();
-    let h=HOTELS.find(o => o.short === hotshort);
-    stockAction(h.name, -1);
-  }
-   
+  /* For HOTELS */
   async function placeHotel(e){
-    console.log("!!!!placeHotel - listener");
     hel=e.detail.tile;
     var tgt=getLastClicked();
     if( tgt != null )
@@ -260,9 +297,45 @@
       }
     }
   }
+
+  async function removeHotel(e){
+    hel=e.detail.tile;
+     
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'placeHotel', 
+                                      'hotel' : hel.innerText,
+                                      'tile' : null,
+                                    })
+                },
+              );
+               
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Remove-Hotel Action");
+    }
+  }
+   
+  /* For STOCKS */
+  function buyStock(e){
+    // called with a hotelitem object, innertext will work here (sloppy)
+    hotel=e.detail.tile;
+    stockAction(hotel.innerText, +1);
+  }
+  function sellStock(e){
+    // called with a stockitem object, will need to translate innertext
+    si=e.detail.tile;
+    hotshort=si.id.split('_').pop();
+    let h=HOTELS.find(o => o.short === hotshort);
+    stockAction(h.name, -1);
+  }
    
   async function stockAction(hname, amt){
-     
     // make REST call to change player hotel amounts by this
     const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid=gameid, playerid=playerid) }}", {
                 method: 'PATCH', 
@@ -350,27 +423,26 @@
       for( var i=0; i<dhotel['occupies'].length; i++)
       {
         var t = dhotel['occupies'][i];
-        console.log(h.name + " on tile " + t);
         var cell=document.getElementById(t);
         if( cell != null)
         {
-          console.log("setting colour");
           cell.style.backgroundColor=h.color;
           cell.style.borderColor=h.color;
           cell.innerText = h.short;
           cell.style.fontSize="small";
-          cell.className = cell.className + " withhotel";
+          cell.className = cell.className + " honboard";
         }
       }
+
+      // Tweak the hotel widget so it's clear it's on the board
+      if( !hel.className.includes(" honboard") ) {
+        hel.className = hel.className + " honboard";
+      }
     }
-    /*
-    // Obviously we can't clear where it WAS, since we don't have that
-    // value right now... TODO: fix that
-    else {
-      // Clear the formatting if it exists
-      cell.className=cell.className.replace(" withhotel", "");
+    else
+    {
+      hel.className=hel.className.replace(" honboard", "");
     }
-    */
      
     // Grey out the widget based on how many stocks are left
     st=parseInt(dhotel['stocks']);
@@ -481,7 +553,7 @@
       var socket = io.connect('{{ serverroot }}');
       socket.emit('join', {'room':'{{ gameid }}'});     
       socket.on('connect', function() {
-          console.log("*** WS:Connected ***")
+          console.log("*** WS:Connected {{serverroot}}***")
       });
 
       socket.on('update', function(data) {

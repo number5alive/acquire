@@ -69,18 +69,16 @@
   color: white;
   opacity: 0.9;
 }
-
-.withhotel {
-}
  
 .occupied {
   background-color: grey;
   color: black;
+  background-size: contain;
   background-image: url("tile.png");
 }
 
 .highlighted {
-  background: linear-gradient(to top left, #000 0%, #000 85%, grey 85%, grey 100%);
+  background: linear-gradient(to top left, #000 0%, #000 75%, darkblue 75%, darkblue 100%);
   /*
   background: linear-gradient(to top left, #000 0%, #000 85%, red 85%, red 100%);
   border-color: darkblue;
