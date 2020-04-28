@@ -80,8 +80,12 @@
 }
 
 .highlighted {
+  background: linear-gradient(to top left, #000 0%, #000 85%, grey 85%, grey 100%);
+  /*
+  background: linear-gradient(to top left, #000 0%, #000 85%, red 85%, red 100%);
   border-color: darkblue;
   background-color: darkblue;
+  */
   color: white;
   opacity: 0.9;
 }

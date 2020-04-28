@@ -22,7 +22,7 @@
 
 <div class="topnav" id="topnav">
 </div>
-<div class="mstick">
+<div class="mstick" id="messagebar">
   <div class="messages">
     <div class="gamemessage" id="el_gamemessage"></div>
     <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
@@ -92,13 +92,13 @@
   <script>
   /* The hotel constants */
   let HOTELS = [
-       {name: "Worldwide", short: "WW", color: "#7b359c"},
+       {name: "Worldwide", short: "WW", color: "rgba(87, 54, 107, 1)"},
        {name: "Saxxon", short: "SX", color: "rgba(199, 140, 68, 1)"},
-       {name: "Festival", short: "FV", color: "#1d7a2b"},
-       {name: "Imperial", short: "IM", color: "#b3b329"},
-       {name: "American", short: "AM", color: "#4244db"},
-       {name: "Continental", short: "CN", color: "#ed3434"},
-       {name: "Tower", short: "TW", color: "#615d5b"},
+       {name: "Festival", short: "FV", color: "rgba(39, 117, 39, 1)"},
+       {name: "Imperial", short: "IM", color:"rgba(181, 149, 45, 1)"},
+       {name: "American", short: "AM", color: "rgba(45, 51, 140, 1)"},
+       {name: "Continental", short: "CN", color: "rgba(156, 57, 26, 1)"},
+       {name: "Tower", short: "TW", color: "rgba(115, 113, 112, 1)"},
    ];
     
   // The main window components we'll reference the most
@@ -111,6 +111,7 @@
   const el_moneyval=document.getElementById('moneyval'); // the widget
   const el_thisplayer=document.getElementById('playername');
   const el_currplayer=document.getElementById('el_currplayer');
+  const el_messagebar=document.getElementById('messagebar');
   const el_gamemessage=document.getElementById('el_gamemessage');
    
   // For TILERACK
@@ -323,14 +324,20 @@
   function sendGameMessage(message, error) {
     console.log(message);
     el_gamemessage.innerText=message;
+    /*
     if( error === undefined || error == true ) {
       el_gamemessage.style.color = "red";
     } else {
       el_gamemessage.style.color = "white";
     }
+    */
     el_gamemessage.className="gamemessage";
+    if( error === undefined || error == true ) {
+      el_messagebar.style.backgroundColor="red"
+    }
     setTimeout(function(){
           el_gamemessage.className = 'gamemessage waa';
+          el_messagebar.style.backgroundColor= '#333';
       }, 2500);
   }
      
@@ -349,6 +356,9 @@
         {
           console.log("setting colour");
           cell.style.backgroundColor=h.color;
+          cell.style.borderColor=h.color;
+          cell.innerText = h.short;
+          cell.style.fontSize="small";
           cell.className = cell.className + " withhotel";
         }
       }
