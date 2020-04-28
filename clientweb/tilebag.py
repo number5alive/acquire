@@ -25,5 +25,5 @@ def get_tilebag_api():
 @tilebag_blueprint.route('/<int:gameid>', methods=['GET'])
 def get_tilebag_clientif(gameid):
   playerid=UserIf.getCallingPlayerId()
-  return render_template('showtiles.html', gameid=gameid, playerid=playerid, serverroot=request.url_root, debug=json.dumps(False))
+  return render_template('showtiles.html', gameid=gameid, playerid=playerid, serverroot=request.host, debug=json.dumps(False))
    
