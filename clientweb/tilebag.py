@@ -1,7 +1,7 @@
 from flask import render_template
 from flask import jsonify
 from flask import request
-from games.tiles import TileBag, Tile
+from games.tilebag.tiles import TileBag, Tile
 import userif as UserIf
 import json
  

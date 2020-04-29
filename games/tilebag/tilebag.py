@@ -1,8 +1,8 @@
 from base import Game
 from base import Player
-from games.tiles import Tile, TileBag
-from games.acquire.board import Board
-from games.acquire.hotels import Hotel, Stock
+from games.tilebag.tiles import Tile, TileBag
+from games.tilebag.board import Board
+from games.tilebag.hotels import Hotel, Stock
 from itertools import cycle, islice
 from random import shuffle
 

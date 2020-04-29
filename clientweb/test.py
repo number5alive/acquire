@@ -1,7 +1,7 @@
 from flask import render_template
 from flask import jsonify
 from lobby.lobbyrest import BASEURI as RESTURI
-from games.tiles import TileBag, Tile
+from games.tilebag.tiles import TileBag, Tile
 import json
  
 # Expose these routes to the main server application 
