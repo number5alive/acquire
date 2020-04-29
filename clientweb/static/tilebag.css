@@ -74,6 +74,10 @@ div.messages {
   text-align: center;
 }
 
+.currplayer {
+  background-color: darkblue ;
+}
+
 /* Style the topnav links */
 .topnav a {
   float: left;

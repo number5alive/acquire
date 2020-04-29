@@ -519,8 +519,14 @@
     } else {
       pinfo=data['game']['you']['playerdata'];
        
+      // Set Current player, highlight it if it's you
       el_thisplayer.innerText=data['game']['you']['name'];
-       
+      if( data['game']['you']['id'] == data['game']['currPlayer']['id']) {
+        el_thisplayer.className = el_thisplayer.className + " currplayer";
+      } else{
+        el_thisplayer.className = el_thisplayer.className.replace(" currplayer", "");
+      }
+      
       // PLAYER MONEY
       el_pmoney.innerText=pinfo['money'];
 
