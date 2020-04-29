@@ -92,6 +92,7 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
   var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var crossingDropZone = false;
+  var origZindex=elmnt.style.zIndex;    
 
   elmnt.onmousedown = dragMouseDown;
     
@@ -104,6 +105,7 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
     origx = elmnt.offsetLeft;
     origy = elmnt.offsetTop;
     origbg = elmnt.style.backgroundColor;
+    elmnt.style.zIndex=10;  // make sure dragged item is always on top
     document.onmouseup = closeDragElement;
     // call a function whenever the cursor moves:
     document.onmousemove = elementDrag;
@@ -181,5 +183,6 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
     elmnt.style.left = (origx) + "px";
     elmnt.style.backgroundColor = origbg;
     elmnt.className=elmnt.className.replace(" overlaps", "");
+    elmnt.style.zIndex=origZindex;   
   }
 } 

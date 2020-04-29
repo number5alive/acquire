@@ -1,4 +1,6 @@
 from flask import Flask
+from flask import url_for, send_from_directory
+import os
 from lobby.lobbyrest import lobbyrest_blueprint
 from games.tilebag.tilebagrest import tilebagrest_blueprint, TILEBAGREST_URL
 from clientweb.test import testview_blueprint
@@ -17,6 +19,12 @@ app.register_blueprint(tilebagrest_blueprint, url_prefix=TILEBAGREST_URL)
 app.register_blueprint(lobby_blueprint) # the lobby
 app.register_blueprint(testview_blueprint, url_prefix='/test') # for testing
 app.register_blueprint(tilebag_blueprint, url_prefix=TILEBAG_URL)
+
+@app.route('/favicon.ico')
+def favicon():
+  ficodir=os.path.join(app.root_path, 'clientweb/static')
+  print(ficodir)
+  return send_from_directory(ficodir, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
  
 @socketio.on('connect')
 def on_connect():

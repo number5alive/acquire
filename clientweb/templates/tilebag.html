@@ -1,134 +1,258 @@
 <!DOCTYPE html>
 <html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <head>
-  <!-- Include the Styles we'll want to use --> 
-  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-  <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}">
-  <link rel="stylesheet" href="{{ url_for('.static', filename='tiles.css') }}">
+  <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}{{ cachefix }}">
    
   <!-- Include our javascript helpers -->
-  <script src="{{ url_for('.static', filename='board.js') }}"></script>
-  <script src="{{ url_for('.static', filename='tiles.js') }}"> </script>
-   
+  <script src="{{ url_for('.static', filename='board.js') }}{{ cachefix }}"></script>
+  <script src="{{ url_for('.static', filename='tiles.js') }}{{ cachefix }}"> </script>
+    
    <!-- And our WebSocket helper -->
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
    
-  <!-- A bit of page-specific style -->
-  <style>
-    body {
-        font-family: 'Roboto';font-size: 22px;
-    }
-
-    #dropzone {
-      bottom: 10px;
-      z-index: -5;
-      font-size: x-large;
-      line-height: 5px;
-      height: 30%;
-      width: 100%;
-      background-color: LightCyan;
-      text-align: center;
-      border: 1px solid #d3d3d3;
-      border-radius: 15px;
-    }
-  </style>
 </head>
- 
-<!-- Ahh, the meat of our page -->
 <body>
-  <h1>Your Tiles - {{userid}} </h1>
 
-  <p>Click-and-drag the tile you want to Play to the Play area</p>
+<div class="header">
+  <h1>TileBag!</h1>
+  <p>Drag and Drop to make Game Actions</p>
+</div>
 
-  <div id="gamestate">
-    CurrPlayer: <span id="currplayer"></span>
+<div class="topnav" id="topnav">
+</div>
+<div class="mstick" id="messagebar">
+  <div class="messages">
+    <div class="gamemessage" id="el_gamemessage"></div>
+    <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
+    <div class="staticmessage" id="playername" style="float:middle">Guest? Click your Name Above</div>
   </div>
-   
-  <div id="playerinfo">
-    <div id=info>
-      Cash: <span id=money></span>
-      Stocks: <span id=stocks></span>
+</div>
+
+<div class="row">
+  <div class="infocolumn">
+    <h2>PLAYER INFO</h2>
+    <div class="card">
+      <h3 style="display:inline">BANK  </h3><span id="playermoney">$$$$$</span>
+      <div class="moneycontainer">
+        <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
+        <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
+        <button class="plusbutton" onclick="mvalClick(100)" id="plus100">+100</button>
+        <button class="plusbutton" onclick="mvalClick(1000)" id="plus1k">+1K</button>
+      </div>
+      <div class="moneyaction">
+        <button onclick="mrstClick()" id="resetmoney">Reset</button>
+        <input id="moneyval" type="number" value=0></input>
+        <button onclick="msetClick()" id="submitmoney">Submit</button>
+      </div>
     </div>
-    <div id="tileRack"></div>
+    <div class="card">
+      <h3>STOCK MARKET</h3>
+      <div class="stockrack" id="el_stockrack">
+        <!-- The following will dynamically be populated with
+        <div class="stockspace">M</div> -->
+      </div>
+    </div>
   </div>
-   
-   
-  <div id="dropzone">
-    <p>Drop Here to Play</p>
-     
-    <!-- Add the board, and populate it -->
-    <div id="acquireBoard"></div>
+  <div class="maincolumn">
+    <div class="card">
+      <h2>TILES</h2>
+      <div class="tilerack" id="tilerack">
+        <!-- The following will dynamically be populated with
+        <div class="rackspace"></div>
+             And each will eventually get populated with
+        <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
+        -->
+      </div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <div class="hotelcolumn">
+          <h2>HOTELS</h2>
+          <div class="hotellist" id="el_hotellist">
+            <div class="rmhotelzone">
+              <div class="rmhotelitem" id="rmhotelzone">Hotel Removal Zone</div>
+            </div>
+          </div>
+        </div>
+        <div class="boardcolumn">
+          <h2>BOARD</h2>
+          <div class="aquireBoard" style="height:300px;" id="acquireBoard"></div>
+        </div>
+      </div>
+    </div>
   </div>
-   
-  <!-- This bit configures the websocket so we'll know if the game updates -->
-  <script type="text/javascript" charset="utf-8">
-      // TODO: get URL from python
-      var socket = io.connect('{{ serverroot }}');
-      socket.emit('join', {'room':'{{ gameid }}'});     
-      socket.on('connect', function() {
-          console.log("*** Connected ***")
-      });
+</div>
 
-      socket.on('update', function(data) {
-        console.log(data);
-        rendergame();
-      });
-       
-  </script>
-     
-  <!-- This bit renders the dynamic content on the page -->
+<div class="footer">
+  <div class="card">
+  <button type="button" class="collapsible">Instructions</button>
+  <div class="content">
+    <p>Instruction: All game actions are completed by dragging elements</p>
+    <ul style="text-align:left">
+      <li>Place a Tile - Drag tile to the board</li>
+      <li>Buy a Stock - Drag hotel to the stock market</li>
+      <li>Sell a Stock - Drag stock to the hotel area</li>
+      <li>Place a Hotel - Click a tile on the board, Drag hotel to the board</li>
+      <li>Remove a Hotel - Drag hotel to the "Remove" area</li>
+    </ul>
+    <p>Note: you are responsible for all game mechanics and logic beyond this (for now). I.e. you will have to determine the price of stocks, pay that from your wallet, and reconcile any hotel mergers. This logic might make it into the next version, so stay tuned!</p>
+  </div>
+  </div>
+  <div class="card">
+  <div class="hotellist"><img src="{{ url_for('.static', filename='stockchart.jpg') }}" alt="STOCK CHART" ></img></div>
+  <h2>Footer</h2>
+  </div>
+</div>
+
+<!-- ################################################################### --> 
+<!-- ## Javascript for Rendering Game Components on the Screen -->
+<!-- ################################################################### --> 
   <script>
-  var tileRack = document.getElementById("tileRack");
-  makeTileRack(tileRack, document.getElementById("dropzone")); // from tiles.js - draws an empty rack
+  /* The hotel constants */
+  let HOTELS = [
+       {name: "Worldwide", short: "WW", color: "rgba(87, 54, 107, 1)"},
+       {name: "Saxxon", short: "SX", color: "rgba(199, 140, 68, 1)"},
+       {name: "Festival", short: "FV", color: "rgba(39, 117, 39, 1)"},
+       {name: "Imperial", short: "IM", color:"rgba(181, 149, 45, 1)"},
+       {name: "American", short: "AM", color: "rgba(45, 51, 140, 1)"},
+       {name: "Continental", short: "CN", color: "rgba(156, 57, 26, 1)"},
+       {name: "Tower", short: "TW", color: "rgba(115, 113, 112, 1)"},
+   ];
+    
+  // The main window components we'll reference the most
+  const el_topnav=document.getElementById("topnav");
+  const el_hotellist=document.getElementById("el_hotellist");
+  const el_rmhotelzone=document.getElementById("rmhotelzone");
+  const el_stockrack=document.getElementById("el_stockrack");
+  const el_tilerack=document.getElementById("tilerack");
+  const el_gameboard=document.getElementById("acquireBoard")
+  const el_pmoney=document.getElementById('playermoney');
+  const el_moneyval=document.getElementById('moneyval'); // the widget
+  const el_thisplayer=document.getElementById('playername');
+  const el_currplayer=document.getElementById('el_currplayer');
+  const el_messagebar=document.getElementById('messagebar');
+  const el_gamemessage=document.getElementById('el_gamemessage');
    
-  dropzone.addEventListener('playtile', tileDropped);
-
-  rendergame();
-  async function rendergame()
-  {
-      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=userid) }}");
-      const data = await response.json();
-      console.log(data);
-
-      // Display the game state
-      document.getElementById("currplayer").innerText=data['game']['currPlayer']['id']
-
-      // BOARD: Draw the board
-      drawBoard(document.getElementById("acquireBoard"),data['game']['board']); // from board.js - draws an empty board
-
-      // HOTELS: Place the hotel tokens on the board
-      hotels=data['game']['hotels'];
-      showHotels(hotels);
-       
-      // see if we have a player or a spectator
-      if( !data['game']['you'] )
-      {
-        // TODO: some fancy spectator display
-      }
-      else
-      {
-        pinfo=data['game']['you']['playerdata'];
-        // PLAYER MONEY and STOCKS
-        document.getElementById("money").innerText=pinfo['money'];
-        document.getElementById("stocks").innerText=JSON.stringify(pinfo['stocks']);
-
-        // PLAYER TILE RACK
-        tiles=data['game']['you']['playerdata']['tiles'];
-        setTiles(tileRack, tiles, dropzone);
-        showOptions(tiles);
-      }
-       
-      return tiles
+  // For TILERACK
+  // Dynamically create the spots for the tiles
+  // <div class="rackspace"></div>
+  for(var i=0; i<7; i++){
+    var rs=document.createElement('div');
+    rs.className="rackspace";
+    el_tilerack.append(rs);
   }
+   
+  // Draw the BOARD
+  drawBoard(el_gameboard); // from board.js - draws an empty board
+   
+  // Called when a hotel tile starts or stops being dragged
+  function onHotelDrag(hotel, done=false) {
+    // TODO: See if the hotel is on the board or not
+    if( !done ) {
+      el_rmhotelzone.innerText = "Drop Here to Remove";
+    }
+    else {
+      el_rmhotelzone.innerText = "Hotel Removal Zone";
+    }
+  }
+   
+  // Dynamically add the HOTELS tokens to the page
+  const buildHotelName = function(hotel){
+    // First Create the space for the hotel item
+    var hs=document.createElement('div');
+    hs.className="hotelspace";
+    //el_hotellist.appendChild(hs);
+    el_hotellist.insertBefore(hs, el_rmhotelzone.parentNode);
+     
+    // Then create the individual hotel and put it in that space
+    hi = document.createElement('div');
+    hi.className="hotelitem";
+    hi.id = hotel.name;
+    hs.appendChild(hi);
+     
+    hi.innerText=hotel.name;
+    hi.style.backgroundColor=hi.style.backgroundColor + " " +  hotel.color;
+     
+    // drop hotel on stocks to buy stock, on board to place hotel
+    makeTileDragable(hi, [[el_stockrack, 'buystock'],
+                          [el_gameboard, 'placehotel'],
+                          [el_rmhotelzone, 'rmhotel']], onHotelDrag);
+  }
+  HOTELS.forEach(h => buildHotelName(h));
 
+  // Dynamically add the "buy/sell" STOCKS widgets to the page
+  const buildStockWidget = function(hotel){
+    // First Create the space for the stock item
+    var ss=document.createElement('div');
+    ss.className="stockspace";
+    el_stockrack.append(ss);
+     
+    // Then create the individual stock and put it in that space
+    si = document.createElement('div');
+    si.className="stockitem";
+    si.id = "st_" + hotel.short;
+    si.style.backgroundColor=hotel.color;
+    ss.append(si);
+     
+    sia = document.createElement('div');
+    sia.className="stockcount";
+    sib = document.createElement('div');
+    sia.id=si.id + "_cnt";
+    sia.innerText=0;
+    sib.innerText=hotel.short;
+    si.append(sia);
+    si.append(sib);
+     
+    makeTileDragable(si, [[el_hotellist, 'sellstock']]);
+  }
+  HOTELS.forEach(h => buildStockWidget(h));
+   
+  enableCollapsables();
+  function enableCollapsables() {
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    }
+  }
+  </script>
+      
+<!-- ################################################################### --> 
+<!-- ## Javascript for Dynamic Game Effects from User actions -->
+<!-- ################################################################### --> 
+  <script>
+  el_gameboard.addEventListener('playtile', tileDropped);
+  el_gameboard.addEventListener('placehotel', placeHotel);
+  el_stockrack.addEventListener('buystock', buyStock);
+  el_hotellist.addEventListener('sellstock', sellStock);
+  el_rmhotelzone.addEventListener('rmhotel', removeHotel);
+
+  /* For TILES */
   function tileDropped(e){
     tile=e.detail.tile;
-    makeGameMove(tile); // post the move to the game server
+    if( {{debug}}  ) {
+      tile.parentNode.removeChild(tile);
+      placeTile(tile.innerText);
+    } else {
+      makeGameMove(tile); // post the move to the game server
+    }
   }
-
+     
   async function makeGameMove(tile)
   {
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid=gameid, playerid=userid) }}", {
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid=gameid, playerid=playerid) }}", {
                 method: 'PATCH', 
                 headers: {
                   Accept: 'application/json',
@@ -140,16 +264,330 @@
               );
                  
     await response.status;
-    if( response.status == 200 )
-    {
+    if( response.status == 200 ) {
       tile.parentNode.removeChild(tile);
-      rendergame()
+    } else if( response.status == 400 ) {
+      sendGameMessage("Not your turn");
+    } else {
+      sendGameMessage("Invalid Game Move");
+    }
+  }
+   
+  /* For HOTELS */
+  async function placeHotel(e){
+    hel=e.detail.tile;
+    var tgt=getLastClicked();
+    if( tgt != null )
+    {
+      // make REST call to change player hotel amounts by this
+      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
+                  method: 'PATCH', 
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ 'action':'placeHotel', 
+                                        'hotel' : hel.innerText,
+                                        'tile' : tgt.id,
+                                      })
+                  },
+                );
+                 
+      await response.status;
+      if( response.status != 200 ) {
+        sendGameMessage("Invalid Hotel Action");
+      }
+    }
+  }
+
+  async function removeHotel(e){
+    hel=e.detail.tile;
+     
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'placeHotel', 
+                                      'hotel' : hel.innerText,
+                                      'tile' : null,
+                                    })
+                },
+              );
+               
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Remove-Hotel Action");
+    }
+  }
+   
+  /* For STOCKS */
+  function buyStock(e){
+    // called with a hotelitem object, innertext will work here (sloppy)
+    hotel=e.detail.tile;
+    stockAction(hotel.innerText, +1);
+  }
+  function sellStock(e){
+    // called with a stockitem object, will need to translate innertext
+    si=e.detail.tile;
+    hotshort=si.id.split('_').pop();
+    let h=HOTELS.find(o => o.short === hotshort);
+    stockAction(h.name, -1);
+  }
+   
+  async function stockAction(hname, amt){
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'buystocks', 
+                                      'hotel' : hname,
+                                      'amount' : amt,
+                                    })
+                },
+              );
+               
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Stock Action");
+    }
+  }
+   
+  /* For MONEY */
+  function mvalClick(inc) {
+    var startVal=parseInt(el_moneyval.value);
+    var newVal=startVal + inc;
+    el_moneyval.value = newVal;
+  }
+  function mrstClick() {
+    el_moneyval.value = 0;
+  }
+  async function msetClick() {
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_money', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'money', 
+                                      'amount' : parseInt(el_moneyval.value),
+                                    })
+                },
+              );
+               
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Banking Action");
+    }
+               
+    // Reset the value in the widget for the next call
+    el_moneyval.value = 0;
+  }
+  </script>
+   
+<!-- ################################################################### --> 
+<!-- ## Javascript for Dynamic Game Effects from Server Messages -->
+<!-- ################################################################### --> 
+  <script>
+
+  function sendGameMessage(message, error) {
+    console.log(message);
+    el_gamemessage.innerText=message;
+    /*
+    if( error === undefined || error == true ) {
+      el_gamemessage.style.color = "red";
+    } else {
+      el_gamemessage.style.color = "white";
+    }
+    */
+    el_gamemessage.className="gamemessage";
+    if( error === undefined || error == true ) {
+      el_messagebar.style.backgroundColor="red"
+    }
+    setTimeout(function(){
+          el_gamemessage.className = 'gamemessage waa';
+          el_messagebar.style.backgroundColor= '#333';
+      }, 2500);
+  }
+     
+  function showHotel(dhotel) {
+    let h=HOTELS.find(o => o.name === dhotel['name']);
+    let hel=document.getElementById(dhotel['name']);
+
+    // If it's on the board, show it on the board
+    if( dhotel['tile'] != null) {
+      for( var i=0; i<dhotel['occupies'].length; i++)
+      {
+        var t = dhotel['occupies'][i];
+        var cell=document.getElementById(t);
+        if( cell != null)
+        {
+          cell.style.backgroundColor=h.color;
+          cell.style.borderColor=h.color;
+          cell.innerText = h.short;
+          cell.style.fontSize="small";
+          cell.className = cell.className + " honboard";
+        }
+      }
+
+      // Tweak the hotel widget so it's clear it's on the board
+      if( !hel.className.includes(" honboard") ) {
+        hel.className = hel.className + " honboard";
+      }
     }
     else
     {
-      // TODO: snap-back the tile and berrate the user
+      hel.className=hel.className.replace(" honboard", "");
+    }
+     
+    // Grey out the widget based on how many stocks are left
+    st=parseInt(dhotel['stocks']);
+    var decksize = st / 25;
+    if(st > 0){
+      decksize += 0.5;
+    }
+    hel.style.opacity=decksize + 0.2;
+  }
+
+  // game info only includes stocks we have, the rest are Zero
+  function updateStocks(h, pstocks) {
+    var stockval=0;
+    var si=document.getElementById("st_" + h.short + "_cnt");
+    if( pstocks[h.name] != undefined )
+    {
+      stockval=pstocks[h.name];
+    }
+    si.innerText=stockval;
+  }
+
+  function showPlayers(pdata) {
+    var pdid=pdata['id'];         // Shorthand for this function
+    var pdname=pdata['name'];
+    var pdelid="playernav_"+pdid;
+
+    // See if an element with this id already exists, if not add it to the nav
+    var pdel=document.getElementById(pdelid);
+    if( pdel === null ) {
+      // New player! yay Friends!
+       
+      // For now, each player will be a link to their page <a href="#">Link</a>
+      var name = document.createElement('a');
+      name.id=pdelid;
+      name.innerText=pdname + " (" + pdid + ")";
+      name.href="{{gameid}}?playerid=" + pdid;
+      el_topnav.appendChild(name);
     }
   }
+
+   
+  async function rendergame(data) {
+    // For testing, we may have called this function with data
+    if( data === undefined ) {
+      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}");
+       
+      await response.status;
+      if( response.status != 200 ) {
+        sendGameMessage("Unable to get game state ?");
+        return;
+      }
+       
+      data = await response.json();
+    }
+     
+    // Display the game state
+    el_currplayer.innerText=data['game']['currPlayer']['name'] + " (" + data['game']['currPlayer']['id'] + ") ";
+     
+    // Show All the players and their names
+    data['game']['players'].forEach(pdata => showPlayers(pdata));
+
+    // BOARD: Draw the board
+    drawBoard(el_gameboard,data['game']['board']); // from board.js
+
+    // HOTELS: Place the hotel tokens on the board
+    hotels=data['game']['hotels'];
+    hotels.forEach(h => showHotel(h));
+     
+    // see if we have a player or a spectator
+    if( !data['game']['you'] ) {
+      // TODO: some fancy spectator display
+    } else {
+      pinfo=data['game']['you']['playerdata'];
+       
+      el_thisplayer.innerText=data['game']['you']['name'];
+       
+      // PLAYER MONEY
+      el_pmoney.innerText=pinfo['money'];
+
+      // STOCKS
+      stocks=pinfo['stocks'];
+      HOTELS.forEach(h => updateStocks(h, stocks));
+
+      // PLAYER TILE RACK
+      tiles=pinfo['tiles'];
+      setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
+      showOptions(tiles);
+    }
+     
+    return tiles
+  }
   </script>
+         
+          
+<!-- ################################################################### --> 
+<!-- ## Javascript for loading / initializing the game (or demo) -->
+<!-- ################################################################### --> 
+  <script>
+  if( {{debug}} ) {
+    loadForDebug();
+  } else {
+    loadForReal();
+  }
+  sendGameMessage("Welcome!", false);
+  
+
+  function setupWebSocket() {
+
+      var url=location.protocol + '//{{ serverroot }}';
+      var socket = io.connect(url, {transports: ['websocket']});
+      socket.emit('join', {'room':'{{ gameid }}'});     
+      socket.on('connect', function() {
+          console.log("*** WS:Connected: " + url);
+      });
+
+      socket.on('update', function(data) {
+        console.log("WS:Update");
+        rendergame();
+      });
+  }
+  
+  function loadForReal(){
+    setupWebSocket();
+    rendergame();
+  }
+   
+  // When loading for twiddling with the client layout (no server to help)
+  function loadForDebug(){
+    tiles=gettiles();
+    async function gettiles()
+    {
+        const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
+        const data = await response.json();
+        tiles=data['tiles'];
+        setTiles("rackspace", tiles, [[acquireBoard,'playtile']]);
+        showOptions(tiles);
+         
+        return tiles
+    }
+  }
+  
+  </script>
+ 
 </body>
 </html>
+

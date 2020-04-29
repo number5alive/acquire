@@ -19,7 +19,7 @@ def get_tiles():
 """ A pretty little javascript viewer for the tiles """
 @testview_blueprint.route('/tile', methods=['GET'])
 def get_tiletest():
-  return render_template('showtiles.html', baseuri=RESTURI, gameid=8, playerid=9, debug=json.dumps(True))
+  return render_template('tilebag.html', baseuri=RESTURI, gameid=8, playerid=9, debug=json.dumps(True), cachefix="")
  
 """ Test endpoint for rendering an acquire board """
 @testview_blueprint.route('/board', methods=['GET'])
