@@ -82,14 +82,13 @@ class TileBagGame(Game):
   _playerClass=TileBagPlayer
   _starturl='/tilebag/v1'
    
-  # Instance Specific Variables
-  _currPlayer=None
-  board=[]
-  tilebag=None;
-  hotels=[Hotel(name) for name in _HOTELS]
-   
   def __init__(self, id):
     super().__init__(id)
+    self._conflictTiles=[]
+    self.board=[]
+    self._currPlayer=None
+    self.tilebag=None;
+    self.hotels=[Hotel(name) for name in self._HOTELS]
 
   def getBoard(self):
     return self.board
@@ -150,19 +149,23 @@ class TileBagGame(Game):
 
     return False
 
+  def _getHotelByName(self, hname):
+    for h in self.hotels:
+      if h.name == hname:
+        return h
+    return None
+
   # return or take stocks from the pile
   def stockAction(self, playerId, hotel, amount):
     if self._started:
       player=self._getPlayer(playerId)
       if player and type(amount) is int:
-        for h in self.hotels:
-          if h.name == hotel:
-            if amount > 0:
-              return self._takeStocks(player, h, amount)
-            elif amount < 0:
-              return self._returnStocks(player, h, -amount)
-            break
-    print("playerid {}, hotel {}, amount {}".format(playerId, hotel, amount))
+        h=self._getHotelByName(hotel)
+        if h is not None:
+          if amount > 0:
+            return self._takeStocks(player, h, amount)
+          elif amount < 0:
+            return self._returnStocks(player, h, -amount)
     return False
 
   def _takeStocks(self, player, h, amount):
@@ -184,45 +187,74 @@ class TileBagGame(Game):
 
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
-  # TODO: Validate that alpha is a position on the board
   def placeHotel(self, playerId, hotel, alpha):
     if self._started:
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
    
-      # make sure it's a remove, or a valid add action
-      if alpha is None or self.board.alphaIsValid(alpha):
-        conn = None
-         
-        if alpha is not None:
+      h=self._getHotelByName(hotel)
+      if h is not None:
+        # REMOVE HOTEL - If it's a remove, resolve conflictTiles
+        if alpha is None:
+          # remove the hotel from the board
+          h.setPosition(None, occupies=None)
+
+          # resolve any conflict tiles
+          self.updateConflictTiles()
+           
+          return True
+        
+        # ADD HOTEL - if it's an add, determine what spaces it occupies
+        elif self.board.alphaIsValid(alpha):
           # find the full list of connected tiles
           r, c = Tile.fromAlpha(alpha)
-          conn = self.board.findConnected(None, r, c)
+          conn = self.board.findConnected(None, r, c, skip=self._conflictTiles)
           print("Connected to {} is: {}".format(alpha, conn))
+           
           # TODO: make sure there are at least two connected tiles
-      
-        for h in self.hotels:
-          if h.name == hotel:
-            h.setPosition(alpha, occupies=conn)
-            return True
-        print("Invalid Hotel")
+          h.setPosition(alpha, occupies=conn)
+          return True
+        else:
+          print("Invalid Hotel Alpha / or Move")
       else:
-        print("Invalid Hotel Alpha / or Move")
+        print("Invalid Hotel name")
+    
     return False
 
-  def updateConnections(self, tile):
+  # loop through the conflict tiles and see if any are no longer in conflict
+  def updateConflictTiles(self):
+    for cf in self._conflictTiles:
+      self.checkTileNextToHotel(cf)
+
+  def checkTileNextToHotel(self, tile):
+    # find neighbouring occupied spaces
     conn=self.board.checkNeighbours(tile.row, tile.col)
-    if not len(conn) == 0:
-      # We're adjacent to *something*, see if it's more than one hotel!
-      print("{} has occupied neighbour(s) {}".format(tile, conn))
-      for h in self.hotels:
+    hn=[]
+    for h in self.hotels:
+      if h.occupies is not None:
+        # check if this space neighbours any active hotels
         tmp = [o for o in conn if o in h.occupies]
         if len(tmp) > 0:
           print("new tile at {} is adjacent to {}".format(tile, h.name))
-          h.setOccupies(self.board.findConnected(None, tile.row, tile.col))
+          hn.append(h)
 
-      # It's already on the board, so we can't check if it's between two
-      # hotels - I'll have to fix that
+    # Now hn has the list of neighbouring hotels
+    if len(hn) >= 2:
+      # it's more than one hotel - add it to a "conflict" list 
+      print("{} is between these hotels: {}".format(tile, [h.name for h in hn]))
+      if tile not in self._conflictTiles:
+        self._conflictTiles.append(tile)
+    elif len(hn) == 1:
+      print("{} is only adjacent to this hotels: {}".format(tile, hn[0].name))
+      # just one hotel, so update that hotel's connected list
+      if tile in self._conflictTiles:
+        print("removing conflict tile: {}".format(tile))
+        self._conflictTiles.remove(tile)
+        hn[0].setOccupies(self.board.findConnected(None, tile.row, tile.col, skip=self._conflictTiles))
+    else:
+      # this would happen for each "safe" new tile placed
+      if tile in self._conflictTiles:
+        self._conflictTiles.remove(tile)
        
   def playTile(self, playerId, tile=None, alpha=None):
     if tile is None and alpha is not None:
@@ -231,7 +263,17 @@ class TileBagGame(Game):
     if self._started:
       if self._currPlayer.getId() == playerId:
         if tile in self._currPlayer.tiles:
+          # NOTE: this tile MIGHT be between two tiles, in that case we need
+          #       to ensure it doesn't cause a "merger" until one of those
+          #       hotels gets removed, therefore:
+           
+          # put tile on the board, and presume it'll be between two tiles
           self.board.placeTile(tile)
+          self._conflictTiles.append(tile)
+
+          # now verify that fact for this tile, cleanup if we were wrong
+          self.checkTileNextToHotel(tile)
+
           # TODO: ensure the above succeeds and is a valid move
           self._currPlayer.removeTile(tile)
           print("Played Tile: {}".format(tile))
@@ -239,7 +281,6 @@ class TileBagGame(Game):
             print("Tilebag exhausted, trigger end-game state")
           else:
             self._currPlayer.receiveTile(self.tilebag.takeTile())
-          self.updateConnections(tile)
           self._currPlayer=next(self._rotation)
           return True
         else:

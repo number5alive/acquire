@@ -49,8 +49,7 @@ class Board:
 
   # Danger... Recursion! (and slow, unoptimized recursion at that!)
   # TODO: change the board to include bitmasking and do this right!
-  def findConnected(self, conn, r, c):
-    print("findConnected")
+  def findConnected(self, conn, r, c, skip=[]):
     if conn is None:
       conn=[]
        
@@ -69,9 +68,9 @@ class Board:
       conn.append(curralpha)
       nb = self.checkNeighbours(r, c)
       for n in nb:
-        if n not in conn:
+        if n not in conn and n not in [str(t) for t in skip]:
           rnew, cnew = Tile.fromAlpha(n)
-          conn = self.findConnected(conn, rnew, cnew)
+          conn = self.findConnected(conn, rnew, cnew, skip)
        
     return conn;
      
