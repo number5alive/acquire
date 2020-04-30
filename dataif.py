@@ -24,7 +24,8 @@ def readGameStates():
       print("Recovering server state from file")
       # TODO: recreate server state from the info in the file
       #games = json.load(f)
-      games=[Game(id) for id in range(0,2)]
+      #games=[Game(id) for id in range(0,2)]
+      games=[Game(id) for id in ["this", "is", "a", "game", "id"]]
       from games.tilebag.tilebag import TileBagGame, TileBagPlayer
       tbg=createGame("TileBag")
       tbg.addPlayer( TileBagPlayer(513, "Colleen", money=5000) )
@@ -34,7 +35,8 @@ def readGameStates():
       tbg.run()
   else:
     print("no saved state, create one")
-    games=[Game(id) for id in range(0,2)]
+#    games=[Game(id) for id in range(0,2)]
+    games=[Game(id) for id in ["this", "is", "a", "game", "id"]]
     saveGameStates()
 
 def notifyPlayers(room):
@@ -60,20 +62,34 @@ def getGameById(gameid):
 def getAllGameIds():
   return [game.id for game in games]
 
-def createGame(gamename):
+def createGame(gametype, gameid=None):
   newGame=None
-  gameInfo=getGameInfo(gamename)
+  newGameId=gameid
+  if gameid is None:
+    newGameId=len(games)
+
+  gameInfo=getGameInfo(gametype)
   if gameInfo is not None:
     class_name=gameInfo['class']
     game_class=locate(class_name)
     print('looked for: ' + class_name)
     print('found: ' + str(game_class))
     if game_class:
-      newGame=game_class(len(games))
+      newGame=game_class(newGameId)
       games.append(newGame)
       saveGameStates() #update the game state when we add a new one
   return newGame;
 
+def deleteGame(gameid=None):
+  req_game=getGameById(gameid)
+  if req_game is not None:
+    print("Deleting {}".format(req_game))
+    games.remove(req_game)
+    print("2Deleting {}".format(req_game))
+    del req_game
+    return True
+  return False
+ 
 # ----- Query Players -----
 def getAllPlayersInGame(gameid):
   req_game=getGameById(gameid)

@@ -18,7 +18,7 @@ def getCallingPlayerInfo(req_game):
    
   caller=UserIf.getCallingPlayerId()
   if caller:
-    pinfo=req_game.getPlayerInfo(int(caller))
+    pinfo=req_game.getPlayerInfo(caller)
   return pinfo
  
 # GET / Confirm Server is running
@@ -28,7 +28,7 @@ def rest_tilebag_hello():
     return jsonify({'message' : 'Hello, World!'})
      
 # GET /games/id Get details about a specific game
-@tilebagrest_blueprint.route('/<int:gameid>', methods=['GET'])
+@tilebagrest_blueprint.route('/<string:gameid>', methods=['GET'])
 def rest_tilebag_get_game_info(gameid):
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -44,7 +44,7 @@ def rest_tilebag_get_game_info(gameid):
     abort(404) #no such game
 
 # PATCH /games/<id>/board place a tile in the game
-@tilebagrest_blueprint.route('/<int:gameid>/board', methods=['PATCH'])
+@tilebagrest_blueprint.route('/<string:gameid>/board', methods=['PATCH'])
 def rest_tilebag_placetile(gameid):
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
@@ -69,7 +69,7 @@ def rest_tilebag_placetile(gameid):
   abort(400)
    
 # PATCH /games/<id>/hotels place a hotel on/off the board
-@tilebagrest_blueprint.route('/<int:gameid>/hotels', methods=['PATCH'])
+@tilebagrest_blueprint.route('/<string:gameid>/hotels', methods=['PATCH'])
 def rest_tilebag_placehotel(gameid):
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
@@ -101,7 +101,7 @@ def rest_tilebag_placehotel(gameid):
   abort(404)
 
 # PATCH /games/<id>/stocks get or return stocks
-@tilebagrest_blueprint.route('/<int:gameid>/stocks', methods=['PATCH'])
+@tilebagrest_blueprint.route('/<string:gameid>/stocks', methods=['PATCH'])
 def rest_tilebag_stocks(gameid):
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
@@ -131,7 +131,7 @@ def rest_tilebag_stocks(gameid):
   abort(404)
    
 # PATCH /games/<id>/money get or return money
-@tilebagrest_blueprint.route('/<int:gameid>/money', methods=['PATCH'])
+@tilebagrest_blueprint.route('/<string:gameid>/money', methods=['PATCH'])
 def rest_tilebag_money(gameid):
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)

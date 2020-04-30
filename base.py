@@ -15,6 +15,9 @@ class Player:
       self._name=name
     else:
       self._name="NoName"+str(id)
+
+  def __del__(self):
+    print("Deleting Player(base)")
  
   def getId(self):
     return self.id
@@ -58,6 +61,12 @@ class Game:
     self._id = id
     self._started = False
     self._players = []
+
+  def __del__(self):
+    print("Deleting Game(base)")
+    for player in self._players:
+      self._players.remove(player)
+      del player
      
   @property
   def id(self):

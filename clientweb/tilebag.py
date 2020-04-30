@@ -31,7 +31,7 @@ def getStaticMaxChangeTime():
   return (max(os.stat(root).st_mtime for root,_,_ in os.walk(staticdir)))
    
 
-@tilebag_blueprint.route('/<int:gameid>', methods=['GET'])
+@tilebag_blueprint.route('/<string:gameid>', methods=['GET'])
 def get_tilebag_clientif(gameid):
   playerid=UserIf.getCallingPlayerId()
    

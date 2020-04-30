@@ -5,6 +5,7 @@ from flask import Response
 import dataif as DataIf
 from base import Game, Player
 from config import serverconfig, getGameInfo
+import hashlib # for creating playerIds
 
 BASEURI="/gamelobby/v1"
  
@@ -31,23 +32,28 @@ def rest_lobby_get_games():
 # POST /games Create a new game
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
 def rest_lobby_make_game():
-  if not request.json or not 'gamename' in request.json:
+  if not request.json or not 'gametype' in request.json:
     print("didn't specify the game type to create")
     abort(404)
+
+  # See if the caller provided a custom game name
+  req_gid=None
+  if 'gameid' in request.json:
+    req_gid=request.json['gameid']
    
-  req_gname=request.json['gamename']
-  if getGameInfo(req_gname) is None:
+  req_gtype=request.json['gametype']
+  if getGameInfo(req_gtype) is None:
     print("asking for a game that doesn't exist")
     abort(404)
      
-  newGame=DataIf.createGame(req_gname)
+  newGame=DataIf.createGame(req_gtype, req_gid)
   if newGame:
     return Response(request.base_url + '/' + str(newGame.id), status=201)
   else:
     abort(404) # couldn't create the game
    
 # GET /games/id Get details about a specific game
-@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['GET'])
 def rest_lobby_get_game_info(gameid):
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -55,8 +61,16 @@ def rest_lobby_get_game_info(gameid):
   else:
     abort(404) #no such game
    
+@lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['DELETE'])
+def rest_lobby_delete_game(gameid):
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    if DataIf.deleteGame(gameid):
+      return jsonify({'success':True})
+  abort(404) #no such game
+      
 # PATCH /games/id Start or Stop a specific game
-@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>', methods=['PATCH'])
+@lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['PATCH'])
 def rest_lobby_start_game(gameid):
   # make sure they're trying to set running : true
   print(request.json)
@@ -99,7 +113,7 @@ def rest_lobby_start_game(gameid):
   abort(404) # Couldn't find the game
    
 # GET /games/<id>/players List all the players playing a specific game
-@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>/players', methods=['GET'])
 def rest_lobby_get_players(gameid): 
   players=DataIf.getAllPlayersInGame(gameid)
   if players is not None:
@@ -108,7 +122,7 @@ def rest_lobby_get_players(gameid):
     abort(404) #Likely no such game
      
 # GET /games/<id>/players/<id> Get specific details about a given player
-@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players/<int:playerid>', methods=['GET'])
+@lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>/players/<string:playerid>', methods=['GET'])
 def rest_lobby_get_player_info(gameid, playerid): 
   players=DataIf.getAllPlayersInGame(gameid)
   if players is not None:
@@ -121,7 +135,7 @@ def rest_lobby_get_player_info(gameid, playerid):
      
 # POST /games/id/players - Join the game
 # TODO: get the USER info from the logged in person, not the post data
-@lobbyrest_blueprint.route(BASEURI + '/games/<int:gameid>/players', methods=['POST'])
+@lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>/players', methods=['POST'])
 def rest_lobby_join_game(gameid):
   # Get the user that wants to the join the game
   print(request.json)
@@ -141,7 +155,8 @@ def rest_lobby_join_game(gameid):
       abort(400)
      
     print("cool cool, try to add this player to the game!")
-    newPlayerId=(gameid<<8)+(num_players+1)
+    newPlayerId=hashlib.sha256(gameid.encode('utf-8')).hexdigest()[:4] + str(num_players+1)
+    #newPlayerId=(gameid<<8)+(num_players+1)
     print("newPlayerId == " + str(newPlayerId))
     if req_game.addPlayer(req_game.newPlayer(newPlayerId,name=newPlayerName)):
       DataIf.updateGame(gameid)

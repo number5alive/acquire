@@ -15,6 +15,9 @@ class TileBagPlayer(Player):
     self._tiles = []
     self._stocks = []
     self.money = money
+     
+  def __del__(self):
+    print("Deleting TileBagPlayer")
 
   # this only exists to help program the tests
   # We'll need a way for the user to specify which tile they're playing
@@ -89,6 +92,11 @@ class TileBagGame(Game):
     self._currPlayer=None
     self.tilebag=None;
     self.hotels=[Hotel(name) for name in self._HOTELS]
+
+  def __del__(self):
+    # todo, delete all of our things
+    print("Deleting TileBagGame")
+    super().__del__()
 
   def getBoard(self):
     return self.board
