@@ -55,6 +55,11 @@
         <div class="stockspace">M</div> -->
       </div>
     </div>
+    <div class="playercard card">
+      <h3>PLAYERS</h3>
+      <div class="playerlist" id="playerlist">
+      </div>
+    </div>
   </div>
   <div class="maincolumn">
     <div class="card">
@@ -131,6 +136,7 @@
   const el_gameboard=document.getElementById("acquireBoard")
   const el_pmoney=document.getElementById('playermoney');
   const el_moneyval=document.getElementById('moneyval'); // the widget
+  const el_playerlist=document.getElementById('playerlist');
   const el_thisplayer=document.getElementById('playername');
   const el_currplayer=document.getElementById('el_currplayer');
   const el_messagebar=document.getElementById('messagebar');
@@ -191,15 +197,15 @@
     el_stockrack.append(ss);
      
     // Then create the individual stock and put it in that space
-    si = document.createElement('div');
+    var si=document.createElement('div');
     si.className="stockitem";
     si.id = "st_" + hotel.short;
     si.style.backgroundColor=hotel.color;
     ss.append(si);
      
-    sia = document.createElement('div');
+    var sia=document.createElement('div');
     sia.className="stockcount";
-    sib = document.createElement('div');
+    var sib=document.createElement('div');
     sia.id=si.id + "_cnt";
     sia.innerText=0;
     sib.innerText=hotel.short;
@@ -467,24 +473,47 @@
   }
 
   function showPlayers(pdata) {
-    var pdid=pdata['id'];         // Shorthand for this function
-    var pdname=pdata['name'];
-    var pdelid="playernav_"+pdid;
+    var pid=pdata['id'];         // Shorthand for this function
+    var pname=pdata['name'];
 
-    // See if an element with this id already exists, if not add it to the nav
-    var pdel=document.getElementById(pdelid);
-    if( pdel === null ) {
+    // Check if this id already exists, if not add it to the nav
+    var pnavid="playernav_"+pid;
+    var pnav=document.getElementById(pnavid);
+    if( pnav === null ) {
       // New player! yay Friends!
        
       // For now, each player will be a link to their page <a href="#">Link</a>
       var name = document.createElement('a');
-      name.id=pdelid;
-      name.innerText=pdname + " (" + pdid + ")";
-      name.href="{{gameid}}?playerid=" + pdid;
+      name.id=pnavid;
+      name.innerText=pname + " (" + pid + ")";
+      name.href="{{gameid}}?playerid=" + pid;
       el_topnav.appendChild(name);
     }
-  }
+     
+    // Check if this id already exists, if not add it to the player card 
+    var pwidid="playerwid_"+pid;
+    var pwid=document.getElementById(pwidid);
+    if( pwid === null ) {
+      // New player! yay Friends!
 
+      // First Create the space for the player item
+      var ps=document.createElement('div');
+      ps.className="playerspace";
+      el_playerlist.append(ps);
+       
+      // Then create the individual player and put it in that space
+      var pi=document.createElement('div');
+      pi.className="playeritem";
+      pi.id = pwidid;
+      pi.innerText=pname;
+      ps.append(pi);
+    }
+    else
+    {
+      // existing player, remove any "currplayer" tag on them
+      pwid.className = pwid.className.replace(" currplayer", "");
+    }
+  }
    
   async function rendergame(data) {
     // For testing, we may have called this function with data
@@ -501,10 +530,16 @@
     }
      
     // Display the game state
-    el_currplayer.innerText=data['game']['currPlayer']['name'] + " (" + data['game']['currPlayer']['id'] + ") ";
+    var currpname=data['game']['currPlayer']['name'];
+    var currpid=data['game']['currPlayer']['id'];
+    el_currplayer.innerText=currpname + " (" + currpid + ") ";
      
     // Show All the players and their names
     data['game']['players'].forEach(pdata => showPlayers(pdata));
+    var pwid=document.getElementById("playerwid_"+currpid);
+    if( pwid != null ) {
+      pwid.className = pwid.className + " currplayer";
+    }
 
     // BOARD: Draw the board
     drawBoard(el_gameboard,data['game']['board']); // from board.js
