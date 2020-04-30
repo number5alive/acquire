@@ -71,45 +71,55 @@ def rest_lobby_delete_game(gameid):
       
 # PATCH /games/id Start or Stop a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['PATCH'])
-def rest_lobby_start_game(gameid):
-  # make sure they're trying to set running : true
-  print(request.json)
-  if not request.json or not 'started' in request.json:
-    print("no json, or not asking to update the 'started' field")
-    abort(400)
-  
-  # Find the game they want to run
+def rest_lobby_patch_game_state(gameid):
+  # Find the game they want to alter
   req_game=DataIf.getGameById(gameid)
-  if req_game is None:
-    print("some dummy just tried to twiddle with a non existent game")
-    abort(400)
+  if req_game is not None:
+    if request.json and 'action' in request.json:
+      action=request.json['action']
 
-  # Find out if they want to stop a game
-  if request.json['started'] == 'false':
-    if not req_game.started:
-      abort(400) # game is not started, can't stop it
-    req_game.stop()
-    return jsonify({'success':True})
-    
-  # Or start one
-  elif request.json['started'] == 'true':
-    # make sure there are enough players
-    num_players, players=req_game.players
-    if num_players < req_game.minPlayers() or num_players > req_game.maxPlayers():
-      print("Not enough players to play yet")
+      if action == "stop":
+        if req_game.started:
+          req_game.stop()
+          DataIf.updateGame(gameid)
+          return jsonify({'success':True})
+        else:
+          print("Game not started, cannot stop it")
+          abort(400)
+
+      elif action == "start" or action == "restart":
+        # if it's a reset, do that, then do the normal start stuff
+        if action == "restart":
+          req_game.reset()
+           
+        if not req_game.started:
+          # make sure there are enough players
+          num_players, players=req_game.players
+          if num_players >= req_game.minPlayers() and num_players <= req_game.maxPlayers():
+            # if we got this far, they must have asked us to start the game
+            req_game.run()
+            DataIf.updateGame(gameid)
+             
+            # return the URL for the running game (maybe tilebag/<id>?)
+            return Response(request.host_url[:-1] + req_game.starturl() + '/' + str(gameid), status=201)
+          else:
+            print("Not enough players to play yet")
+            abort(400)
+             
+        # Or if they were on glue
+        else:
+          print("Game already started")
+          abort(400)
+
+      else:
+        print("Invalid action ({}) specified".format(action))
+        abort(400)
+    else:
+      print("no json, or no 'action' tag in that json")
       abort(400)
-       
-    # if we got this far, they must have asked us to start the game
-    req_game.run() # note, probably won't do anything
-    DataIf.updateGame(gameid)
-     
-    # return the URL for the running game (maybe tilebag/<id>?)
-    return Response(request.host_url[:-1] + req_game.starturl() + '/' + str(gameid), status=201)
-  # Or if they were on glue
   else:
-    print("some keener tried to change started to something other than true")
-    abort(400)
-   
+    print("some dummy just tried to twiddle with a non existent game")
+  
   abort(404) # Couldn't find the game
    
 # GET /games/<id>/players List all the players playing a specific game

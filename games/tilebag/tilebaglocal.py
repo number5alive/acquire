@@ -1,5 +1,9 @@
 from games.tilebag.tilebag import TileBagGame, TileBagPlayer, SAVEDGAME
+import os
+import json
+import base
 
+SAVEDGAME="game.json"
 if __name__ == "__main__":
   # helper function to show the board state in the console
   def printBoard(board):
@@ -12,70 +16,42 @@ if __name__ == "__main__":
         print("{:^6}".format(col), end=' ')
       print()
       i+=1
-       
-  print("name: " + TileBagGame.name())
-  print("min: " + str(TileBagGame.minPlayers()))
-  print("max: " + str(TileBagGame.maxPlayers()))
-  print("fullname: " + TileBagGame.fullname())
 
-  # Initialize a new game, with three players, and start it
-  tbg=TileBagGame(1)
-  p=TileBagPlayer(100, "Stan", money=7000)
-  tbg.addPlayer(p)
-  tbg.addPlayer(tbg.newPlayer(1))
-  tbg.addPlayer(tbg.newPlayer(2))
-  tbg.addPlayer(tbg.newPlayer(3))
-  tbg.run()
+  print("---- Testing restoring state from json ----")
+  if os.path.isfile(SAVEDGAME):
+    print("save file is there, let's give it a try")
+    with open(SAVEDGAME, 'r') as f:
+      sd=json.load(f)
+      tbg=TileBagGame(sd['id'])
+      tbg.loadFromSavedData(sd)
+      tbg_sd=json.dumps(tbg.serialize(True))
+      sd_js=json.dumps(sd)
+      #if str(sd) == str(tbg.serialize(True)):
+      if str(sd_js) == str(tbg_sd):
+        print("SUCCESS - loaded game matches saved")
+      else:
+        print("FAIL - loaded game differs from saved")
+        #print(tbg_sd)
+        print(tbg.serialize(True))
+        print("^loaded --vs-- vfile")
+        print(sd)
+         
+      # presume success, try things out
+      print("{} is the starting player".format(tbg.currPlayer.name))
 
-  currBoard = tbg.getBoard()
-  printBoard(currBoard)
-  print("{} is the starting player".format(tbg.currPlayer.name))
-
-  # simulate a bunch of turns
-  for i in range(0,40):
-    print("{} tiles: {}".format(tbg.currPlayer.name, tbg.currPlayer.tiles))
-    tile=tbg.currPlayer.selectRandomTile()
-    tbg.playTile(tbg.currPlayer.getId(), tile)
+      # simulate a bunch of turns (to test game mechanics)
+      print("---- simulating some game mechanics to ensure load worked ----")
+      for i in range(0,40):
+        tile=tbg.currPlayer.selectRandomTile()
+        if tile is None:
+          print("Player ran out of tiles, ending loop")
+          break
+        else:
+          # testing both ways of playing a tile (tile object, or string)
+          if i%2 == 0:
+            tbg.playTile(tbg.currPlayer.getId(), alpha=str(tile))
+          else:
+            tbg.playTile(tbg.currPlayer.getId(), tile)
+  else:
+    print("no saved state")
    
-  printBoard(currBoard)
-
-  # stress the serialization functions
-  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
-  print(">>> saveGameData: {}".format(tbg.saveGameData()))
-  print(">>> serialize: {}".format(tbg.serialize(True)))
-
-  print("---- Testing the hotel movement functionality ----")
-  print("Adding hotel: {}".format(tbg.moveHotel(1,"American","1A")))
-  print("Adding hotel: {}".format(tbg.moveHotel(1,"Tower","2B")))
-  print("Invalid hotel position: {}".format(not tbg.moveHotel(1,"Tower","B2")))
-  print("Invalid hotel: {}".format(not tbg.moveHotel(1,"Arbuckle","7B")))
-  print("Removing hotel: {}".format(tbg.moveHotel(1,"American",None)))
-  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
-
-  print("---- Testing the stock mechanics -----")
-  print("Taking stock: {}".format(tbg.stockAction(100,"American",-3)))
-  print("Taking stock: {}".format(tbg.stockAction(100,"Tower",-1)))
-  print("Taking stock: {}".format(tbg.stockAction(100,"Continental",-5)))
-  print("Invalid stock: {}".format(not tbg.stockAction(100,"Arbuckle",1)))
-  print("Invalid amount: {}".format(not tbg.stockAction(100,"American","a")))
-  print("Returning stock: {}".format(tbg.stockAction(100,"American",2)))
-  print("Returning invalid amount: {}".format(not tbg.stockAction(100,"Saxxon",2)))
-  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
-
-  print("---- Testing TileBagPlayer money functionality ----")
-  print("valid + Money: {}".format(tbg.moneyAction(100, 100)))
-  print("valid - Money: {}".format(tbg.moneyAction(100, -200)))
-  print("invalid Money: {}".format(not tbg.moneyAction(100, "$10" )))
-  print("too much - Money: {}".format(not tbg.moneyAction(100, -100000 )))
-
-  print("savePlayerData: {}".format(p.savePlayerData()))
-   
-  print("---- Testing TileBagPlayer functionality ----")
-  print("savePlayerData: {}".format(p.savePlayerData()))
-  print(">>> serialize: {}".format(tbg.serialize(True)))
-   
-  # Save the game to a file
-  import json
-  import base
-  with open(SAVEDGAME, 'w') as f:
-    json.dump(tbg.serialize(True), f, indent=2)

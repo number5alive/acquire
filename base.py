@@ -67,6 +67,10 @@ class Game:
     for player in self._players:
       self._players.remove(player)
       del player
+
+  # Child classes can override this to reset game state to original
+  def reset(self):
+    self._started = False
      
   @property
   def id(self):

@@ -29,7 +29,7 @@ class Hotel:
   def occupies(self):
     return self._occupies
 
-  def setPosition(self, alpha, occupies):
+  def setPosition(self, alpha, occupies=None):
     self._tile=alpha
     self._occupies=occupies
 

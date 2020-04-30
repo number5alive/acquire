@@ -15,7 +15,7 @@ function createGame() {
     curl -i -H "Content-Type: application/json" -X POST -d '{"gameid":"'$GID'","name":"'$p'"}' $GURL/players
   done
      
-  curl -i -H "Content-Type: application/json" -X PATCH -d '{"started":"true"}' $GURL
+  curl -i -H "Content-Type: application/json" -X PATCH -d '{"action":"start"}' $GURL
 } 
   
 echo "Creating a TileBag game with 4 players"
