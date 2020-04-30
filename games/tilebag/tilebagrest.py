@@ -63,10 +63,12 @@ def rest_tilebag_placetile(gameid):
         print("No tile specified")
     else:
       print("we're not going to let just anyone twiddle with the game!")
+      abort(403) #forbidden
   else:
     print("some dummy just tried to twiddle with a non existent game")
+    abort(404)
      
-  abort(400)
+  abort(400) # presume generic error / Bad Request
    
 # PATCH /games/<id>/hotels place a hotel on/off the board
 @tilebagrest_blueprint.route('/<string:gameid>/hotels', methods=['PATCH'])
@@ -92,13 +94,14 @@ def rest_tilebag_placehotel(gameid):
           print("Game Engine refused the hotel move")
       else:
         print("No tile, or No hotel in hotel action")
-      abort(400)
     else:
       print("we're not going to let just anyone twiddle with the game!")
-      abort(500)
+      abort(403)
   else:
     print("some dummy just tried to twiddle with a non existent game")
-  abort(404)
+    abort(404)
+     
+  abort(400) # presume generic error / Bad Request
 
 # PATCH /games/<id>/stocks get or return stocks
 @tilebagrest_blueprint.route('/<string:gameid>/stocks', methods=['PATCH'])
@@ -119,16 +122,16 @@ def rest_tilebag_stocks(gameid):
           return jsonify({'success':True})
         else:
           print("Game engine refused the request")
-          abort(401)
       else:
         print("no 'hotel' and/or no 'amount' in stock request")
-      abort(400)
     else:
       print("we're not going to let just anyone twiddle with the game!")
-      abort(500)
+      abort(403) # forbidden
   else:
     print("some dummy just tried to twiddle with a non existent game")
-  abort(404)
+    abort(404)
+     
+  abort(400) # presume generic error / Bad Request
    
 # PATCH /games/<id>/money get or return money
 @tilebagrest_blueprint.route('/<string:gameid>/money', methods=['PATCH'])
@@ -148,13 +151,13 @@ def rest_tilebag_money(gameid):
           return jsonify({'success':True})
         else:
           print("Game engine refused the request")
-          abort(401)
       else:
         print("no 'amount' in money request")
-      abort(400)
     else:
       print("we're not going to let just anyone twiddle with the game!")
-      abort(500)
+      abort(403)
   else:
     print("some dummy just tried to twiddle with a non existent game")
-  abort(404)
+    abort(404)
+     
+  abort(400) # presume generic error / Bad Request

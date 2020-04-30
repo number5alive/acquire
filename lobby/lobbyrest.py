@@ -40,6 +40,9 @@ def rest_lobby_make_game():
   req_gid=None
   if 'gameid' in request.json:
     req_gid=request.json['gameid']
+    if DataIf.getGameById(req_gid) is not None:
+      print("that game already exists")
+      abort(409)
    
   req_gtype=request.json['gametype']
   if getGameInfo(req_gtype) is None:
@@ -162,7 +165,7 @@ def rest_lobby_join_game(gameid):
     num_players, players=req_game.players
     if num_players >= req_game.maxPlayers():
       print("whoa-la, already at the max for players")
-      abort(400)
+      abort(409)
      
     print("cool cool, try to add this player to the game!")
     newPlayerId=hashlib.sha256(gameid.encode('utf-8')).hexdigest()[:4] + str(num_players+1)
@@ -172,7 +175,7 @@ def rest_lobby_join_game(gameid):
       DataIf.updateGame(gameid)
       return Response(request.base_url + '/' + str(newPlayerId), status=201)
     else:
-      abort(401) #that's odd
+      abort(500) #that's odd
   else:
     abort(404) #no such game
 
