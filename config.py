@@ -3,7 +3,7 @@ from flask import Flask
 from flask_socketio import SocketIO
  
 # Moving server config info here so we can get it from elsewhere too!
-app = Flask(__name__)
+app = Flask(__name__,static_folder='clientweb/static')
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
  

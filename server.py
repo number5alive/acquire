@@ -16,7 +16,7 @@ app.register_blueprint(lobbyrest_blueprint)
 app.register_blueprint(tilebagrest_blueprint, url_prefix=TILEBAGREST_URL)
 
 # Client-side view of things
-app.register_blueprint(lobby_blueprint) # the lobby
+app.register_blueprint(lobby_blueprint, url_prefix='/') # the lobby
 app.register_blueprint(testview_blueprint, url_prefix='/test') # for testing
 app.register_blueprint(tilebag_blueprint, url_prefix=TILEBAG_URL)
 

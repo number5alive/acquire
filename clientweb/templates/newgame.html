@@ -1,25 +1,57 @@
 <!DOCTYPE html>
 <html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
 <style>
-body {
+
+input {
   margin: 0;
-  min-width: 250px;
+  border: none;
+  border-radius: 0;
+  width: 50%;
+  padding: 10px;
+  float: left;
+  font-size: 16px;
+}
+.addBtn {
+  padding: 10px;
+  width: 25%;
+  background: #d9d9d9;
+  color: #555;
+  float: left;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 0;
+}
+.addBtn:hover {
+  background-color: #bbb;
 }
 
-/* Include the padding and border in an element's total width and height */
-* {
-  box-sizing: border-box;
+.startBtn {
+  padding: 10px;
+  width: 100%;
+  background: #d9d9d9;
+  color: #555;
+  float: left;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 0;
 }
-
+.startBtn:hover {
+  background-color: #5f5;
+}
+ 
 /* Remove margins and padding from the list */
 ul {
   margin: 0;
   padding: 0;
 }
-
 /* Style the list items */
 ul li {
   cursor: pointer;
@@ -36,38 +68,6 @@ ul li {
   -ms-user-select: none;
   user-select: none;
 }
-
-/* Set all odd list items to a different color (zebra-stripes) */
-ul li:nth-child(odd) {
-  background: #f9f9f9;
-}
-
-/* Darker background-color on hover */
-ul li:hover {
-  background: #ddd;
-}
-
-/* When clicked on, add a background color and strike out text */
-ul li.checked {
-  background: #888;
-  color: #fff;
-  text-decoration: line-through;
-}
-
-/* Add a "checked" mark when clicked on */
-ul li.checked::before {
-  content: '';
-  position: absolute;
-  border-color: #fff;
-  border-style: solid;
-  border-width: 0 2px 2px 0;
-  top: 10px;
-  left: 16px;
-  transform: rotate(45deg);
-  height: 15px;
-  width: 7px;
-}
-
 /* Style the close button */
 .close {
   position: absolute;
@@ -80,50 +80,7 @@ ul li.checked::before {
   background-color: #f44336;
   color: white;
 }
-
-/* Style the header */
-.header {
-  background-color: #f44336;
-  padding: 30px 40px;
-  color: white;
-  text-align: center;
-}
-
-/* Clear floats after the header */
-.header:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-/* Style the input */
-input {
-  margin: 0;
-  border: none;
-  border-radius: 0;
-  width: 75%;
-  padding: 10px;
-  float: left;
-  font-size: 16px;
-}
-
-/* Style the "Add" button */
-.addBtn {
-  padding: 10px;
-  width: 25%;
-  background: #d9d9d9;
-  color: #555;
-  float: left;
-  text-align: center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
-  border-radius: 0;
-}
-
-.addBtn:hover {
-  background-color: #bbb;
-}
+   
 </style>
 </head>
 <body>
@@ -132,20 +89,41 @@ input {
   <h1>Create a New Game</h1>
 </div>
 
-<div id="myDIV" class="header">
-  <h2 style="margin:5px">Player List</h2>
-  <input type="text" id="myInput" placeholder="Title...">
-  <span onclick="newElement()" class="addBtn">Add</span>
+<div class="topnav" id="topnav">
+  <div class="message" style="text-align:center; color:white">Game hasn't started yet. Add players, then click 'Start'</div>
+</div>
+  
+<div class="row">
+  <div class="infocolumn">
+    <h2>Player List</h2>
+    <ul id="myUL">
+    </ul>
+  </div>
+  <div class="maincolumn">
+    <h2/>
+    <input type="text" id="myInput" placeholder="New Player...">
+    <span onclick="addPlayer()" id="addBtn" class="addBtn">Add</span>
+  </div>
 </div>
 
-<ul id="myUL">
-</ul>
-
-<div class="footer">
-  <span onclick="createGame()" class="submitBtn">Create</span>
-</div>
+<span onclick="createGame()" id="startBtn" class="startBtn">Start the Game!</span>
 
 <script>
+// Let the user hit "enter" when entering names
+var input = document.getElementById("myInput");
+
+// Execute a function when the user releases a key on the keyboard
+input.addEventListener("keyup", function(event) {
+  // Number 13 is the "Enter" key on the keyboard
+  if (event.keyCode === 13) {
+    // Cancel the default action, if needed
+    event.preventDefault();
+    // Trigger the button element with a click
+    document.getElementById("addBtn").click();
+    input.innerText="";
+  }
+});
+ 
 // Create a "close" button and append it to each list item
 var myNodelist = document.getElementsByTagName("LI");
 var i;
@@ -167,18 +145,8 @@ for (i = 0; i < close.length; i++) {
   }
 }
 
-/*
-// Add a "checked" symbol when clicking on a list item
-var list = document.querySelector('ul');
-list.addEventListener('click', function(ev) {
-  if (ev.target.tagName === 'LI') {
-    ev.target.classList.toggle('checked');
-  }
-}, false);
-*/
-
 // Create a new list item when clicking on the "Add" button
-function newElement() {
+function addPlayer() {
   var li = document.createElement("li");
   var inputValue = document.getElementById("myInput").value;
   var t = document.createTextNode(inputValue);
@@ -201,6 +169,15 @@ function newElement() {
       var div = this.parentElement;
       div.style.display = "none";
     }
+  }
+}
+
+function createGame() {
+  var ul = document.getElementById("myUL");
+
+  for(var i=0; i<ul.childNodes.length; i++)
+  {
+    console.log("Child["+i+"]="+ul.childNodes[i].innerText);
   }
 }
 </script>

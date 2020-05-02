@@ -17,7 +17,7 @@ TILEBAG_URL="/games/tilebag"
 # Expose these routes to the main server application 
 from flask import Blueprint
 tilebag_blueprint = Blueprint('tilebag_blueprint', __name__,
-                  template_folder='templates', static_folder='static')
+                  template_folder='templates', static_url_path='static', static_folder='static')
 
 @tilebag_blueprint.route('/', methods=['GET'])
 def get_tilebag_api():

@@ -8,7 +8,7 @@ import dataif as DataIf
 # Expose these routes to the main server application 
 from flask import Blueprint
 lobby_blueprint = Blueprint('lobby_blueprint', __name__,
-                  template_folder='templates', static_folder='static')
+                  template_folder='templates', static_url_path='static', static_folder='static')
 
 """ Test endpoint for rendering tiles """
 @lobby_blueprint.route('/lobby', methods=['GET'])
