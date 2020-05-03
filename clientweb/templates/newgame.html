@@ -102,11 +102,11 @@ ul li {
   <div class="maincolumn">
     <h2/>
     <input type="text" id="myInput" placeholder="New Player...">
-    <span onclick="addPlayer()" id="addBtn" class="addBtn">Add</span>
+    <span onclick="addPlayerToList()" id="addBtn" class="addBtn">Add</span>
   </div>
 </div>
 
-<span onclick="createGame()" id="startBtn" class="startBtn">Start the Game!</span>
+<span onclick="startGame()" id="startBtn" class="startBtn">Start the Game!</span>
 
 <script>
 // Let the user hit "enter" when entering names
@@ -123,30 +123,15 @@ input.addEventListener("keyup", function(event) {
     input.innerText="";
   }
 });
- 
-// Create a "close" button and append it to each list item
-var myNodelist = document.getElementsByTagName("LI");
-var i;
-for (i = 0; i < myNodelist.length; i++) {
-  var span = document.createElement("SPAN");
-  var txt = document.createTextNode("\u00D7");
-  span.className = "close";
-  span.appendChild(txt);
-  myNodelist[i].appendChild(span);
-}
 
-// Click on a close button to hide the current list item
-var close = document.getElementsByClassName("close");
-var i;
-for (i = 0; i < close.length; i++) {
-  close[i].onclick = function() {
-    var div = this.parentElement;
-    div.style.display = "none";
-  }
+// Remove an item from our list
+function removePlayerFromList(li) {
+  console.log("Removing Item: " + li);
+  li.parentElement.removeChild(li);
 }
 
 // Create a new list item when clicking on the "Add" button
-function addPlayer() {
+function addPlayerToList() {
   var li = document.createElement("li");
   var inputValue = document.getElementById("myInput").value;
   var t = document.createTextNode(inputValue);
@@ -161,25 +146,72 @@ function addPlayer() {
   var span = document.createElement("SPAN");
   var txt = document.createTextNode("\u00D7");
   span.className = "close";
+  span.onclick = function() { removePlayerFromList(li) };
   span.appendChild(txt);
   li.appendChild(span);
-
-  for (i = 0; i < close.length; i++) {
-    close[i].onclick = function() {
-      var div = this.parentElement;
-      div.style.display = "none";
-    }
-  }
 }
 
-function createGame() {
+function startGame() {
   var ul = document.getElementById("myUL");
+  var bError = false;
+  
 
-  for(var i=0; i<ul.childNodes.length; i++)
+  var lis = ul.getElementsByTagName("li");
+
+  // TODO: loop through list, find player
+  for(var i=0; i<lis.length && bError == false; i++)
   {
-    console.log("Child["+i+"]="+ul.childNodes[i].innerText);
+    var pname = lis[i].innerText;
+    var pname = pname.replace("\u00D7", "");
+    var pname = pname.replace("\n", "");
+    console.log("trying to add " + pname);
+     
+    bError = !callREST_addPlayer(pname);
+  }
+
+  if( bError == false ) {
+    callREST_startGame();
   }
 }
+  
+async function callREST_addPlayer(player) {
+  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_join_game', gameid=gameid) }}", {
+              method: 'POST', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'name': player})
+                },
+              );
+                 
+    await response.status;
+    if( response.status == 200 || response.status == 201) {
+      return true;
+    } else {
+      console.log("Failed to add player");
+    }
+    return false;
+}
+ 
+async function callREST_startGame() {
+  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_patch_game_state', gameid=gameid) }}", {
+              method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action': 'start'})
+                },
+              );
+                 
+    await response.status;
+    if( response.status == 200 ) {
+    } else if( response.status == 400 ) {
+    } else {
+    }
+}
+
 </script>
 
 </body>

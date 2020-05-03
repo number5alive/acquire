@@ -28,23 +28,23 @@ def getStaticMaxChangeTime():
   return (max(os.stat(root).st_mtime for root,_,_ in os.walk(staticdir)))
    
 # for creating and starting new games at the poke of URL
-@lobby_blueprint.route('/<string:gname>', methods=['GET'])
-def lobby_new_game(gname):
+@lobby_blueprint.route('/<string:gameid>', methods=['GET'])
+def lobby_new_game(gameid):
   CACHEFIX="?{}".format(int(getStaticMaxChangeTime()))
    
   # see if the game exists, and if not, create it
-  req_game=DataIf.getGameById(gname)
+  req_game=DataIf.getGameById(gameid)
   if req_game is None:
     print("trying to start a new game?")
     # for now, we only have TileBag on the server, so default to that
-    req_game=DataIf.createGame("TileBag", gname)
+    req_game=DataIf.createGame("TileBag", gameid)
  
   # if the game hasn't started, show the page for adding players and starting
   if not req_game.started:
-    return render_template('newgame.html', gname=gname, lobbyrest=BASEURI, cachefix=CACHEFIX)
+    return render_template('newgame.html', gameid=gameid, lobbyrest=BASEURI, cachefix=CACHEFIX)
 
   else:
     print("redirect to the actual, running game")
-    return redirect(url_for('tilebag_blueprint.get_tilebag_clientif', gameid=gname))
+    return redirect(url_for('tilebag_blueprint.get_tilebag_clientif', gameid=gameid))
     
    
