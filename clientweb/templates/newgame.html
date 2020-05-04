@@ -137,7 +137,7 @@ function addPlayerToList() {
   var t = document.createTextNode(inputValue);
   li.appendChild(t);
   if (inputValue === '') {
-    alert("You must write something!");
+    return;
   } else {
     document.getElementById("myUL").appendChild(li);
   }
@@ -151,27 +151,50 @@ function addPlayerToList() {
   li.appendChild(span);
 }
 
-function startGame() {
-  var ul = document.getElementById("myUL");
-  var bError = false;
-  
+async function startGame() {
 
+  console.log("asking to create all the players");
+  var bRet=addAllPlayers();
+  await bRet;
+  if( bRet ) {
+    console.log("players all created (?), starting the game");
+    callREST_startGame();
+    location.reload();
+  }
+  else
+  {
+    console.log("must've failed to add a player... that's awkward");
+  }
+}
+ 
+async function addAllPlayers() {
+  var ul = document.getElementById("myUL");
+  var promises=[];
+  
   var lis = ul.getElementsByTagName("li");
 
   // TODO: loop through list, find player
-  for(var i=0; i<lis.length && bError == false; i++)
+  for(var i=0; i<lis.length; i++)
   {
     var pname = lis[i].innerText;
     var pname = pname.replace("\u00D7", "");
     var pname = pname.replace("\n", "");
     console.log("trying to add " + pname);
      
-    bError = !callREST_addPlayer(pname);
+    var bRet=callREST_addPlayer(pname);
+    promises.push(bRet);
   }
 
-  if( bError == false ) {
-    callREST_startGame();
+  console.log("asked to create all players, waiting for those to finish");
+  await Promise.all(promises);
+  console.log("done - return sum of results");
+  for(var i=0; i<promises.length; i++)
+  {
+    if(!promises[i]){
+      return false;
+    }
   }
+  return true;
 }
   
 async function callREST_addPlayer(player) {

@@ -2,7 +2,9 @@ from flask import render_template
 from flask import current_app as app
 from flask import jsonify
 from flask import request
+from flask import redirect, url_for
 from games.tilebag.tiles import TileBag, Tile
+import dataif as DataIf
 import userif as UserIf
 import json
  
@@ -33,13 +35,17 @@ def getStaticMaxChangeTime():
 
 @tilebag_blueprint.route('/<string:gameid>', methods=['GET'])
 def get_tilebag_clientif(gameid):
-  playerid=UserIf.getCallingPlayerId()
-   
-  # I was having difficulting with static files being cached between the
-  # server and the caller, this makes sure if we change those files it'll
-  # be okay
-  CACHEFIX=int(getStaticMaxChangeTime())
-  print("CACHEFIX={}".format(CACHEFIX))
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    playerid=UserIf.getCallingPlayerId()
      
-  return render_template('tilebag.html', gameid=gameid, playerid=playerid, serverroot=request.host, debug=json.dumps(False), cachefix="?{}".format(CACHEFIX))
+    # I was having difficulting with static files being cached between the
+    # server and the caller, this makes sure if we change those files it'll
+    # be okay
+    CACHEFIX=int(getStaticMaxChangeTime())
+    print("CACHEFIX={}".format(CACHEFIX))
+       
+    return render_template('tilebag.html', gameid=gameid, playerid=playerid, serverroot=request.host, debug=json.dumps(False), cachefix="?{}".format(CACHEFIX))
+  else:
+    return redirect(url_for('lobby_blueprint.lobby_new_game', gameid=gameid))
    
