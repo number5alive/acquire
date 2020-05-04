@@ -509,6 +509,9 @@
     var currpname=data['game']['currPlayer']['name'];
     var currpid=data['game']['currPlayer']['id'];
     el_currplayer.innerText=currpname;
+    var el_currState=document.getElementById("currstate");
+    el_currState.innerText="Waiting on " + currpname + " to <action>"
+
 
     // GAMELOG: Show the last messages
     var el_msgLog=document.getElementById("messagelog");

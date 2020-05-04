@@ -175,6 +175,13 @@ border: 1px solid red;
   clear: both;
 }
 
+.currstate {
+  font-size: small;
+  width: 100%;
+  text-align: center;
+  border-bottom: 1px solid red;
+}
+
 .messagelog {
 }
 
@@ -199,6 +206,16 @@ border: 1px solid red;
   user-select: none;
 }
   
+.messagelog ul li:nth-child(odd) { 
+  background: #ccc;
+}
+ 
+.currstate {
+  font-size: small;
+  width: 100%;
+  text-align: center;
+  border-bottom: 1px solid red;
+}
 /* TILES Basically a "row" */
 .tilerack {
   border-radius: 5px;
