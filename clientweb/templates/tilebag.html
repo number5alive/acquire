@@ -55,10 +55,10 @@
         <div class="stockspace">M</div> -->
       </div>
     </div>
-    <div class="playercard card">
-      <h3>PLAYERS</h3>
-      <div class="playerlist" id="playerlist">
-      </div>
+    <div class="gamelog card">
+      <h3>GAMELOG</h3>
+      <div class="currstate" id="currstate"></div>
+      <div class="messagelog"><ul id="messagelog"></ul></div>
     </div>
   </div>
   <div class="maincolumn">
@@ -489,30 +489,6 @@
       name.href="{{gameid}}?playerid=" + pid;
       el_topnav.appendChild(name);
     }
-     
-    // Check if this id already exists, if not add it to the player card 
-    var pwidid="playerwid_"+pid;
-    var pwid=document.getElementById(pwidid);
-    if( pwid === null ) {
-      // New player! yay Friends!
-
-      // First Create the space for the player item
-      var ps=document.createElement('div');
-      ps.className="playerspace";
-      el_playerlist.append(ps);
-       
-      // Then create the individual player and put it in that space
-      var pi=document.createElement('div');
-      pi.className="playeritem";
-      pi.id = pwidid;
-      pi.innerText=pname;
-      ps.append(pi);
-    }
-    else
-    {
-      // existing player, remove any "currplayer" tag on them
-      pwid.className = pwid.className.replace(" currplayer", "");
-    }
   }
    
   async function rendergame(data) {
@@ -529,10 +505,12 @@
       data = await response.json();
     }
      
-    // Display the game state
+    // GAMESTATE: Show the current action we're waiting on
     var currpname=data['game']['currPlayer']['name'];
     var currpid=data['game']['currPlayer']['id'];
-    el_currplayer.innerText=currpname + " (" + currpid + ") ";
+    el_currplayer.innerText=currpname;
+
+    // GAMELOG: Show the last messages
      
     // Show All the players and their names
     data['game']['players'].forEach(pdata => showPlayers(pdata));

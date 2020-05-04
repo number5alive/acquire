@@ -3,6 +3,7 @@ from base import Player
 from games.tilebag.tiles import Tile, TileBag
 from games.tilebag.board import Board
 from games.tilebag.hotels import Hotel, Stock
+from games.tilebag.gamelog import GameLog, GameAction
 from itertools import cycle, islice
 from random import shuffle
 
@@ -97,6 +98,7 @@ class TileBagGame(Game):
   def __init__(self, id):
     super().__init__(id)
     self._initcomponents()
+    self._log.recordGameMessage("Game Created")
 
   def __del__(self):
     # todo, delete all of our things
@@ -109,13 +111,15 @@ class TileBagGame(Game):
     self._currPlayer=None
     self.tilebag=None;
     self.hotels=[Hotel(name) for name in self._HOTELS]
+    self._log=GameLog()
 
   def reset(self):
-    print("Resetting TileBag")
+    self._log.recordGameMessage("Resetting TileBag")
     del self._conflictTiles
     del self.board
     del self.hotels
     del self.tilebag
+    del self._log
     self._initcomponents()
     for player in self._players:
       player.reset()
@@ -148,7 +152,7 @@ class TileBagGame(Game):
       return False;
        
     # Initialize Game Components
-    print("TileBagGame Started!")
+    self._log.recordGameMessage("TileBagGame Started!")
     self.board = Board(9,12)
     self.tilebag = TileBag(9,12)
 
@@ -157,10 +161,12 @@ class TileBagGame(Game):
     lowestTile=Tile(10,8)
     for player in self._players:
       t=self.tilebag.takeTile()
+      self._log.recordTileAction(player.name, str(t))
       if t <= lowestTile:
         lowestTile=t
         self._currPlayer=player
       self.board.placeTile(t)
+    self._log.recordGameMessage("{} is the first player".format(self._currPlayer.name))
 
     # Now set the game order to the above
     self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
@@ -176,6 +182,7 @@ class TileBagGame(Game):
       if player and type(amount) is int:
         if amount > 0 or player.money >= -amount:
           player.money += amount
+          self._log.recordMoneyAction(player.name, amount)
           return True
         else:
           print("moneyAction: Subtracting more than the player has")
@@ -206,6 +213,7 @@ class TileBagGame(Game):
       for i in range(0,amount):
         s=h.takeStock()
         player.receiveStock(s)
+      self._log.recordStockAction(player.name, h.name, amount)
       return True
     return False
        
@@ -215,6 +223,7 @@ class TileBagGame(Game):
         s=player.returnStock(h.name)
         if not h.returnStock(s):
           return False
+      self._log.recordStockAction(player.name, h.name, -amount)
       return True
     return False
 
@@ -234,6 +243,8 @@ class TileBagGame(Game):
 
           # resolve any conflict tiles
           self.updateConflictTiles()
+
+          self._log.recordRemoveHotelAction(h.name)
            
           return True
         
@@ -246,6 +257,7 @@ class TileBagGame(Game):
            
           # TODO: make sure there are at least two connected tiles
           h.setPosition(alpha, occupies=conn)
+          self._log.recordPlaceHotelAction(h.name, alpha)
           return True
         else:
           print("Invalid Hotel Alpha / or Move")
@@ -307,7 +319,12 @@ class TileBagGame(Game):
           # now verify that fact for this tile, cleanup if we were wrong
           self.checkTileNextToHotel(tile)
 
-          # TODO: ensure the above succeeds and is a valid move
+          self._log.recordTileAction(self._currPlayer.name, str(tile))
+
+          # TODO: Change the game state to either:
+          # makeHotel, resolveMerger, buyStocks, 
+
+          # TODO: Move this to the "end turn" action
           self._currPlayer.removeTile(tile)
           print("Played Tile: {}".format(tile))
           if self.tilebag.isEmpty():
@@ -367,7 +384,8 @@ class TileBagGame(Game):
       'currPlayer': self._currPlayer.serialize(False),
       'board': self.board.serialize(),
       'players' : [x.serialize(False) for x in self._players],
-      'hotels': [h.serialize() for h in self.hotels]
+      'hotels': [h.serialize() for h in self.hotels],
+      'gamelog': self._log.serialize(last=10),
     }
 
 if __name__ == "__main__":
@@ -408,13 +426,13 @@ if __name__ == "__main__":
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
 
   print("---- Testing the stock mechanics -----")
-  print("Taking stock: {}".format(tbg.stockAction(100,"American",-3)))
-  print("Taking stock: {}".format(tbg.stockAction(100,"Tower",-1)))
-  print("Taking stock: {}".format(tbg.stockAction(100,"Continental",-5)))
+  print("Taking stock: {}".format(tbg.stockAction(100,"American",3)))
+  print("Taking stock: {}".format(tbg.stockAction(100,"Tower",1)))
+  print("Taking stock: {}".format(tbg.stockAction(100,"Continental",5)))
   print("Invalid stock: {}".format(not tbg.stockAction(100,"Arbuckle",1)))
   print("Invalid amount: {}".format(not tbg.stockAction(100,"American","a")))
-  print("Returning stock: {}".format(tbg.stockAction(100,"American",2)))
-  print("Returning invalid amount: {}".format(not tbg.stockAction(100,"Saxxon",2)))
+  print("Returning stock: {}".format(tbg.stockAction(100,"American",-2)))
+  print("Returning invalid amount: {}".format(not tbg.stockAction(100,"Saxxon",-2)))
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
 
   print("---- Testing TileBagPlayer money functionality ----")
@@ -428,6 +446,7 @@ if __name__ == "__main__":
   print("---- Testing TileBagPlayer functionality ----")
   print("savePlayerData: {}".format(p.savePlayerData()))
   print(">>> serialize: {}".format(tbg.serialize(True)))
+  print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))
    
   print("---- Testing TileBagGame reset functionality ----")
   print(">>> saveGameData: {}".format(tbg.saveGameData()))
