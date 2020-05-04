@@ -20,11 +20,20 @@ class GameAction():
     elif self._what == 'playTile':
       return "{} played tile {}".format(self._who, self._details)
     elif self._what == 'stockAction':
+      action='bought'
       amt=self._details['amount']
+      if amt < 0:
+        action='sold'
+        amt = -amt
       hotel=self._details['hotel']
-      return "{} {} {} stocks in {}".format(self._who, 'bought|sold', amt, hotel)
+      return "{} {} {} stocks in {}".format(self._who, action, amt, hotel)
     elif self._what == 'moneyAction':
-      return "{} {} ${}".format(self._who, 'spent|received', self._details)
+      action='received'
+      amt=self._details
+      if amt < 0:
+        action='spent'
+        amt=-amt
+      return "{} {} ${}".format(self._who, action, amt)
     elif self._what == 'removeHotel':
       return "{} has been removed from the board".format(self._details)
     elif self._what == 'placeHotel':
@@ -58,6 +67,7 @@ class GameLog():
 
   def recordMoneyAction(self, player, amount):
     action=GameAction(player, 'moneyAction', amount)
+    self.append(action)
 
   def recordStockAction(self, player, hotel, amount):
     extDetails={"hotel": hotel, "amount": amount}

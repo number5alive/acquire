@@ -380,13 +380,16 @@ class TileBagGame(Game):
      
   # Get the information you'd see if you were looking at this game on a table
   def getPublicInformation(self):
-    return {
-      'currPlayer': self._currPlayer.serialize(False),
-      'board': self.board.serialize(),
-      'players' : [x.serialize(False) for x in self._players],
-      'hotels': [h.serialize() for h in self.hotels],
-      'gamelog': self._log.serialize(last=10),
-    }
+    if self._started:
+      return {
+        'currPlayer': self._currPlayer.serialize(False),
+        'board': self.board.serialize(),
+        'players' : [x.serialize(False) for x in self._players],
+        'hotels': [h.serialize() for h in self.hotels],
+        'gamelog': self._log.serialize(last=10),
+      }
+    else:
+      return {}
 
 if __name__ == "__main__":
   print("name: " + TileBagGame.name())
