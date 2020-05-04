@@ -511,6 +511,15 @@
     el_currplayer.innerText=currpname;
 
     // GAMELOG: Show the last messages
+    var el_msgLog=document.getElementById("messagelog");
+    var msgs=data['game']['gamelog'];
+    el_msgLog.innerHTML="";
+    for(var i=0; i<msgs.length; i++) {
+      var li=document.createElement("li");
+      var t=document.createTextNode(msgs[i]);
+      li.appendChild(t);
+      el_msgLog.appendChild(li);
+    }
      
     // Show All the players and their names
     data['game']['players'].forEach(pdata => showPlayers(pdata));
