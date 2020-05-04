@@ -485,7 +485,7 @@
       // For now, each player will be a link to their page <a href="#">Link</a>
       var name = document.createElement('a');
       name.id=pnavid;
-      name.innerText=pname + " (" + pid + ")";
+      name.innerText=pname;
       name.href="{{gameid}}?playerid=" + pid;
       el_topnav.appendChild(name);
     }
