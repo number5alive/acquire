@@ -26,7 +26,7 @@
 <div class="mstick" id="messagebar">
   <div class="messages">
     <div class="gamemessage" id="el_gamemessage"></div>
-    <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='el_currplayer'>Norm</span></div>
+    <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='currplayer'>Norm</span></div>
     <div class="staticmessage" id="playername" style="float:middle">Guest? Click your Name Above</div>
   </div>
 </div>
@@ -35,7 +35,7 @@
   <div class="infocolumn">
     <h2>PLAYER INFO</h2>
     <div class="card">
-      <h3 style="display:inline">BANK  </h3><span id="playermoney">$$$$$</span>
+      <h3 style="display:inline">BANK  </h3><span class="playermoney" id="playermoney">$$$$$</span>
       <div class="moneycontainer">
         <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
         <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
@@ -57,7 +57,7 @@
     </div>
     <div class="gamelog card">
       <h3>GAMELOG</h3>
-      <div class="currstate" id="currstate"></div>
+      <div class="currstate" id="gamestate"></div>
       <div class="messagelog"><ul id="messagelog"></ul></div>
     </div>
   </div>
@@ -134,11 +134,12 @@
   const el_stockrack=document.getElementById("el_stockrack");
   const el_tilerack=document.getElementById("tilerack");
   const el_gameboard=document.getElementById("acquireBoard")
+  const el_gamestate=document.getElementById('gamestate');
   const el_pmoney=document.getElementById('playermoney');
   const el_moneyval=document.getElementById('moneyval'); // the widget
   const el_playerlist=document.getElementById('playerlist');
   const el_thisplayer=document.getElementById('playername');
-  const el_currplayer=document.getElementById('el_currplayer');
+  const el_currplayer=document.getElementById('currplayer');
   const el_messagebar=document.getElementById('messagebar');
   const el_gamemessage=document.getElementById('el_gamemessage');
    
@@ -509,9 +510,7 @@
     var currpname=data['game']['currPlayer']['name'];
     var currpid=data['game']['currPlayer']['id'];
     el_currplayer.innerText=currpname;
-    var el_currState=document.getElementById("currstate");
-    el_currState.innerText="Waiting on " + currpname + " to <action>"
-
+    el_gamestate.innerText="Waiting on " + currpname + " to <action>"
 
     // GAMELOG: Show the last messages
     var el_msgLog=document.getElementById("messagelog");
@@ -548,12 +547,14 @@
       el_thisplayer.innerText=data['game']['you']['name'];
       if( data['game']['you']['id'] == data['game']['currPlayer']['id']) {
         el_thisplayer.className = el_thisplayer.className + " currplayer";
+        el_gamestate.className = "currstate currplayer";
       } else{
         el_thisplayer.className = el_thisplayer.className.replace(" currplayer", "");
+        el_gamestate.className = "currstate";
       }
       
       // PLAYER MONEY
-      el_pmoney.innerText=pinfo['money'];
+      el_pmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumSignificantDigits: 1,})).format(pinfo['money']);
 
       // STOCKS
       stocks=pinfo['stocks'];

@@ -168,6 +168,12 @@ border: 1px solid red;
   font-family: Arial
 }
 
+.playermoney span {
+  width: 100%;
+  text-align: right;
+  border: 1px solid red;
+}
+
 /* Clear floats after the columns */
 .stockrack:after {
   content: "";
