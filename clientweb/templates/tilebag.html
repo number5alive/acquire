@@ -4,6 +4,7 @@
 <head>
   <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='ticker.css') }}{{ cachefix }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='board.css') }}{{ cachefix }}">
    
   <!-- Include our javascript helpers -->
@@ -84,7 +85,16 @@
         </div>
         <div class="boardcolumn">
           <h2>BOARD</h2>
-          <div class="aquireBoard" style="height:300px;" id="acquireBoard"></div>
+          <div class="acquireBoard" style="height:300px;" id="acquireBoard"></div>
+          <div class="row">
+            <div id="outer">
+              <!-- This div is important! 
+              It lets us specify margin-left as percentage (in css loop) -->
+              <div>
+                  <div id="loop"><div id="content">Welcome to TileBag!&nbsp;</div></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -116,6 +126,7 @@
 <!-- ## Javascript for Rendering Game Components on the Screen -->
 <!-- ################################################################### --> 
   <script>
+
   /* The hotel constants */
   let HOTELS = [
        {name: "Worldwide", short: "WW", color: "rgba(87, 54, 107, 1)"},
@@ -142,6 +153,8 @@
   const el_currplayer=document.getElementById('currplayer');
   const el_messagebar=document.getElementById('messagebar');
   const el_gamemessage=document.getElementById('el_gamemessage');
+  const el_outer=document.getElementById('outer');
+  const el_loop=el_outer.querySelector('#loop');
    
   // For TILERACK
   // Dynamically create the spots for the tiles
@@ -154,7 +167,7 @@
    
   // Draw the BOARD
   drawBoard(el_gameboard); // from board.js - draws an empty board
-   
+
   // Called when a hotel tile starts or stops being dragged
   function onHotelDrag(hotel, done=false) {
     // TODO: See if the hotel is on the board or not
@@ -423,12 +436,18 @@
       }, 2500);
   }
      
-  function showHotel(dhotel) {
+  function showHotel(dhotel, ticker) {
     let h=HOTELS.find(o => o.name === dhotel['name']);
     let hel=document.getElementById(dhotel['name']);
 
     // If it's on the board, show it on the board
     if( dhotel['tile'] != null) {
+      // Update the stock ticker
+      var sti=document.createElement('span');
+      sti.style.color=h.color;
+      sti.innerText=h.short+"("+dhotel['occupies'].length+") $400;   ";
+      ticker.appendChild(sti);
+      // Colour the tiles on the board
       for( var i=0; i<dhotel['occupies'].length; i++)
       {
         var t = dhotel['occupies'][i];
@@ -460,6 +479,17 @@
       decksize += 0.5;
     }
     hel.style.opacity=decksize + 0.2;
+  }
+   
+  // For the stock ticker
+  function repeatContent(el, till) {
+    let html = el.innerHTML;
+    let counter = 0; // prevents infinite loop
+
+    while (el.offsetWidth < till && counter < 100) {
+        el.innerHTML += html;
+        counter += 1;
+    }
   }
 
   // game info only includes stocks we have, the rest are Zero
@@ -534,9 +564,17 @@
     drawBoard(el_gameboard,data['game']['board']); // from board.js
 
     // HOTELS: Place the hotel tokens on the board
+    el_loop.innerHTML="";           // clear the stock ticker first
+    elt=document.createElement('div');
+    elt.className='content';
+    el_loop.appendChild(elt);
     hotels=data['game']['hotels'];
-    hotels.forEach(h => showHotel(h));
+    hotels.forEach(h => showHotel(h,elt));
      
+    // Draw the stock TICKER
+    repeatContent(elt, el_outer.offsetWidth);
+    el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
+
     // see if we have a player or a spectator
     if( !data['game']['you'] ) {
       // TODO: some fancy spectator display
