@@ -510,7 +510,7 @@
     var currpname=data['game']['currPlayer']['name'];
     var currpid=data['game']['currPlayer']['id'];
     el_currplayer.innerText=currpname;
-    el_gamestate.innerText="Waiting on " + currpname + " to <action>"
+    el_gamestate.innerText=data['game']['gamestate'];
 
     // GAMELOG: Show the last messages
     var el_msgLog=document.getElementById("messagelog");

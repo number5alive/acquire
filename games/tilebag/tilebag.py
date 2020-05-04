@@ -89,6 +89,12 @@ class TileBagPlayer(Player):
 class TileBagGame(Game):
   # Fixed Data about the Game
   _HOTELS=["Worldwide", "Saxxon", "Festival", "Imperial", "American", "Continental", "Tower"]
+  _STATES={'placetile': 'place a tile', 
+           'placehotel': 'place a hotel', 
+           'buystocks': 'buy stocks',
+           'picktakeover': 'pick hotel to be acquired',
+           'resovlestocks': 'resolve acquired stocks' }
+            
   _name='TileBag'
   _minPlayers=3
   _maxPlayers=5
@@ -109,6 +115,7 @@ class TileBagGame(Game):
     self._conflictTiles=[]
     self.board=[]
     self._currPlayer=None
+    self._gamestate=None
     self.tilebag=None;
     self.hotels=[Hotel(name) for name in self._HOTELS]
     self._log=GameLog()
@@ -157,6 +164,7 @@ class TileBagGame(Game):
     self.tilebag = TileBag(9,12)
 
     # Determine Start Order: draw a single tile for each player
+    self._gamestate='placetile'
     self._currPlayer = None
     lowestTile=Tile(10,8)
     for player in self._players:
@@ -371,18 +379,23 @@ class TileBagGame(Game):
     if self._started:
       return { 
         'currPlayer': self._currPlayer.getId(),
+        'gamestate': self._gamestate,
         'board': self.board.serialize(),
         'bag': self.tilebag.serialize(),
         'hotels': [h.serialize() for h in self.hotels]
       }
     else:
       return {}
-     
+
+  def convertStateToHuman(self):
+     return "Waiting for {} to {}".format(self._currPlayer.name, TileBagGame._STATES[self._gamestate])
+      
   # Get the information you'd see if you were looking at this game on a table
   def getPublicInformation(self):
     if self._started:
       return {
         'currPlayer': self._currPlayer.serialize(False),
+        'gamestate': self.convertStateToHuman(),
         'board': self.board.serialize(),
         'players' : [x.serialize(False) for x in self._players],
         'hotels': [h.serialize() for h in self.hotels],
