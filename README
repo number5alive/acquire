@@ -25,5 +25,5 @@ NOTE: run these apps from the root folder via:
 (virtual-env) $ python3 -m games.tilebag.tilebag
 
 # to play the game
-Run the server (see above). Then you'll need to create a game. *IF* you drop a file named game.json in the root folder, it'll create a stub game you can find at <localhost:5000/games/tilebag/2> (I'll make a better "game lobby" soon.... maybe)
+Run the server (see above). Then navigate to <localhost:5000/somestring>, it'll let you create and start a game.
  
