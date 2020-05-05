@@ -404,6 +404,13 @@ border: 1px solid red;
   transform: scale(1.2);
 }
 
+.rmstockcount {
+  float: left;
+  padding-top: 12%;
+  font-size: x-small;
+  text-align: right;
+}
+
 /* PLAYERS */
 .playerlist {
   border-radius: 5px;

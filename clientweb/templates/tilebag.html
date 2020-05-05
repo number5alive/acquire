@@ -26,7 +26,7 @@
 </div>
 <div class="mstick" id="messagebar">
   <div class="messages">
-    <div class="gamemessage" id="el_gamemessage"></div>
+    <div class="gamemessage" id="gamemessage"></div>
     <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='currplayer'>Norm</span></div>
     <div class="staticmessage" id="playername" style="float:middle">Guest? Click your Name Above</div>
   </div>
@@ -51,7 +51,7 @@
     </div>
     <div class="card">
       <h3>STOCK MARKET</h3>
-      <div class="stockrack" id="el_stockrack">
+      <div class="stockrack" id="stockrack">
         <!-- The following will dynamically be populated with
         <div class="stockspace">M</div> -->
       </div>
@@ -77,7 +77,7 @@
       <div class="row">
         <div class="hotelcolumn">
           <h2>HOTELS</h2>
-          <div class="hotellist" id="el_hotellist">
+          <div class="hotellist" id="hotellist">
             <div class="rmhotelzone">
               <div class="rmhotelitem" id="rmhotelzone">Hotel Removal Zone</div>
             </div>
@@ -140,9 +140,9 @@
     
   // The main window components we'll reference the most
   const el_topnav=document.getElementById("topnav");
-  const el_hotellist=document.getElementById("el_hotellist");
+  const el_hotellist=document.getElementById("hotellist");
   const el_rmhotelzone=document.getElementById("rmhotelzone");
-  const el_stockrack=document.getElementById("el_stockrack");
+  const el_stockrack=document.getElementById("stockrack");
   const el_tilerack=document.getElementById("tilerack");
   const el_gameboard=document.getElementById("acquireBoard")
   const el_gamestate=document.getElementById('gamestate');
@@ -152,7 +152,7 @@
   const el_thisplayer=document.getElementById('playername');
   const el_currplayer=document.getElementById('currplayer');
   const el_messagebar=document.getElementById('messagebar');
-  const el_gamemessage=document.getElementById('el_gamemessage');
+  const el_gamemessage=document.getElementById('gamemessage');
   const el_outer=document.getElementById('outer');
   const el_loop=el_outer.querySelector('#loop');
    
@@ -192,9 +192,15 @@
     hi.className="hotelitem";
     hi.id = hotel.name;
     hs.appendChild(hi);
-     
     hi.innerText=hotel.name;
     hi.style.backgroundColor=hi.style.backgroundColor + " " +  hotel.color;
+     
+    // Create the remaining stock count part
+    sc = document.createElement('span');
+    sc.className="rmstockcount";
+    sc.id = "sc_" + hotel.name;
+    sc.innerText="#";
+    hi.appendChild(sc)
      
     // drop hotel on stocks to buy stock, on board to place hotel
     makeTileDragable(hi, [[el_stockrack, 'buystock'],
@@ -307,7 +313,7 @@
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ 'action':'placeHotel', 
-                                        'hotel' : hel.innerText,
+                                        'hotel' : hel.id,
                                         'tile' : tgt.id,
                                       })
                   },
@@ -331,7 +337,7 @@
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ 'action':'placeHotel', 
-                                      'hotel' : hel.innerText,
+                                      'hotel' : hel.id,
                                       'tile' : null,
                                     })
                 },
@@ -345,9 +351,9 @@
    
   /* For STOCKS */
   function buyStock(e){
-    // called with a hotelitem object, innertext will work here (sloppy)
+    // called with a hotelitem object
     hotel=e.detail.tile;
-    stockAction(hotel.innerText, +1);
+    stockAction(hotel.id, +1);
   }
   function sellStock(e){
     // called with a stockitem object, will need to translate innertext
@@ -440,6 +446,10 @@
     let h=HOTELS.find(o => o.name === dhotel['name']);
     let hel=document.getElementById(dhotel['name']);
 
+    // Update the remaining stock count
+    var sc=document.getElementById("sc_" + h.name);
+    sc.innerText=dhotel['stocks'];
+       
     // If it's on the board, show it on the board
     if( dhotel['tile'] != null) {
       // Update the stock ticker
@@ -447,6 +457,7 @@
       sti.style.color=h.color;
       sti.innerText=h.short+"("+dhotel['occupies'].length+") $" + dhotel['price'] + ";   ";
       ticker.appendChild(sti);
+       
       // Colour the tiles on the board
       for( var i=0; i<dhotel['occupies'].length; i++)
       {
