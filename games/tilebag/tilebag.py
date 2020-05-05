@@ -2,7 +2,7 @@ from base import Game
 from base import Player
 from games.tilebag.tiles import Tile, TileBag
 from games.tilebag.board import Board
-from games.tilebag.hotels import Hotel, Stock
+from games.tilebag.hotels import Hotel, Stock, HOTELS
 from games.tilebag.gamelog import GameLog, GameAction
 from itertools import cycle, islice
 from random import shuffle
@@ -88,7 +88,6 @@ class TileBagPlayer(Player):
 
 class TileBagGame(Game):
   # Fixed Data about the Game
-  _HOTELS=["Worldwide", "Saxxon", "Festival", "Imperial", "American", "Continental", "Tower"]
   _STATES={'placetile': 'place a tile', 
            'placehotel': 'place a hotel', 
            'buystocks': 'buy stocks',
@@ -117,7 +116,7 @@ class TileBagGame(Game):
     self._currPlayer=None
     self._gamestate=None
     self.tilebag=None;
-    self.hotels=[Hotel(name) for name in self._HOTELS]
+    self.hotels=[Hotel(h['name'], h['chart']) for h in HOTELS]
     self._log=GameLog()
 
   def reset(self):

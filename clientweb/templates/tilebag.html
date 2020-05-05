@@ -445,7 +445,7 @@
       // Update the stock ticker
       var sti=document.createElement('span');
       sti.style.color=h.color;
-      sti.innerText=h.short+"("+dhotel['occupies'].length+") $400;   ";
+      sti.innerText=h.short+"("+dhotel['occupies'].length+") $" + dhotel['price'] + ";   ";
       ticker.appendChild(sti);
       // Colour the tiles on the board
       for( var i=0; i<dhotel['occupies'].length; i++)
