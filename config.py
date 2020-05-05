@@ -5,7 +5,7 @@ from flask_socketio import SocketIO
 # Moving server config info here so we can get it from elsewhere too!
 app = Flask(__name__,static_folder='clientweb/static')
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*:*")
  
 # TODO: query for game subclasses and presume they can be loaded
 # dictionary should be key=Class value=module
