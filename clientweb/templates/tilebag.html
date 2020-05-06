@@ -79,7 +79,7 @@
           <h2>HOTELS</h2>
           <div class="hotellist" id="hotellist">
             <div class="rmhotelzone">
-              <div class="rmhotelitem" id="rmhotelzone">Hotel Removal Zone</div>
+              <div class="rmhotelitem" id="rmhotelzone" style="border:none">Hotel Removal Zone</div>
             </div>
           </div>
         </div>
@@ -188,15 +188,25 @@
     el_hotellist.insertBefore(hs, el_rmhotelzone.parentNode);
      
     // Then create the individual hotel and put it in that space
-    hi = document.createElement('div');
+    var hi = document.createElement('div');
     hi.className="hotelitem";
     hi.id = hotel.name;
     hs.appendChild(hi);
     hi.innerText=hotel.name;
+    hi.dataset.hasmoved=false;
     hi.style.backgroundColor=hi.style.backgroundColor + " " +  hotel.color;
+    hi.style.borderColor=hotel.color;
+
+    // Create the "hidden" multi-select count part
+    var ms = document.createElement('span');
+    ms.className="mscount";
+    ms.id = "ms_" + hotel.name;
+    ms.dataset.count=0;
+    hi.appendChild(ms);
+    hi.onclick=function() {hotelClick(ms);};
      
     // Create the remaining stock count part
-    sc = document.createElement('span');
+    var sc = document.createElement('span');
     sc.className="rmstockcount";
     sc.id = "sc_" + hotel.name;
     sc.innerText="#";
@@ -208,6 +218,20 @@
                           [el_rmhotelzone, 'rmhotel']], onHotelDrag);
   }
   HOTELS.forEach(h => buildHotelName(h));
+
+  function hotelClick(mselem) {
+    console.log(mselem.id + " " + mselem.innerText);
+    if( mselem.parentElement.dataset.hasmoved == "false" )
+    {
+      var reqcount=parseInt(mselem.dataset.count);
+      reqcount = isNaN(reqcount) ? 1 : reqcount+1;
+      mselem.innerText=reqcount
+      mselem.dataset.count=reqcount;
+      if( !mselem.className.includes(" visible") ) {
+        mselem.className = mselem.className + " visible";
+      }
+    }
+  }
 
   // Dynamically add the "buy/sell" STOCKS widgets to the page
   const buildStockWidget = function(hotel){
@@ -353,8 +377,18 @@
   function buyStock(e){
     // called with a hotelitem object
     hotel=e.detail.tile;
-    stockAction(hotel.id, +1);
+    var elw=document.getElementById("ms_" + hotel.id);
+    var buyCount=parseInt(elw.dataset.count);
+    if( isNaN(buyCount) || buyCount == 0) {
+      buyCount = 1;
+    }
+    stockAction(hotel.id, buyCount);
+
+    // Clear the "buyCount" value from the element
+    elw.dataset.count=0;
+    elw.className = elw.className.replace(" visible", "");
   }
+   
   function sellStock(e){
     // called with a stockitem object, will need to translate innertext
     si=e.detail.tile;

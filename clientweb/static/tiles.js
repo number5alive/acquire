@@ -106,6 +106,7 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
     origy = elmnt.offsetTop;
     origbg = elmnt.style.backgroundColor;
     elmnt.style.zIndex=10;  // make sure dragged item is always on top
+    elmnt.dataset.hasmoved=false; // might just be a click
     document.onmouseup = closeDragElement;
     // call a function whenever the cursor moves:
     document.onmousemove = elementDrag;
@@ -123,6 +124,10 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
     pos2 = pos4 - e.clientY;
     pos3 = e.clientX;
     pos4 = e.clientY;
+
+    // set the flag to indicate that this object moved
+    // TODO: check for a minimum amount of moving?
+    elmnt.dataset.hasmoved = true;
      
     // set the element's new position:
     elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
