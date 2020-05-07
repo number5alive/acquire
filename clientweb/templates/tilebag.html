@@ -55,7 +55,7 @@
     <div class="card">
       <div class=row>
         <h3 class="left60">STOCK MARKET</h3>
-        <button class="clr right30" onclick="clrStockCnt()" id="btnClearStockCnt">Clear</button>
+        <button class="clr right30" onclick="clrCnt('S')" id="btnClearSCnt">Clear</button>
       </div>
       <div class="stockrack" id="stockrack">
         <!-- The following will dynamically be populated with
@@ -84,7 +84,7 @@
         <div class="hotelcolumn">
           <div class=row>
             <h2 class="left60">HOTELS</h2>
-            <button onclick="clrHotelCnt()" class="right30 clr" id="btnClearHotelCnt">Clear</button>
+            <button onclick="clrCnt('H')" class="right30 clr" id="btnClearHCnt">Clear</button>
           </div>
           <div class="hotellist" id="hotellist">
             <div class="rmhotelzone">
@@ -197,6 +197,19 @@
       el_rmhotelzone.innerText = "Hotel Removal Zone";
     }
   }
+
+  function getMultiSelectId(itemtype, hname) {
+    return "ms_" + itemtype + "_" + hname;
+  }
+
+  function addMultiSelect(hostelm, itemtype) {
+    var ms = document.createElement('span');
+    ms.className="mscount";
+    ms.id = getMultiSelectId(itemtype, hostelm.dataset.hotel);
+    ms.dataset.count=0;
+    hostelm.appendChild(ms);
+    hostelm.onclick=function() {onMultiSelectClick(ms, itemtype);};
+  }
    
   // Dynamically add the HOTELS tokens to the page
   const buildHotelName = function(hotel){
@@ -210,6 +223,7 @@
     var hi = document.createElement('div');
     hi.className="hotelitem";
     hi.id = hotel.name;
+    hi.dataset.hotel=hotel.name;
     hs.appendChild(hi);
     hi.innerText=hotel.name;
     hi.dataset.hasmoved=false;
@@ -217,12 +231,7 @@
     hi.style.borderColor=hotel.color;
 
     // Create the "hidden" multi-select count part
-    var ms = document.createElement('span');
-    ms.className="mscount";
-    ms.id = "ms_" + hotel.name;
-    ms.dataset.count=0;
-    hi.appendChild(ms);
-    hi.onclick=function() {hotelClick(ms, "Hotel");};
+    addMultiSelect(hi, "H");
      
     // Create the remaining stock count part
     var sc = document.createElement('span');
@@ -238,40 +247,34 @@
   }
   HOTELS.forEach(h => buildHotelName(h));
 
-  function _clrCnt(h, idpre) {
-    var elCnt=document.getElementById(idpre+h.name);
+  function _clrCnt(h, itemtype) {
+   
+    var elCnt=document.getElementById(getMultiSelectId(itemtype, h.name));
     elCnt.dataset.count=0;
     hideElement(elCnt);
   }
 
-  function clrHotelCnt() {
+  function clrCnt(itemtype) {
     // Go through all count items, reset them and hide them
-    HOTELS.forEach(h => _clrCnt(h, "ms_"));
+    HOTELS.forEach(h => _clrCnt(h, itemtype));
     
     // Hide the Clear Button
-    var elClrHotel=document.getElementById("btnClearHotelCnt");
-    hideElement(elClrHotel);
-  }
-
-  function clrStockCnt() {
-    // Go through all count items, reset them and hide them
-    HOTELS.forEach(h => _clrCnt(h, "ss_"));
-    
-    // Hide the Clear Button
-    var elClrStock=document.getElementById("btnClearStockCnt");
+    var elClrStock=document.getElementById("btnClear"+itemtype+"Cnt");
     hideElement(elClrStock);
   }
    
-  function hotelClick(mselem, itemtype) {
+  function onMultiSelectClick(mselem, itemtype) {
     if( mselem.parentElement.dataset.hasmoved == "false" )
     {
       var reqcount=parseInt(mselem.dataset.count);
       reqcount = isNaN(reqcount) ? 1 : reqcount+1;
+      console.log(reqcount);
+      clrCnt(itemtype); // clear all others
       mselem.innerText=reqcount
       mselem.dataset.count=reqcount;
       showElement(mselem);
-      var elClrHotel=document.getElementById("btnClear"+itemtype+"Cnt");
-      showElement(elClrHotel);
+      var elClrBtn=document.getElementById("btnClear"+itemtype+"Cnt");
+      showElement(elClrBtn);
     }
   }
 
@@ -286,16 +289,12 @@
     var si=document.createElement('div');
     si.className="stockitem";
     si.id = "st_" + hotel.short;
+    si.dataset.hotel=hotel.name; // required for multi-select
     si.style.backgroundColor=hotel.color;
     ss.append(si);
      
     // Create the "hidden" multi-select count part
-    var sls = document.createElement('span');
-    sls.className="mscount";
-    sls.id = "ss_" + hotel.name;
-    sls.dataset.count=0;
-    si.appendChild(sls);
-    si.onclick=function() {hotelClick(sls, "Stock");};
+    addMultiSelect(si, "S");
      
     var sia=document.createElement('div');
     sia.className="stockcount";
@@ -422,49 +421,47 @@
       sendGameMessage("Invalid Remove-Hotel Action");
     }
   }
-   
-  /* For STOCKS */
-  function buyStock(e){
-    // called with a hotelitem object, who's id is helpfully the hotel name
-    hotel=e.detail.tile;
-    var elw=document.getElementById("ms_" + hotel.id);
-    var buyCount = 1;
+
+  function getCountFromMultSelect(itemtype, hname) {
+    var elw=document.getElementById(getMultiSelectId(itemtype, hname));
+    var count = 1;
     if( elw != undefined )
     {
-      buyCount=parseInt(elw.dataset.count);
-      if( isNaN(buyCount) || buyCount == 0) {
-        buyCount = 1;
+      count=parseInt(elw.dataset.count);
+      if( isNaN(count) || count == 0) {
+        count = 1;
       }
        
-      // Clear the "buyCount" value from the element
+      // Clear the "count" value from the element
       elw.dataset.count=0;
       hideElement(elw);
     }
-    stockAction(hotel.id, buyCount);
+    return count;
+  }
+   
+  /* For STOCKS */
+  function buyStock(e){
+    // called with a hotelitem object
+    var hotel=e.detail.tile;
+    var hname=hotel.dataset.hotel;
+    var buyCount=getCountFromMultSelect('H', hname);
+     
+    stockAction(hname, buyCount);
+     
+    var elClrHotel=document.getElementById("btnClearHCnt");
+    hideElement(elClrHotel);
   }
    
   function sellStock(e){
-    // called with a stockitem object, will need to translate - find hotel
-    si=e.detail.tile;
-    hotshort=si.id.split('_').pop();
-    let h=HOTELS.find(o => o.short === hotshort);
+    // called with a stockitem object
+    var si=e.detail.tile;
+    var hname=si.dataset.hotel;
+    var sellCount=getCountFromMultSelect('S', hname);
+       
+    stockAction(hname, -sellCount);
      
-    // find out how many (presume one)
-    var sellCount=1;
-    var elss=document.getElementById("ss_" + h.name);
-    if( elss != undefined )
-    {
-      sellCount=parseInt(elss.dataset.count);
-      if( isNaN(sellCount) || sellCount == 0) {
-        sellCount = 1;
-      }
-       
-      // Clear the "sellCount" value from the element
-      elss.dataset.count=0;
-      hideElement(elss);
-    }
-       
-    stockAction(h.name, -sellCount);
+    var elClrHotel=document.getElementById("btnClearSCnt");
+    hideElement(elClrHotel);
   }
    
   async function stockAction(hname, amt){
