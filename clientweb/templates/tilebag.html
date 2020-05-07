@@ -268,7 +268,6 @@
     {
       var reqcount=parseInt(mselem.dataset.count);
       reqcount = isNaN(reqcount) ? 1 : reqcount+1;
-      console.log(reqcount);
       clrCnt(itemtype); // clear all others
       mselem.innerText=reqcount
       mselem.dataset.count=reqcount;
