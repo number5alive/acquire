@@ -36,7 +36,10 @@
   <div class="infocolumn">
     <h2>PLAYER INFO</h2>
     <div class="card">
-      <h3 style="display:inline">BANK  </h3><span class="playermoney" id="playermoney">$$$$$</span>
+      <div class="row">
+        <h3 class="left60">BANK</h3>
+        <span class="right30 playermoney" id="playermoney">$$$$$</span>
+      </div>
       <div class="moneycontainer">
         <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
         <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
@@ -50,14 +53,17 @@
       </div>
     </div>
     <div class="card">
-      <h3>STOCK MARKET</h3>
+      <div class=row>
+        <h3 class="left60">STOCK MARKET</h3>
+        <button class="clr right30" onclick="clrStockCnt()">Clear</button>
+      </div>
       <div class="stockrack" id="stockrack">
         <!-- The following will dynamically be populated with
         <div class="stockspace">M</div> -->
       </div>
     </div>
     <div class="gamelog card">
-      <h3>GAMELOG</h3>
+      <h3>GAME LOG</h3>
       <div class="currstate" id="gamestate"></div>
       <div class="messagelog"><ul id="messagelog"></ul></div>
     </div>
@@ -76,7 +82,10 @@
     <div class="card">
       <div class="row">
         <div class="hotelcolumn">
-          <h2>HOTELS</h2>
+          <div class=row>
+            <h2 class="left60">HOTELS</h2>
+            <button onclick="clrHotelCnt()" class="right30 clr" id="btnClearHotelCnt">Clear</button>
+          </div>
           <div class="hotellist" id="hotellist">
             <div class="rmhotelzone">
               <div class="rmhotelitem" id="rmhotelzone" style="border:none">Hotel Removal Zone</div>
@@ -155,6 +164,16 @@
   const el_gamemessage=document.getElementById('gamemessage');
   const el_outer=document.getElementById('outer');
   const el_loop=el_outer.querySelector('#loop');
+
+  // Helper functions
+  function showElement(elem) {
+    if( !elem.className.includes("visible ") ) {
+      elem.className = "visible " + elem.className;
+    }
+  }
+  function hideElement(elem) {
+    elem.className = elem.className.replace("visible ", "");
+  }
    
   // For TILERACK
   // Dynamically create the spots for the tiles
@@ -219,17 +238,31 @@
   }
   HOTELS.forEach(h => buildHotelName(h));
 
+  function _clrHotelCnt(h) {
+    var elCnt=document.getElementById("ms_"+h.name);
+    elCnt.dataset.count=0;
+    hideElement(elCnt);
+  }
+
+  function clrHotelCnt() {
+    // Go through all count items, reset them and hide them
+    HOTELS.forEach(h => _clrHotelCnt(h));
+    
+    // Hide the Clear Button
+    var elClrHotel=document.getElementById("btnClearHotelCnt");
+    hideElement(elClrHotel);
+  }
+
   function hotelClick(mselem) {
-    console.log(mselem.id + " " + mselem.innerText);
     if( mselem.parentElement.dataset.hasmoved == "false" )
     {
       var reqcount=parseInt(mselem.dataset.count);
       reqcount = isNaN(reqcount) ? 1 : reqcount+1;
       mselem.innerText=reqcount
       mselem.dataset.count=reqcount;
-      if( !mselem.className.includes(" visible") ) {
-        mselem.className = mselem.className + " visible";
-      }
+      showElement(mselem);
+      var elClrHotel=document.getElementById("btnClearHotelCnt");
+      showElement(elClrHotel);
     }
   }
 
@@ -386,7 +419,7 @@
 
     // Clear the "buyCount" value from the element
     elw.dataset.count=0;
-    elw.className = elw.className.replace(" visible", "");
+    hideElement(elw);
   }
    
   function sellStock(e){
@@ -637,7 +670,7 @@
       }
       
       // PLAYER MONEY
-      el_pmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumSignificantDigits: 1,})).format(pinfo['money']);
+      el_pmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(pinfo['money']);
 
       // STOCKS
       stocks=pinfo['stocks'];

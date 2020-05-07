@@ -36,6 +36,32 @@ body {
   overflow: hidden;
   background-color: #333;
 }
+
+.row {
+  width: 100%;
+}
+ 
+.left60 {
+  float: left;
+  width: 60%;
+}
+
+.left60 {
+  float: left;
+  width: 60%;
+  margin: 5px 2px;
+}
+
+.right30 {
+  float: right;
+  width: 30%;
+  margin: 5px 2px;
+}
+
+.clr {
+  visibility: hidden;
+  font-size: x-small;
+}
  
 div.mstick {
   z-index: 10;
@@ -298,6 +324,7 @@ border: 1px solid red;
 .moneycontainer {
   height: 50px;
   border-radius: 5px;
+  margin-bottom: 5px;
   margin-left: 5%;
   margin-right: 5%;
   padding-left: 2%; /* adjust math for individual tile container */
@@ -420,7 +447,7 @@ border: 1px solid red;
 }
 
 .visible {
-  visibility: visible;
+  visibility: visible !important;
 }
  
 .rmstockcount {
