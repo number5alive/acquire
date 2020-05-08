@@ -11,7 +11,7 @@ class State():
         print('Initializing state: {}'.format(str(self)))
         self._game=game
 
-    def on_event(self, event):
+    def on_event(self, event, **kwargs):
         """
         Handle events that are delegated to this State.
         """
@@ -31,48 +31,56 @@ class State():
 
     def serialize(self, forsave=False):
       return {}
+
+    def toHuman(self):
+      return "Waiting for player to {}".format(str(self))
  
 class StateEngine():
-  def __init__(self, currplayer, start):
-    self._currplayer=currplayer
-    self._state=start
+  def __init__(self, start):
+    self._currplayer=None
+    self._players=None
+    self._start=start
+    self._state=start # our current state
 
   @property
   def currplayer(self):
     return self._currplayer
      
-  def on_event(self, player, event):
+  def on_event(self, player, event, **kwargs):
     """
     This is the bread and butter of the state machine. Incoming events are
     delegated to the given states which then handle the event. The result is
     then assigned as the new state.
     """
 
-    # The next state will be the result of the on_event function.
+    # Let the first state have no player, otherwise enforce current player
     # TODO: make sure this all works as intended, as written:
     #       will not support concurrent actions (like stock transactions)
-    if self._currplayer == player:
-      self._state = self._state.on_event(event)
+    if self._start == self._state or self._currplayer == player:
+      # The current state can keep or modify the state on return
+      self._state = self._state.on_event(event, **kwargs)
     else:
       print("Not the current player, cannot take action")
 
   def serialize(self, forsave=False):
     return { 'currplayer' : self._currplayer,
              'state' : str(self._state),
-             'stateinfo' : self._state.serialize(forsave) }
+             'stateinfo' : self._state.serialize(forsave),
+             'message' : self._state.toHuman(), }
 
 if __name__ == "__main__":
   # Test the state machine Engine with a few states
   class TestGame(StateEngine):
-    def __init__(self, player):
-      self._blah="hello!";
-      super().__init__(player, TestGame.StateA(game=self));
+    def __init__(self):
       print("TestGameEngine")
+      self._blah="hello!";
+      super().__init__(TestGame.StateA(self))
        
     class StateA(State):
-      def on_event(self, event):
+      def on_event(self, event, **kwargs):
         print("StateA")
         if event == 'hi':
+          self._game._currplayer = 'timmy'
           print("Hit 'hi' event from 'StateB', testing _currplayer access {}".format(self._game._currplayer))
           return TestGame.StateB(self._game)
         else:
@@ -80,7 +88,7 @@ if __name__ == "__main__":
         return self
 
     class StateB(State):
-      def on_event(self, event):
+      def on_event(self, event, **kwargs):
         print("StateB")
         if event == 'bye':
           print("Hit event 'bye' from 'StateB', testing Game access {}".format(self._game._blah))
@@ -89,8 +97,11 @@ if __name__ == "__main__":
           print("invalidB")
         return self
 
+      def toHuman(self):
+        return "Waiting for something something StateB something"
+
   print("---- Testing basic state transition mechanics ----")
-  engine=TestGame('timmy')
+  engine=TestGame()
   engine.on_event('timmy', 'hi')
   engine.on_event('timmy', 'hi')
   engine.on_event('billy', 'bye')
@@ -99,5 +110,7 @@ if __name__ == "__main__":
   engine.on_event('timmy', 'bye')
 
   print("---- Testing Serialization ----")
+  print(engine.serialize(False))
+  engine.on_event('timmy', 'hi')
   print(engine.serialize(False))
 

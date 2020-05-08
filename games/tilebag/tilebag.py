@@ -5,11 +5,17 @@ from games.tilebag.tiles import Tile, TileBag
 from games.tilebag.board import Board
 from games.tilebag.hotels import Hotel, Stock, HOTELS
 from games.tilebag.gamelog import GameLog, GameAction
+from games.tilebag.stateengine import State, StateEngine
 from itertools import cycle, islice
-from random import shuffle
 
-
-class TileBagGame(Game):
+class TileBagGame(Game, StateEngine):
+  """
+  THIS... this is the game... It has all the logic and state for a game of
+  TileBag. You'll notice it inherits both the base Game class (so it can run
+  on this framework), and StateEngine - because I'm switching it over to run
+  as discrete game states via a state machine... why not, every other 
+  decision has basically been this random!
+  """
   # Fixed Data about the Game
   _STATES={'placetile': 'place a tile', 
            'placehotel': 'place a hotel', 
@@ -24,14 +30,14 @@ class TileBagGame(Game):
   _starturl='/tilebag/v1'
    
   def __init__(self, id):
-    super().__init__(id)
+    Game.__init__(self,id)
     self._initcomponents()
     self._log.recordGameMessage("Game Created")
 
   def __del__(self):
     # todo, delete all of our things
     print("Deleting TileBagGame")
-    super().__del__()
+    Game.__del__(self)
 
   def _initcomponents(self):
     self._conflictTiles=[]
@@ -54,7 +60,7 @@ class TileBagGame(Game):
       player.reset()
        
     # only thing from base class to reset is the "started" flag
-    super().reset()
+    Game.reset(self)
 
   def getBoard(self):
     return self.board
@@ -69,11 +75,8 @@ class TileBagGame(Game):
         return player
     return None
 
-  def getPlayerInfo(self, playerid):
-    player=self._getPlayer(playerid)
-    if player:
-      return player.serialize(True)
-    return None
+  # ===== External Requests into the Game Engine =====
+  # These will be passed on to the state machine for handling mechanics
 
   def run(self):
     if not super().run():
@@ -273,6 +276,46 @@ class TileBagGame(Game):
     # if we get down here, we didn't succeed at playing the tile
     return False
 
+  # ===== Start of the State Machine logic =====
+  # note: there are a small handful of states: 
+  #   playing a tile, buying stocks, placing a hotel, resolving a merger
+  #   - with the last one having a few sub-states, but that's okay
+
+  class StartGame(State):
+    def on_event(self, event, **kwargs):
+      return self
+
+    def toHuman(self):
+      return "Waiting on game to start"
+
+  class PlayTile(State):
+    def on_event(self, event, **kwargs):
+      # see if there's a new hotel to go down
+      # see if there's a merger about to happen
+      return self
+
+    def toHuman(self):
+      return "Waiting on {} to play a tile".format(self._game._currplayer)
+
+  class PlaceHotel(State):
+    def on_event(self, event, **kwargs):
+      return self
+
+  class BuyStocks(State):
+    def on_event(self, event, **kwargs):
+      return self
+
+  class ResolveMerger(State):
+    def on_event(self, event, **kwargs):
+      return self
+
+  class LiquidateStocks(State):
+    def on_event(self, event, **kwargs):
+      return self
+
+  # ===== Serialization and Deserialization of the Game object ====
+  # both for the clients, as well as for saving and restoring state
+
   # Load (recreate) a version of this game from the JSON object
   def loadFromSavedData(self,sd):
     gd=sd['gamedata']
@@ -293,6 +336,12 @@ class TileBagGame(Game):
     self.board=Board.loadFromSavedData(gd['board'])
     rows, cols =self.board.getBoardSize()
     self.tilebag=TileBag(rows, cols, initialTiles=gd['bag'])
+
+  def getPlayerInfo(self, playerid):
+    player=self._getPlayer(playerid)
+    if player:
+      return player.serialize(True)
+    return None
    
   # Saves the game to json format (using the JSONEncoder from elsewhere)
   # Why is this different than getPublicInformation? Because I'm super lazy!

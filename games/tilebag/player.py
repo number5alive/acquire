@@ -1,5 +1,6 @@
 from games.tilebag.tiles import Tile, TileBag
 from base import Player
+from random import shuffle
 
 class TileBagPlayer(Player):
   _tiles=[]
