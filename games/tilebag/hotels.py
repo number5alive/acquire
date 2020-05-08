@@ -42,7 +42,8 @@ class Hotel:
   def setOccupies(self, occupies):
     self._occupies=occupies
 
-  def stocksRemaining(self):
+  @property
+  def nstocks(self):
     return len(self._stocks)
 
   def takeStock(self):
@@ -83,7 +84,7 @@ class Hotel:
       'name' : self._name,
       'tile' : self._tile,
       'occupies' : self._occupies,
-      'stocks' : self.stocksRemaining(),
+      'stocks' : self.nstocks,
       'price' : curr['price'] if curr else None,
       'majority' : curr['maj'] if curr else None,
       'minority' : curr['min'] if curr else None,
@@ -146,13 +147,13 @@ if __name__ == "__main__":
   print("serialized: {}".format(h.serialize()))
 
   print("---- Testing Stock interactions with Hotel ----")
-  print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
+  print("Total Stocks in {}: {}".format(h.name, h.nstocks))
   s=h.takeStock()
-  print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
+  print("Total Stocks in {}: {}".format(h.name, h.nstocks))
   h.returnStock(s)
-  print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
+  print("Total Stocks in {}: {}".format(h.name, h.nstocks))
   [h.takeStock() for i in range(0,24)]
-  print("Total Stocks in {}: {}".format(h.name, h.stocksRemaining()))
+  print("Total Stocks in {}: {}".format(h.name, h.nstocks))
   print("takeStock: {}".format(h.takeStock()))
   print("takeStock: {}".format(h.takeStock()))
 
