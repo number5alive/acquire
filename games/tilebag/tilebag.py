@@ -30,6 +30,7 @@ class TileBagGame(Game, StateEngine):
   _starturl='/tilebag/v1'
    
   def __init__(self, id):
+    StateEngine.__init__(self, TileBagGame.StartGame(self))
     Game.__init__(self,id)
     self._initcomponents()
     self._log.recordGameMessage("Game Created")
@@ -58,6 +59,7 @@ class TileBagGame(Game, StateEngine):
     self._initcomponents()
     for player in self._players:
       player.reset()
+    StateEngine.__init__(self, TileBagGame.StartGame(self))
        
     # only thing from base class to reset is the "started" flag
     Game.reset(self)
@@ -67,7 +69,7 @@ class TileBagGame(Game, StateEngine):
 
   @property
   def currPlayer(self):
-    return self._currPlayer
+    return self._currplayer
 
   def _getPlayer(self, playerid):
     for player in self._players:
@@ -82,32 +84,8 @@ class TileBagGame(Game, StateEngine):
     if not super().run():
       print("Unable to start the game - probably not enough players")
       return False;
-       
-    # Initialize Game Components
-    self._log.recordGameMessage("TileBagGame Started!")
-    self.board = Board(9,12)
-    self.tilebag = TileBag(9,12)
 
-    # Determine Start Order: draw a single tile for each player
-    self._gamestate='placetile'
-    self._currPlayer = None
-    lowestTile=Tile(10,8)
-    for player in self._players:
-      t=self.tilebag.takeTile()
-      self._log.recordTileAction(player.name, str(t))
-      if t <= lowestTile:
-        lowestTile=t
-        self._currPlayer=player
-      self.board.placeTile(t)
-    self._log.recordGameMessage("{} is the first player".format(self._currPlayer.name))
-
-    # Now set the game order to the above
-    self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
-   
-    # give each player seven tiles to start
-    for player in self._players:
-      for i in range(0,7):
-        player.receiveTile(self.tilebag.takeTile())
+    return self.on_event(None, 'StartGame')
 
   def moneyAction(self, playerId, amount):
     if self._started:
@@ -235,46 +213,14 @@ class TileBagGame(Game, StateEngine):
         self._conflictTiles.remove(tile)
        
   def playTile(self, playerId, tile=None, alpha=None):
-    if tile is None and alpha is not None:
-      tile=Tile.newTileFromAlpha(alpha)
-       
-    if self._started:
-      if self._currPlayer.getId() == playerId:
-        if tile in self._currPlayer.tiles:
-          # NOTE: this tile MIGHT be between two tiles, in that case we need
-          #       to ensure it doesn't cause a "merger" until one of those
-          #       hotels gets removed, therefore:
-           
-          # put tile on the board, and presume it'll be between two tiles
-          self.board.placeTile(tile)
-          self._conflictTiles.append(tile)
-
-          # now verify that fact for this tile, cleanup if we were wrong
-          self.checkTileNextToHotel(tile)
-
-          self._log.recordTileAction(self._currPlayer.name, str(tile))
-
-          # TODO: Change the game state to either:
-          # makeHotel, resolveMerger, buyStocks, 
-
-          # TODO: Move this to the "end turn" action
-          self._currPlayer.removeTile(tile)
-          print("Played Tile: {}".format(tile))
-          if self.tilebag.isEmpty():
-            print("Tilebag exhausted, trigger end-game state")
-          else:
-            self._currPlayer.receiveTile(self.tilebag.takeTile())
-          self._currPlayer=next(self._rotation)
-          return True
-        else:
-          print("{} is not in {}".format(tile, self._currPlayer.tiles))
+    if tile is None:
+      if alpha is not None:
+        tile=Tile.newTileFromAlpha(alpha)
       else:
-        print("{} is not the current player".format(playerId))
-    else:
-      print("game isn't started, cannot make a move")
+        print("Invalid argument to playTile")
+        return False
 
-    # if we get down here, we didn't succeed at playing the tile
-    return False
+    return self.on_event(self._getPlayer(playerId), 'PlayTile', tile=tile)
 
   # ===== Start of the State Machine logic =====
   # note: there are a small handful of states: 
@@ -283,7 +229,36 @@ class TileBagGame(Game, StateEngine):
 
   class StartGame(State):
     def on_event(self, event, **kwargs):
-      return self
+      if event == 'StartGame':
+        # Initialize Game Components
+        self._game._log.recordGameMessage("TileBagGame Started!")
+        self._game.board = Board(9,12)
+        self._game.tilebag = TileBag(9,12)
+
+        # Determine Start Order: draw a single tile for each player
+        self._game._currplayer = None
+        lowestTile=Tile(10,8)
+        for player in self._game._players:
+          t=self._game.tilebag.takeTile()
+          self._game._log.recordTileAction(player.name, str(t))
+          if t <= lowestTile:
+            lowestTile=t
+            self._game._currplayer=player
+          self._game.board.placeTile(t)
+        self._game._log.recordGameMessage("{} is the first player".format(self._game._currplayer.name))
+
+        # Now set the game order to the above
+        self._game._rotation = islice(cycle(self._game._players), self._game._players.index(self._game._currplayer)+1, None)
+       
+        # give each player seven tiles to start
+        for player in self._game._players:
+          for i in range(0,7):
+            player.receiveTile(self._game.tilebag.takeTile())
+
+        # good to go, flip into the main game state cycle
+        return True, TileBagGame.PlayTile(self._game)
+
+      return False, self
 
     def toHuman(self):
       return "Waiting on game to start"
@@ -292,7 +267,43 @@ class TileBagGame(Game, StateEngine):
     def on_event(self, event, **kwargs):
       # see if there's a new hotel to go down
       # see if there's a merger about to happen
-      return self
+      print(kwargs)
+         
+      if event == 'PlayTile':
+        tile=kwargs['tile']
+        if tile in self._game._currplayer.tiles:
+          # NOTE: this tile MIGHT be between two tiles, in that case we need
+          #       to ensure it doesn't cause a "merger" until one of those
+          #       hotels gets removed, therefore:
+           
+          # put tile on the board, and presume it'll be between two tiles
+          self._game.board.placeTile(tile)
+          self._game._conflictTiles.append(tile)
+
+          # now verify that fact for this tile, cleanup if we were wrong
+          self._game.checkTileNextToHotel(tile)
+
+          self._game._log.recordTileAction(self._game._currplayer.name, str(tile))
+
+          # TODO: Change the game state to either:
+          # makeHotel, resolveMerger, buyStocks, 
+
+          # TODO: Move this to the end of the buy stock action
+          self._game._currplayer.removeTile(tile)
+          print("Played Tile: {}".format(tile))
+          if self._game.tilebag.isEmpty():
+            print("Tilebag exhausted, trigger end-game state")
+          else:
+            self._game._currplayer.receiveTile(self._game.tilebag.takeTile())
+          self._game._currplayer=next(self._game._rotation)
+          return True, self
+        else:
+          print("{} is not in {}".format(tile, self._game._currplayer.tiles))
+      else:
+        print("In PlayTile, event was {}".format(event))
+
+      # if we get down here, we didn't succeed at playing the tile
+      return False, self
 
     def toHuman(self):
       return "Waiting on {} to play a tile".format(self._game._currplayer)
@@ -349,8 +360,8 @@ class TileBagGame(Game, StateEngine):
   def saveGameData(self):
     if self._started:
       return { 
-        'currPlayer': self._currPlayer.getId(),
-        'gamestate': self._gamestate,
+        'currPlayer': self._currplayer.getId(),
+        'gamestate': self._state,
         'board': self.board.serialize(),
         'bag': self.tilebag.serialize(),
         'hotels': [h.serialize() for h in self.hotels]
@@ -365,8 +376,8 @@ class TileBagGame(Game, StateEngine):
   def getPublicInformation(self):
     if self._started:
       return {
-        'currPlayer': self._currPlayer.serialize(False),
-        'gamestate': self.convertStateToHuman(),
+        'currPlayer': self._currplayer.serialize(False),
+        'gamestate': StateEngine.serialize(self, False),
         'board': self.board.serialize(),
         'players' : [x.serialize(False) for x in self._players],
         'hotels': [h.serialize() for h in self.hotels],

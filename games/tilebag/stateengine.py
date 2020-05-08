@@ -15,7 +15,7 @@ class State():
         """
         Handle events that are delegated to this State.
         """
-        print("Handling event {} from {}".format(event, str(self)))
+        pass # should return ret, nextState
 
     def __repr__(self):
         """
@@ -38,7 +38,7 @@ class State():
 class StateEngine():
   def __init__(self, start):
     self._currplayer=None
-    self._players=None
+    #self._players=None
     self._start=start
     self._state=start # our current state
 
@@ -54,13 +54,16 @@ class StateEngine():
     """
 
     # Let the first state have no player, otherwise enforce current player
+    # presumption is that the first state WILL set the _currplayer value
     # TODO: make sure this all works as intended, as written:
     #       will not support concurrent actions (like stock transactions)
+    ret=False
     if self._start == self._state or self._currplayer == player:
       # The current state can keep or modify the state on return
-      self._state = self._state.on_event(event, **kwargs)
+      ret, self._state = self._state.on_event(event, **kwargs)
     else:
       print("Not the current player, cannot take action")
+    return ret
 
   def serialize(self, forsave=False):
     return { 'currplayer' : self._currplayer,
@@ -82,20 +85,20 @@ if __name__ == "__main__":
         if event == 'hi':
           self._game._currplayer = 'timmy'
           print("Hit 'hi' event from 'StateB', testing _currplayer access {}".format(self._game._currplayer))
-          return TestGame.StateB(self._game)
+          return True, TestGame.StateB(self._game)
         else:
           print("invalidA")
-        return self
+        return False, self
 
     class StateB(State):
       def on_event(self, event, **kwargs):
         print("StateB")
         if event == 'bye':
           print("Hit event 'bye' from 'StateB', testing Game access {}".format(self._game._blah))
-          return TestGame.StateA(self._game)
+          return True, TestGame.StateA(self._game)
         else:
           print("invalidB")
-        return self
+        return False, self
 
       def toHuman(self):
         return "Waiting for something something StateB something"

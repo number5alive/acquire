@@ -648,10 +648,10 @@
     }
      
     // GAMESTATE: Show the current action we're waiting on
-    var currpname=data['game']['currPlayer']['name'];
-    var currpid=data['game']['currPlayer']['id'];
+    var currpname=data['game']['gamestate']['currplayer']['name'];
+    var currpid=data['game']['gamestate']['currplayer']['id'];
     el_currplayer.innerText=currpname;
-    el_gamestate.innerText=data['game']['gamestate'];
+    el_gamestate.innerText=data['game']['gamestate']['message'];
 
     // GAMELOG: Show the last messages
     var el_msgLog=document.getElementById("messagelog");
@@ -694,7 +694,7 @@
        
       // Set Current player, highlight it if it's you
       el_thisplayer.innerText=data['game']['you']['name'];
-      if( data['game']['you']['id'] == data['game']['currPlayer']['id']) {
+      if( data['game']['you']['id'] == data['game']['gamestate']['currplayer']['id']) {
         el_thisplayer.className = el_thisplayer.className + " currplayer";
         el_gamestate.className = "currstate currplayer";
       } else{
@@ -733,7 +733,13 @@
   function setupWebSocket() {
 
       var url=location.protocol + '//{{ serverroot }}';
-      var socket = io.connect(url, {transports: ['websocket']});
+      var socket = io.connect(url, {
+                     'transports': ['websocket'],
+                     'reconnection': true,
+                     'reconnectionDelay': 1000,
+                     'reconnectionDelayMax': 5000,
+                     'reconnectionAttempts': 5,
+                  });
       socket.emit('join', {'room':'{{ gameid }}'});     
       socket.on('connect', function() {
           console.log("*** WS:Connected: " + url);
