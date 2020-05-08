@@ -112,7 +112,6 @@ class TileBagGame(Game, StateEngine):
       for i in range(0,amount):
         s=h.takeStock()
         player.receiveStock(s)
-      self._log.recordStockAction(player.name, h.name, amount)
       return True
     return False
        
@@ -126,9 +125,26 @@ class TileBagGame(Game, StateEngine):
       return True
     return False
 
+  # Constants to avoid typeos wreaking havoc across my code (again)
+  EVENT_REMOVEHOTEL='RemoveHotel'
+  EVENT_PLACEHOTEL='PlaceHotel'
+  EVENT_PLACETILE='PlaceTile'
+   
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
-  def placeHotel(self, playerId, hotel, alpha):
+  def placeHotel(self, playerId, hname, alpha):
+    player=self._getPlayer(playerId)
+    hotel=self._getHotelByName(hname)
+     
+    if hotel is not None:
+      if alpha is None:
+        return self.on_event(player, TileBagGame.EVENT_REMOVEHOTEL, hotel=hotel)
+      elif self.board.alphaIsValid(alpha):
+        return self.on_event(player, TileBagGame.EVENT_PLACEHOTEL, hotel=hotel, tile=Tile.newTileFromAlpha(alpha))
+         
+    print("invalid hotel, or invalid tile location")
+    return False
+     
     if self._started:
       # NOTE: For now we're letting anyone move the hotels
       #if self._currPlayer.getId() == playerId:
@@ -170,8 +186,8 @@ class TileBagGame(Game, StateEngine):
     for cf in self._conflictTiles:
       self.checkTileNextToHotel(cf)
 
-  def checkTileNextToHotel(self, tile):
-    # find neighbouring occupied spaces
+  # return the spaces next to us, and a list of hotels
+  def _getBorderingSpaces(self, tile):
     conn=self.board.checkNeighbours(tile.row, tile.col)
     hn=[]
     for h in self.hotels:
@@ -181,6 +197,11 @@ class TileBagGame(Game, StateEngine):
         if len(tmp) > 0:
           print("new tile at {} is adjacent to {}".format(tile, h.name))
           hn.append(h)
+    return conn, hn
+
+  def checkTileNextToHotel(self, tile):
+    # find neighbouring occupied spaces
+    conn, hn = self._getBorderingSpaces(tile)
 
     # Now hn has the list of neighbouring hotels
     if len(hn) >= 2:
@@ -264,14 +285,10 @@ class TileBagGame(Game, StateEngine):
     def on_event(self, event, **kwargs):
       # see if there's a new hotel to go down
       # see if there's a merger about to happen
-      print(kwargs)
          
       if event == 'PlayTile':
         tile=kwargs['tile']
         if tile in self._game._currplayer.tiles:
-          # NOTE: this tile MIGHT be between two tiles, in that case we need
-          #       to ensure it doesn't cause a "merger" until one of those
-          #       hotels gets removed, therefore:
 
           # TODO: check for illegal move (borders two hotels of size 11, or
           #       all hotels on the board and this would make another
@@ -279,25 +296,27 @@ class TileBagGame(Game, StateEngine):
           if bIllegal:
             return False, self
            
+          # NOTE: this tile MIGHT be between two tiles, in that case we need
+          #       to ensure it doesn't cause a "merger" until one of those
+          #       hotels gets removed, therefore:
+           
           # put tile on the board, and presume it'll be between two tiles
+          # now verify that fact for this tile, cleanup if we were wrong
           self._game.board.placeTile(tile)
           self._game._conflictTiles.append(tile)
-
-          # now verify that fact for this tile, cleanup if we were wrong
           self._game.checkTileNextToHotel(tile)
-
           self._game._log.recordTileAction(self._game._currplayer.name, str(tile))
-
           self._game._currplayer.removeTile(tile)
           print("Played Tile: {}".format(tile))
            
           if len(self._game._conflictTiles) > 0:
             return True, TileBagGame.ResolveMerger(self._game)
            
-          # TODO: put in check for should create hotel
-          bNewHotel=False
-          if bNewHotel: 
-            return True, TileBagGame.PlaceHotel(self._game)
+          # check for should create hotel
+          conn, hn = self._game._getBorderingSpaces(tile)
+          if len(conn) > 0 and len(hn) == 0:
+            # more than one tile borders, and none are hotels, New Hotel!
+            return True, TileBagGame.PlaceHotel(self._game, tile)
            
           # check for no hotels on the board
           # or no stocks left in hotels on the board
@@ -328,8 +347,31 @@ class TileBagGame(Game, StateEngine):
       return "Waiting on {} to play a tile".format(self._game._currplayer)
 
   class PlaceHotel(State):
+    def __init__(self, game, tile):
+      self._game=game
+      self._tile=tile
+      self._alpha=str(tile)
+ 
     def on_event(self, event, **kwargs):
-      return self
+      if event == TileBagGame.EVENT_PLACEHOTEL:
+        if 'hotel' in kwargs:
+          hotel=kwargs['hotel']
+          if hotel.tile is None:
+            conn = self._game.board.findConnected(None, self._tile.row, self._tile.col, skip=self._game._conflictTiles)
+            hotel.setPosition(self._alpha, occupies=conn)
+            self._game._takeStocks(self._game._currplayer, hotel, 1)
+            self._game._log.recordPlaceHotelAction(hotel.name, self._alpha)
+            return True, TileBagGame.BuyStocks(self._game)
+          else:
+            print("Hotel is already on the board!")
+        else:
+          print("invalid arguments to PlaceTile event")
+      else:
+        print("Invalid event {} while waiting for hotel to be placed".format(event))
+      return False, self
+       
+    def toHuman(self):
+      return "Waiting on {} to place a Hotel".format(self._game._currplayer)
 
   class BuyStocks(State):
     def __init__(self, game):
@@ -352,6 +394,7 @@ class TileBagGame(Game, StateEngine):
               cost=hotel.price() * amount
               if player.money >= cost:
                 if self._game._takeStocks(player, hotel, amount):
+                  self._game._log.recordStockAction(player.name, hotel.name, amount)
                   self._bought += amount
                   player.money -= cost
                   self._game._log.recordMoneyAction(player.name, -cost)
