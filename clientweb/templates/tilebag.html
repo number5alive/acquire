@@ -65,7 +65,7 @@
     <div class="gamelog card">
       <div class=row>
         <h3 class="left60">GAME LOG</h3>
-        <button class="clr right30" onclick="passTurn()" id="btnPass">Pass</button>
+        <button class="clr right30" onclick="passTurn()" id="btnPass">End Turn</button>
       </div>
       <div class="currstate" id="gamestate"></div>
       <div class="messagelog"><ul id="messagelog"></ul></div>
@@ -661,9 +661,7 @@
     el_currplayer.innerText=currpname;
     el_gamestate.innerText=data['game']['gamestate']['message'];
     var elBtnPass=document.getElementById("btnPass");
-    if(data['game']['gamestate']['state'] == 'BuyStocks') {
-      showElement(elBtnPass);
-    } else {
+    if(data['game']['gamestate']['state'] != 'BuyStocks') {
       hideElement(elBtnPass);
     }
 
@@ -709,6 +707,11 @@
       // Set Current player, highlight it if it's you
       el_thisplayer.innerText=data['game']['you']['name'];
       if( data['game']['you']['id'] == data['game']['gamestate']['currplayer']['id']) {
+        var elBtnPass=document.getElementById("btnPass");
+        if(data['game']['gamestate']['state'] == 'BuyStocks') {
+          showElement(elBtnPass);
+        }
+         
         el_thisplayer.className = el_thisplayer.className + " currplayer";
         el_gamestate.className = "currstate currplayer";
       } else{
