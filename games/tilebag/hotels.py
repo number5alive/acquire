@@ -78,17 +78,36 @@ class Hotel:
       return curr['maj'], curr['min']
     return None
 
-  def serialize(self):
+  @staticmethod
+  def loadFromSavedData(sd):
+    ct=sd['charttype']
+    chart=LOWEND_CHART if ct == 'low' else MIDEND_CHART if ct == 'mid' else HIGHEND_CHART
+    h=Hotel(sd['name'], chart)
+    h.setPosition(sd['tile'], sd['occupies'])
+    h._stocks=[Stock(sd['name'])]*int(sd['stocks'])
+    return h
+
+  def serialize(self, forsave=False):
     curr=self.searchChart()
-    return {
-      'name' : self._name,
-      'tile' : self._tile,
-      'occupies' : self._occupies,
-      'stocks' : self.nstocks,
-      'price' : curr['price'] if curr else None,
-      'majority' : curr['maj'] if curr else None,
-      'minority' : curr['min'] if curr else None,
-    }
+    ret = { 'name' : self._name,
+            'tile' : self._tile,
+            'occupies' : self._occupies,
+            'stocks' : self.nstocks,
+          }
+    if forsave:
+      minprice=self._chart[0]['price']
+      charttype='low' if minprice == 200 else 'mid' if minprice == 300 else 'high'
+      return { **ret,
+              'charttype' : charttype,
+             }
+    else:
+      return { **ret,
+                'price' : curr['price'] if curr else None,
+                'majority' : curr['maj'] if curr else None,
+                'minority' : curr['min'] if curr else None,
+             }
+       
+    return ret
 
 LOWEND_CHART=[
      {'size':'x==2', 'price':200, 'maj':2000, 'min':1000},  
@@ -156,6 +175,9 @@ if __name__ == "__main__":
   print("Total Stocks in {}: {}".format(h.name, h.nstocks))
   print("takeStock: {}".format(h.takeStock()))
   print("takeStock: {}".format(h.takeStock()))
+  h.returnStock(s)
+  h.returnStock(s)
+  h.returnStock(s)
 
   print("---- Testing Hotel occupation ----")
   h.setPosition("A1")
@@ -180,6 +202,17 @@ if __name__ == "__main__":
   h.setPosition("B2", ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'])
   print("Hotel size {} = ${}".format(h.size, h.price()))
    
-  print("---- Testing Hotel Serialization ----")
-  print("serialized: {}".format(h.serialize()))
+  print("---- Testing Hotel Serialization (save, restore) ----")
+  orig=h.serialize(forsave=True)
+  fs=Hotel.loadFromSavedData(orig)
+  restored=fs.serialize(forsave=True)
+  print("ORIG: serialized: {}".format(orig))
+  print("RESTORED: serialized: {}".format(restored))
+  print("{}".format("MATCH" if orig==restored else "FAIL"))
+   
+  print("---- Testing Restored Hotel Functionality ----")
+  s=fs.takeStock()
+  fs.returnStock(s)
+  fs.setPosition("B2", ['B2', 'B3', 'B4', 'B5', 'B6', 'B7'])
+  print("Hotel size {} = ${}".format(fs.size, fs.price()))
     

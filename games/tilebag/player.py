@@ -1,4 +1,5 @@
 from games.tilebag.tiles import Tile, TileBag
+from games.tilebag.hotels import Stock
 from base import Player
 from random import shuffle
 
@@ -64,13 +65,24 @@ class TileBagPlayer(Player):
   def tiles(self):
     return self._tiles
 
-  def loadFromSavedData(self,sd):
-    self._name=sd['name']
-     
+  @staticmethod
+  def loadFromSavedData(sd):
+    p=TileBagPlayer(sd['id'], name=sd['name'])
     pd=sd['playerdata']
+     
+    # restore the tiles
     for tile in pd['tiles']:
       t=Tile.newTileFromAlpha(tile)
-      self._tiles.append(t)
+      p.receiveTile(t)
+       
+    # restore the money
+    p.money=pd['money']
+     
+    # restore the stocks
+    for key, value in pd['stocks'].items():
+      [p.receiveStock(Stock(key)) for i in range(0,int(value))]
+
+    return p
      
   def savePlayerData(self):
     # recover unique names in our list of stocks

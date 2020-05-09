@@ -27,6 +27,7 @@ class TileBagGame(Game, StateEngine):
     Game.__init__(self,id)
     self._initcomponents()
     self._log.recordGameMessage("Game Created")
+    blah=TileBagGame.BuyStocks
 
   def __del__(self):
     # todo, delete all of our things
@@ -129,7 +130,14 @@ class TileBagGame(Game, StateEngine):
   EVENT_REMOVEHOTEL='RemoveHotel'
   EVENT_PLACEHOTEL='PlaceHotel'
   EVENT_PLACETILE='PlaceTile'
-   
+
+  STATE_BUYSTOCKS='BuyStocks'
+  STATE_STARTGAME='StartGame'
+  STATE_PLACETILE='PlaceTile'
+  STATE_PLACEHOTEL='PlaceHotel'
+  STATE_SELECTMERGEWINNER='SelectMergeWinner'
+  STATE_SELECTMERGETARGET='SelectMergeTarget'
+
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
   def placeHotel(self, playerId, hname, alpha):
@@ -347,6 +355,7 @@ class TileBagGame(Game, StateEngine):
     def __init__(self, game):
       self._game=game
       self._bought=0
+      print(self.toHuman())
 
     def toHuman(self):
       return "Waiting on {} to Buy Stocks".format(self._game._currplayer)
@@ -466,20 +475,45 @@ class TileBagGame(Game, StateEngine):
      
     # create the players
     for player in sd['players']:
-      p=self.newPlayer(player['id'])
-      p.loadFromSavedData(player)
+      p=TileBagPlayer.loadFromSavedData(player)
       self.addPlayer(p)
-      if player['id'] == gd['currPlayer']:
-        self._currPlayer=p
 
-    # restore the game state
-    self._started=sd['started']
-    self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
-     
     # restore the board and the tilebag
     self.board=Board.loadFromSavedData(gd['board'])
     rows, cols =self.board.getBoardSize()
     self.tilebag=TileBag(rows, cols, initialTiles=gd['bag'])
+
+    # restore the hotels
+    self.hotels=[]
+    for hotel in gd['hotels']:
+      self.hotels.append(Hotel.loadFromSavedData(hotel))
+       
+    # restore the game state
+    self._currPlayer=self._getPlayer(gd['currPlayer'])
+
+    self._started=sd['started']
+    self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
+     
+    # lookup dictionary to convert string into the State class
+    # mainly required for "save" save/restore functionality from json
+    lookup_state = { 
+      TileBagGame.STATE_BUYSTOCKS : TileBagGame.BuyStocks,
+      TileBagGame.STATE_STARTGAME : TileBagGame.StartGame,
+      TileBagGame.STATE_PLACETILE : TileBagGame.PlaceTile,
+      TileBagGame.STATE_PLACEHOTEL : TileBagGame.PlaceHotel,
+      TileBagGame.STATE_SELECTMERGEWINNER : TileBagGame.SelectMergeWinner,
+      TileBagGame.STATE_SELECTMERGETARGET : TileBagGame.SelectMergeTarget,
+      }
+   
+    # restore the state machine
+    sm=gd['gamestate']
+    self._currplayer=self._getPlayer(sm['currplayer']['id'])
+    stateclass=lookup_state[sm['state']]
+    print("creating state class: {}".format(stateclass))
+    if len(sm['stateinfo']) == 0:
+      self._state=stateclass(self)
+    else:
+      self._state=stateclass(self, **sm['statinfo'])
 
   def getPlayerInfo(self, playerid):
     player=self._getPlayer(playerid)
@@ -490,14 +524,16 @@ class TileBagGame(Game, StateEngine):
   # Saves the game to json format (using the JSONEncoder from elsewhere)
   # Why is this different than getPublicInformation? Because I'm super lazy!
   # TODO: find a cute way to merge these
+   
   def saveGameData(self):
     if self._started:
       return { 
         'currPlayer': self._currplayer.getId(),
-        'gamestate': self._state,
+        'gamestate': StateEngine.serialize(self, True),
         'board': self.board.serialize(),
         'bag': self.tilebag.serialize(),
-        'hotels': [h.serialize() for h in self.hotels]
+        'hotels': [h.serialize(forsave=True) for h in self.hotels],
+        'gamelog': self._log.serialize(),
       }
     else:
       return {}

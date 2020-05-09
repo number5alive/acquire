@@ -32,28 +32,38 @@ def rest_lobby_get_games():
 # POST /games Create a new game
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
 def rest_lobby_make_game():
-  if not request.json or not 'gametype' in request.json:
-    print("didn't specify the game type to create")
-    abort(404)
+  if request.json:
+    if 'game' in request.json:
+      print("Loading a Saved game from JSON")
+      ginfo=request.json['game']
+      newGame=DataIf.createGame(ginfo['name'], ginfo['id'])
+      newGame.loadFromSavedData(ginfo)
+      return Response(request.base_url + '/' + str(newGame.id), status=201)
 
-  # See if the caller provided a custom game name
-  req_gid=None
-  if 'gameid' in request.json:
-    req_gid=request.json['gameid']
-    if DataIf.getGameById(req_gid) is not None:
-      print("that game already exists")
-      abort(409)
-   
-  req_gtype=request.json['gametype']
-  if getGameInfo(req_gtype) is None:
-    print("asking for a game that doesn't exist")
-    abort(404)
-     
-  newGame=DataIf.createGame(req_gtype, req_gid)
-  if newGame:
-    return Response(request.base_url + '/' + str(newGame.id), status=201)
-  else:
-    abort(404) # couldn't create the game
+    elif 'gametype' in request.json:
+      print("Creating a new game!")
+      # See if the caller provided a custom game name
+      req_gid=None
+      if 'gameid' in request.json:
+        req_gid=request.json['gameid']
+        if DataIf.getGameById(req_gid) is not None:
+          print("that game already exists")
+          abort(409)
+       
+      req_gtype=request.json['gametype']
+      if getGameInfo(req_gtype) is None:
+        print("asking for a game that doesn't exist")
+        abort(404)
+         
+      newGame=DataIf.createGame(req_gtype, req_gid)
+      if newGame:
+        return Response(request.base_url + '/' + str(newGame.id), status=201)
+      else:
+        abort(404) # couldn't create the game
+
+  print("didn't specify the game type to create")
+  abort(400)
+      
    
 # GET /games/id Get details about a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['GET'])

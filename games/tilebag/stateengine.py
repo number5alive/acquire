@@ -29,6 +29,8 @@ class State():
         """
         return self.__class__.__name__
 
+    # override if you pass other variables to init
+    # loadFromSaveData will pass these as-is as kwargs (I think)
     def serialize(self, forsave=False):
       return {}
 

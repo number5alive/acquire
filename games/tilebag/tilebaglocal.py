@@ -1,4 +1,4 @@
-from games.tilebag.tilebag import TileBagGame, TileBagPlayer, SAVEDGAME
+from games.tilebag.tilebag import TileBagGame, TileBagPlayer
 import os
 import json
 import base
@@ -16,7 +16,30 @@ if __name__ == "__main__":
         print("{:^6}".format(col), end=' ')
       print()
       i+=1
+       
+  print("---- Testing restoring state from json ----")
+  if os.path.isfile(SAVEDGAME):
+    print("save file is there, let's give it a try")
+    with open(SAVEDGAME, 'r') as f:
+      sda=json.load(f)
+      sd=sda['game']
+      print(sd)
+      tbg=TileBagGame(sd['id'])
+      tbg.loadFromSavedData(sd)
+      tbg_sd=json.dumps(tbg.serialize(True), sort_keys=True)
+      print(tbg_sd)
+      print("{}".format("MATCH" if tbg_sd == sda else "NOMATCH"))
+        
+def garbag2():
+      sd_js=json.dumps(sd)
+      if str(sd_js) == str(tbg_sd):
+        print("SUCCESS - loaded game matches saved")
+      else:
+        print("FAIL - loaded game differs from saved")
 
+        
+  
+def garbage():
   print("---- Testing restoring state from json ----")
   if os.path.isfile(SAVEDGAME):
     print("save file is there, let's give it a try")

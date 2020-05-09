@@ -43,6 +43,16 @@ def rest_tilebag_get_game_info(gameid):
   else:
     abort(404) #no such game
 
+# GET /games/id Get details about a specific game
+@tilebagrest_blueprint.route('/save/<string:gameid>', methods=['GET'])
+def rest_tilebag_save_game(gameid):
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    ret={'game' : req_game.serialize(forsave=True)}
+    return jsonify(ret)
+  else:
+    abort(404) #no such game
+
 # PATCH /games/<id>/board place a tile in the game
 @tilebagrest_blueprint.route('/<string:gameid>/board', methods=['PATCH'])
 def rest_tilebag_placetile(gameid):
