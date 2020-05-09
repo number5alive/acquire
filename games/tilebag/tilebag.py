@@ -197,7 +197,7 @@ class TileBagGame(Game, StateEngine):
         print("Invalid argument to playTile")
         return False
 
-    return self.on_event(self._getPlayer(playerId), 'PlayTile', tile=tile)
+    return self.on_event(self._getPlayer(playerId), 'PlaceTile', tile=tile)
 
   # ===== Start of the State Machine logic =====
   # note: there are a small handful of states: 
@@ -211,9 +211,12 @@ class TileBagGame(Game, StateEngine):
     else:
       self._currplayer.receiveTile(self.tilebag.takeTile())
     self._currplayer=next(self._rotation)
-    return True, TileBagGame.PlayTile(self)
+    return True, TileBagGame.PlaceTile(self)
 
   class StartGame(State):
+    def toHuman(self):
+      return "Waiting on game to start"
+
     def on_event(self, event, **kwargs):
       if event == 'StartGame':
         # Initialize Game Components
@@ -242,26 +245,41 @@ class TileBagGame(Game, StateEngine):
             player.receiveTile(self._game.tilebag.takeTile())
 
         # good to go, flip into the main game state cycle
-        return True, TileBagGame.PlayTile(self._game)
+        return True, TileBagGame.PlaceTile(self._game)
 
       return False, self
 
+  class PlaceTile(State):
     def toHuman(self):
-      return "Waiting on game to start"
+      return "Waiting on {} to play a tile".format(self._game._currplayer)
 
-  class PlayTile(State):
     def on_event(self, event, **kwargs):
-      # see if there's a new hotel to go down
-      # see if there's a merger about to happen
-         
-      if event == 'PlayTile':
-        tile=kwargs['tile']
+      if event == 'PlaceTile':
+        tile=kwargs.get('tile',None)
         if tile in self._game._currplayer.tiles:
-
-          # TODO: check for illegal move (borders two hotels of size 11, or
-          #       all hotels on the board and this would make another
-          bIllegal=False
-          if bIllegal:
+          # check for no hotels on the board
+          # or no stocks left in hotels on the board
+          bHotelsOnBoard=False
+          bAllHotelsOnBoard=True
+          bStocksAvailable=False
+          ofSize11=0
+          conn, hn = self._game._getBorderingSpaces(tile)
+          for h in self._game.hotels:
+            if h.size > 0:
+              bHotelsOnBoard=True
+              if h.nstocks > 0:
+                bStocksAvailable=True
+              if h in hn and h.size >= 11:
+                ofSize11+=1
+            else:
+              bAllHotelsOnBoard=False
+              
+          # Check for illegal move (borders two hotels of size 11, or
+          #       All hotels on the board and this would make another)
+          bWouldMakeNewHotel=len(conn) > 0 and len(hn) == 0
+          if (ofSize11 >= 2) or (bAllHotelsOnBoard and bWouldMakeNewHotel):
+            # TODO: send a message back to the user that this is bad
+            print("ERROR - Illegal Tile Move")
             return False, self
            
           # NOTE: this tile MIGHT be between two tiles, in that case we need
@@ -280,25 +298,12 @@ class TileBagGame(Game, StateEngine):
           if len(self._game._conflictTiles) > 0:
             return True, TileBagGame.ResolveMerger(self._game)
            
-          # check for should create hotel
-          conn, hn = self._game._getBorderingSpaces(tile)
-          if len(conn) > 0 and len(hn) == 0:
-            # more than one tile borders, and none are hotels, New Hotel!
+          # more than one tile borders, and none are hotels, New Hotel!
+          if bWouldMakeNewHotel:
             return True, TileBagGame.PlaceHotel(self._game, tile)
            
-          # check for no hotels on the board
-          # or no stocks left in hotels on the board
-          bHotelsOnBoard=False
-          bStocksAvailable=False
-          for h in self._game.hotels:
-            if h.size > 0:
-              bHotelsOnBoard=True
-              if h.nstocks > 0:
-                bStocksAvailable=True
-                break # good enough, both conditions are true
-           
           # If there's no stocks to buy, skip to next person
-          if not bHotelsOnBoard or not bStocksAvailable:
+          if not bStocksAvailable:
             return self._game.endTurnAction()
              
           # Default after playing a tile is to buy stocks
@@ -306,13 +311,10 @@ class TileBagGame(Game, StateEngine):
         else:
           print("{} is not in {}".format(tile, self._game._currplayer.tiles))
       else:
-        print("In PlayTile, event was {}".format(event))
+        print("In PlaceTile, event was {}".format(event))
 
       # if we get down here, we didn't succeed at playing the tile
       return False, self
-
-    def toHuman(self):
-      return "Waiting on {} to play a tile".format(self._game._currplayer)
 
   class PlaceHotel(State):
     def __init__(self, game, tile):
@@ -320,6 +322,9 @@ class TileBagGame(Game, StateEngine):
       self._tile=tile
       self._alpha=str(tile)
  
+    def toHuman(self):
+      return "Waiting on {} to place a Hotel".format(self._game._currplayer)
+
     def on_event(self, event, **kwargs):
       if event == TileBagGame.EVENT_PLACEHOTEL:
         if 'hotel' in kwargs:
@@ -338,14 +343,14 @@ class TileBagGame(Game, StateEngine):
         print("Invalid event {} while waiting for hotel to be placed".format(event))
       return False, self
        
-    def toHuman(self):
-      return "Waiting on {} to place a Hotel".format(self._game._currplayer)
-
   class BuyStocks(State):
     def __init__(self, game):
       self._game=game
       self._bought=0
 
+    def toHuman(self):
+      return "Waiting on {} to Buy Stocks".format(self._game._currplayer)
+       
     def on_event(self, event, **kwargs):
       if event == 'BuyStocks':
         if 'amount' in kwargs:
