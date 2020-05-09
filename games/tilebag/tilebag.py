@@ -103,7 +103,7 @@ class TileBagGame(Game, StateEngine):
   def stockAction(self, playerId, hotel, amount):
     player=self._getPlayer(playerId)
     h=self._getHotelByName(hotel)
-    action='BuyStocks' if amount > 0 else 'SellStocks'
+    action='BuyStocks' if amount >= 0 else 'SellStocks'
      
     return self.on_event(player, action, hotel=h, amount=amount)
      

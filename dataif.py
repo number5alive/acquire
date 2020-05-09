@@ -17,6 +17,16 @@ def saveGameStates():
     json.dump(games, f, indent=2)
 
 def readGameStates():
+  games=[Game(id) for id in ["this", "is", "a", "game", "id"]]
+  from games.tilebag.tilebag import TileBagGame, TileBagPlayer
+  tbg=createGame("TileBag", "test")
+  tbg.addPlayer( TileBagPlayer("513", "Colleen", money=5000) )
+  tbg.addPlayer( TileBagPlayer("514", "Geoff", money=5000) )
+  tbg.addPlayer( TileBagPlayer("515", "Higgs", money=5000) )
+  tbg.addPlayer( TileBagPlayer("516", "FS&SnB", money=5000) )
+  tbg.run()
+       
+def garbageDeleteMe():
   global games
   if os.path.isfile(_SAVEDSTATES):
     print("file is there, let's give it a try")

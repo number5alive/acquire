@@ -63,7 +63,10 @@
       </div>
     </div>
     <div class="gamelog card">
-      <h3>GAME LOG</h3>
+      <div class=row>
+        <h3 class="left60">GAME LOG</h3>
+        <button class="clr right30" onclick="passTurn()" id="btnPass">Pass</button>
+      </div>
       <div class="currstate" id="gamestate"></div>
       <div class="messagelog"><ul id="messagelog"></ul></div>
     </div>
@@ -252,6 +255,14 @@
     var elCnt=document.getElementById(getMultiSelectId(itemtype, h.name));
     elCnt.dataset.count=0;
     hideElement(elCnt);
+  }
+
+  function passTurn() {
+    stockAction("Passing", 0);
+
+    // Hide the button
+    var elBtnPass=document.getElementById("btnPass");
+    hideElement(elBtnPass);
   }
 
   function clrCnt(itemtype) {
@@ -649,6 +660,12 @@
     var currpid=data['game']['gamestate']['currplayer']['id'];
     el_currplayer.innerText=currpname;
     el_gamestate.innerText=data['game']['gamestate']['message'];
+    var elBtnPass=document.getElementById("btnPass");
+    if(data['game']['gamestate']['state'] == 'BuyStocks') {
+      showElement(elBtnPass);
+    } else {
+      hideElement(elBtnPass);
+    }
 
     // GAMELOG: Show the last messages
     var el_msgLog=document.getElementById("messagelog");
