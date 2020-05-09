@@ -139,46 +139,14 @@ class TileBagGame(Game, StateEngine):
     if hotel is not None:
       if alpha is None:
         return self.on_event(player, TileBagGame.EVENT_REMOVEHOTEL, hotel=hotel)
-      elif self.board.alphaIsValid(alpha):
-        return self.on_event(player, TileBagGame.EVENT_PLACEHOTEL, hotel=hotel, tile=Tile.newTileFromAlpha(alpha))
-         
-    print("invalid hotel, or invalid tile location")
-    return False
-     
-    if self._started:
-      # NOTE: For now we're letting anyone move the hotels
-      #if self._currPlayer.getId() == playerId:
-   
-      h=self._getHotelByName(hotel)
-      if h is not None:
-        # REMOVE HOTEL - If it's a remove, resolve conflictTiles
-        if alpha is None:
-          # remove the hotel from the board
-          h.setPosition(None, occupies=None)
-
-          # resolve any conflict tiles
-          self.updateConflictTiles()
-
-          self._log.recordRemoveHotelAction(h.name)
-           
-          return True
-        
-        # ADD HOTEL - if it's an add, determine what spaces it occupies
-        elif self.board.alphaIsValid(alpha):
-          # find the full list of connected tiles
-          r, c = Tile.fromAlpha(alpha)
-          conn = self.board.findConnected(None, r, c, skip=self._conflictTiles)
-          print("Connected to {} is: {}".format(alpha, conn))
-           
-          # TODO: make sure there are at least two connected tiles
-          h.setPosition(alpha, occupies=conn)
-          self._log.recordPlaceHotelAction(h.name, alpha)
-          return True
-        else:
-          print("Invalid Hotel Alpha / or Move")
       else:
-        print("Invalid Hotel name")
-    
+        return self.on_event(player, TileBagGame.EVENT_PLACEHOTEL, hotel=hotel)
+      # REMOVE HOTEL - If it's a remove, resolve conflictTiles
+      #  h.setPosition(None, occupies=None)
+      #  self.updateConflictTiles()
+      #  self._log.recordRemoveHotelAction(h.name)
+           
+    print("invalid hotel, or invalid tile location")
     return False
 
   # loop through the conflict tiles and see if any are no longer in conflict

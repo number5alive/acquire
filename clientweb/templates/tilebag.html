@@ -374,27 +374,24 @@
   /* For HOTELS */
   async function placeHotel(e){
     hel=e.detail.tile;
-    var tgt=getLastClicked();
-    if( tgt != null )
-    {
-      // make REST call to change player hotel amounts by this
-      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
-                  method: 'PATCH', 
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ 'action':'placeHotel', 
-                                        'hotel' : hel.id,
-                                        'tile' : tgt.id,
-                                      })
-                  },
-                );
-                 
-      await response.status;
-      if( response.status != 200 ) {
-        sendGameMessage("Invalid Hotel Action");
-      }
+     
+    // make REST call to change player hotel amounts by this
+    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
+                method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action':'placeHotel', 
+                                      'hotel' : hel.id,
+                                      'tile' : 'lastplaced',
+                                    })
+                },
+              );
+               
+    await response.status;
+    if( response.status != 200 ) {
+      sendGameMessage("Invalid Hotel Action");
     }
   }
 
