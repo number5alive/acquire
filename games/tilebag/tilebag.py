@@ -104,7 +104,8 @@ class TileBagGame(Game, StateEngine):
   def stockAction(self, playerId, hotel, amount):
     player=self._getPlayer(playerId)
     h=self._getHotelByName(hotel)
-    action='BuyStocks' if amount >= 0 else 'SellStocks'
+    action=TileBagGame.EVENT_BUYSTOCKS if amount >= 0 else TileBagGame.EVENT_SELLSTOCKS
+    amount=amount if amount >=0 else -amount
      
     return self.on_event(player, action, hotel=h, amount=amount)
      
@@ -122,11 +123,12 @@ class TileBagGame(Game, StateEngine):
         s=player.returnStock(h.name)
         if not h.returnStock(s):
           return False
-      self._log.recordStockAction(player.name, h.name, -amount)
       return True
     return False
 
   # Constants to avoid typeos wreaking havoc across my code (again)
+  EVENT_BUYSTOCKS='BuyStocks'
+  EVENT_SELLSTOCKS='SellStocks'
   EVENT_REMOVEHOTEL='RemoveHotel'
   EVENT_PLACEHOTEL='PlaceHotel'
   EVENT_PLACETILE='PlaceTile'
@@ -136,7 +138,7 @@ class TileBagGame(Game, StateEngine):
   STATE_PLACETILE='PlaceTile'
   STATE_PLACEHOTEL='PlaceHotel'
   STATE_SELECTMERGEWINNER='SelectMergeWinner'
-  STATE_SELECTMERGETARGET='SelectMergeTarget'
+  STATE_SELECTMERGELOSER='SelectMergeLoser'
 
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
@@ -149,13 +151,15 @@ class TileBagGame(Game, StateEngine):
         return self.on_event(player, TileBagGame.EVENT_REMOVEHOTEL, hotel=hotel)
       else:
         return self.on_event(player, TileBagGame.EVENT_PLACEHOTEL, hotel=hotel)
-      # REMOVE HOTEL - If it's a remove, resolve conflictTiles
-      #  h.setPosition(None, occupies=None)
-      #  self.updateConflictTiles()
-      #  self._log.recordRemoveHotelAction(h.name)
            
     print("invalid hotel, or invalid tile location")
     return False
+
+  # REMOVE HOTEL - If it's a remove, resolve conflictTiles
+  def _removeHotel(self, hotel):
+    hotel.setPosition(None, occupies=None)
+    self.updateConflictTiles()
+    self._log.recordRemoveHotelAction(hotel.name)
 
   # loop through the conflict tiles and see if any are no longer in conflict
   def updateConflictTiles(self):
@@ -361,7 +365,7 @@ class TileBagGame(Game, StateEngine):
       return "Waiting on {} to Buy Stocks".format(self._game._currplayer)
        
     def on_event(self, event, **kwargs):
-      if event == 'BuyStocks':
+      if event == TileBagGame.EVENT_BUYSTOCKS:
         if 'amount' in kwargs:
           amount=kwargs['amount']
           hotel=kwargs.get('hotel', None)
@@ -402,32 +406,40 @@ class TileBagGame(Game, StateEngine):
       return False, self
 
   # NOTE: Not a class, a factory method to determine which state to land in
-  def _resolveMerger(self, game, tile):
+  def _resolveMerger(self, game, tile, biggest=None, smallest=None):
     conn, merging=game._getBorderingSpaces(tile)
     print("Before Sorting: {}".format(merging))
     merging.sort(key=lambda x: x.size, reverse=True)
     print("After Sorting: {}".format(merging))
 
+    # Check for exit condition (all mergers completed)
+    # current player gets to do their buy stock action
+    if len(merging) == 1:
+      return TileBagGame.BuyStocks(game)
+
+    # WARNING: Complicated logic here... 
     # buy out from smallest to biggest, but we have to be careful...
     # there may be multiple smallests or biggests
+    # When merger is triggered, all states need to call back to this function
+    # so we can  resolve them in order
 
-    biggest=merging[0]
-    smallest=merging[-1]
-    if merging[0].size == merging[1].size:
+    if biggest is None and merging[0].size == merging[1].size:
       print("more than one are biggest")
-      biggest=[h for h in merging if h.size == merging[0]]
-      rest=[h for h in merging and h not in biggest]
-      return TileBagGame.SelectMergeWinner(game, tile, biggest, rest)
-    elif merging[-1].size == merging[-2].size:
+      bigoption=[h for h in merging if h.size == merging[0]]
+      return TileBagGame.SelectMergeWinner(game, tile, bigoption)
+       
+    biggest=biggest if biggest is not None else merging[0]
+    if smallest is None and merging[-1].size == merging[-2].size:
       print("more than one are the smallest")
-      smallest=[h for h in merging if h.size == merging[1]]
-      return TileBagGame.SelectMergeLoser(game, tile, biggest, smallest)
-    else:
-      print("we know {} ({}) is bigger than {} ({})".format(biggest.name, biggest.size, smallest.name, smallest.size))
-      return TileBagGame.LiquidateStocks(game, biggest, smallest)
+      smalloption=[h for h in merging if h.size == merging[1]]
+      return TileBagGame.SelectMergeLoser(game, tile, smalloption)
+       
+    smallest=smallest if smallest is not None else merging[-1]
+    print("we know {} ({}) is bigger than {} ({})".format(biggest.name, biggest.size, smallest.name, smallest.size))
+    return TileBagGame.LiquidateStocks(game, tile, biggest, smallest)
       
   class SelectMergeWinner(State):
-    def __init__(self, game, winners):
+    def __init__(self, game, tile, bigoption):
       self._game=game
       self._winners=winners
       print(self.toHuman())
@@ -438,8 +450,8 @@ class TileBagGame(Game, StateEngine):
     def on_event(self, event, **kwargs):
       pass
        
-  class SelectMergeTarget(State):
-    def __init__(self, game, targets):
+  class SelectMergeLoser(State):
+    def __init__(self, game, tile, smalloption):
       self._game=game
       self._targets=targets
       print(self.toHuman())
@@ -451,20 +463,99 @@ class TileBagGame(Game, StateEngine):
       pass
 
   class LiquidateStocks(State):
-    def __init__(self, game, bigger, shorter):
+    def __init__(self, game, tile, biggest, smallest):
       self._game=game
-      self._bigger=bigger
-      self._shorter=shorter
+      self._tile=tile
+      self._biggest=biggest
+      self._smallest=smallest
       self._startplayer=self._game._currplayer
       print(self.toHuman())
        
       # TODO: find out maj/min shareholder bonus'
+
+      # rotate forward through to a player with shares in the smallest
+      # this is safe enough, *someone* has a stock, the free one 
+      while self._checkPlayerDone():
+        self._game._currplayer=next(self._game._rotation)
        
     def toHuman(self):
       return "Waiting for {} to pick stock options [Sell|Trade|Keep]".format(self._game._currplayer)
        
+    # loop through to the next player with stocks in smallest, 
+    def _onPlayerDone(self):
+      self._game._currplayer=next(self._game._rotation)
+      while self._game.currplayer != self._startplayer:
+        if not self._checkPlayerDone():
+          return self
+        self._game._currplayer=next(self._game._rotation)
+       
+      # That's all she wrote... Take the smallest hotel out of the equation
+      # Note: if we don't do this we'll have a beautiful endless loop
+      self._game._removeHotel(self._smallest)
+      return self._game._resolveMerger(self._game, self._tile, biggest=self._biggest)
+
+    # helper, check if no stocks in smallest hotel, obviously done then
+    def _checkPlayerDone(self):
+      return self._game.currplayer.numStocks(self._smallest.name) == 0
+       
     def on_event(self, event, **kwargs):
-      return self
+      # Buy > 0(Bigger) - trigger 2-for-1
+      # Sell > 0 (Smaller) - sell
+      # Buy == 0 (Bigger or Smaller) - End
+       
+      # just a shorter form since we use this a lot
+      player=self._game.currplayer
+       
+      if event == TileBagGame.EVENT_BUYSTOCKS:
+        if 'amount' in kwargs:
+          amount=kwargs['amount']
+          hotel=kwargs.get('hotel', None)
+           
+          # Check if player is signalling the end of their turn
+          if amount == 0:
+            return True, self._onPlayerDone()
+            
+          # Check 2-for-1
+          if hotel is self._biggest:
+            # make sure the big hotel has enough stocks
+            if hotel.nstocks >= amount:
+              # make sure the player has 2*amount of smallest stocks
+              nSmallest=player.numStocks(hname=self._smallest.name)
+              if nSmallest >= 2*amount:
+                self._game._returnStocks(player, self._smallest, 2*amount)
+                self._game._takeStocks(player, self._biggest, amount)
+                
+                # make the 2-for-1 swap
+                return True, self if not self._checkPlayerDone() else self._onPlayerDone()
+              else:
+                print("Player doesn't have enough stocks for swap {}".format(nSmallest))
+            else:
+              print("Big hotel doesn't have enough stocks: {}".format(hotel.nstocks))
+          else:
+            print("Invalid Buy action in Liquidate - can only be for biggest hotel: {}".format(self._biggest))
+        else:
+          print("Invalid args to Liquidate Stock Event (buy/keep)")
+      elif event == TileBagGame.EVENT_SELLSTOCKS:
+        if 'amount' in kwargs:
+          amount=kwargs['amount']
+          hotel=kwargs.get('hotel', None)
+           
+          if amount > 0 and hotel is self._smallest:
+            # make sure the player has amount of smallest, sell them
+            if self._game._returnStocks(player, hotel, amount):
+              player.money += hotel.price()*amount
+              self._game._log.recordStockAction(player.name, hotel.name, -amount)
+              return True, self if not self._checkPlayerDone() else self._onPlayerDone()
+            else:
+              print("player doesn't have {} stocks to sell".format(amount))
+          else:
+            print("Sell action has to be >0 ({}) and for {} ({})".format(amount, self._smallest.name, hotel))
+        else:
+          print("Invalid args to Liquidate Stock Event (sell)")
+      else:
+        print("invalid event {} while in liquidate stock (only accepts buy or sell stock)".format(event))
+          
+      return False, self
 
   # ===== Serialization and Deserialization of the Game object ====
   # both for the clients, as well as for saving and restoring state
@@ -502,7 +593,7 @@ class TileBagGame(Game, StateEngine):
       TileBagGame.STATE_PLACETILE : TileBagGame.PlaceTile,
       TileBagGame.STATE_PLACEHOTEL : TileBagGame.PlaceHotel,
       TileBagGame.STATE_SELECTMERGEWINNER : TileBagGame.SelectMergeWinner,
-      TileBagGame.STATE_SELECTMERGETARGET : TileBagGame.SelectMergeTarget,
+      TileBagGame.STATE_SELECTMERGELOSER: TileBagGame.SelectMergeLoser,
       }
    
     # restore the state machine
