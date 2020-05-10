@@ -408,9 +408,7 @@ class TileBagGame(Game, StateEngine):
   # NOTE: Not a class, a factory method to determine which state to land in
   def _resolveMerger(self, game, tile, biggest=None, smallest=None):
     conn, merging=game._getBorderingSpaces(tile)
-    print("Before Sorting: {}".format(merging))
     merging.sort(key=lambda x: x.size, reverse=True)
-    print("After Sorting: {}".format(merging))
 
     # Check for exit condition (all mergers completed)
     # current player gets to do their buy stock action
@@ -425,42 +423,62 @@ class TileBagGame(Game, StateEngine):
 
     if biggest is None and merging[0].size == merging[1].size:
       print("more than one are biggest")
-      bigoption=[h for h in merging if h.size == merging[0]]
+      bigoption=[h for h in merging if h.size == merging[0].size]
       return TileBagGame.SelectMergeWinner(game, tile, bigoption)
        
     biggest=biggest if biggest is not None else merging[0]
-    if smallest is None and merging[-1].size == merging[-2].size:
+    merging.remove(biggest) # pull biggest out of the list
+
+    if smallest is None and len(merging) >=2 and merging[-1].size == merging[-2].size:
       print("more than one are the smallest")
-      smalloption=[h for h in merging if h.size == merging[1]]
-      return TileBagGame.SelectMergeLoser(game, tile, smalloption)
+      smalloption=[h for h in merging if h.size == merging[1].size]
+      return TileBagGame.SelectMergeLoser(game, tile, biggest, smalloption)
        
     smallest=smallest if smallest is not None else merging[-1]
-    print("we know {} ({}) is bigger than {} ({})".format(biggest.name, biggest.size, smallest.name, smallest.size))
+    print("We know {} ({}) is bigger than {} ({})".format(biggest.name, biggest.size, smallest.name, smallest.size))
     return TileBagGame.LiquidateStocks(game, tile, biggest, smallest)
       
   class SelectMergeWinner(State):
     def __init__(self, game, tile, bigoption):
       self._game=game
-      self._winners=winners
+      self._tile=tile
+      self._bigoption=bigoption
       print(self.toHuman())
 
     def toHuman(self):
-      return "Waiting for {} to select the hotel that will acquire the others - between:{}".format(self._game._currplayer, self._winners)
+      return "Waiting for {} to select the hotel that will acquire the others - between:{}".format(self._game._currplayer, [h.name for h in self._bigoption])
+
+    def serialize(self, forsave=False):
+      return { 'bigoption' : [h.name for h in self._bigoption], }
 
     def on_event(self, event, **kwargs):
-      pass
+      if event == TileBagGame.EVENT_PLACEHOTEL:
+        hotel=kwargs.get('hotel', None)
+        if hotel in self._bigoption:
+          return True, self._game._resolveMerger(self._game, self._tile, biggest=hotel)
+        else:
+          print("Must select hotel in the list {}".format([h.name for h in self._bigoption]))
+      return False, self
        
   class SelectMergeLoser(State):
-    def __init__(self, game, tile, smalloption):
+    def __init__(self, game, tile, biggest, smalloption):
       self._game=game
-      self._targets=targets
+      self._tile=tile
+      self._biggest=biggest
+      self._smalloption=smalloption
       print(self.toHuman())
 
     def toHuman(self):
-      return "Waiting for {} to select the hotel that will BE acquired - between:{}".format(self._game._currplayer, self._targets)
+      return "Waiting for {} to select the hotel that will BE acquired by {} - between:{}".format(self._game._currplayer, self._biggest.name, [h.name for h in self._smalloption])
 
     def on_event(self, event, **kwargs):
-      pass
+      if event == TileBagGame.EVENT_REMOVEHOTEL:
+        hotel=kwargs.get('hotel', None)
+        if hotel in self._smalloption:
+          return True, self._game._resolveMerger(self._game, self._tile, biggest=self._biggest, smallest=hotel)
+        else:
+          print("Must select hotel in the list {}".format([h.name for h in self._smalloption]))
+      return False, self
 
   class LiquidateStocks(State):
     def __init__(self, game, tile, biggest, smallest):
@@ -471,7 +489,8 @@ class TileBagGame(Game, StateEngine):
       self._startplayer=self._game._currplayer
       print(self.toHuman())
        
-      # TODO: find out maj/min shareholder bonus'
+      # find out maj/min shareholder bonus'
+      self._payoutBonuses()
 
       # rotate forward through to a player with shares in the smallest
       # this is safe enough, *someone* has a stock, the free one 
@@ -479,7 +498,31 @@ class TileBagGame(Game, StateEngine):
         self._game._currplayer=next(self._game._rotation)
        
     def toHuman(self):
-      return "Waiting for {} to pick stock options [Sell|Trade|Keep]".format(self._game._currplayer)
+      return "{} acquiring {}\nWaiting for {} to pick stock options [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer)
+
+    def _payoutBonuses(self):
+      shareholders=[{'stocks' : p.numStocks(self._smallest.name), 'player':p,} for p in self._game._players]
+      shareholders.sort(key=lambda x: x['stocks'], reverse=True)
+
+
+      majsh=[p for p in shareholders if p['stocks'] == shareholders[0]['stocks']]
+      minsh=[p for p in shareholders if p['stocks'] == (shareholders[1]['stocks'] if shareholders[1]['stocks'] > 0 else shareholders[0]['stocks'])]
+      print("Majority Shareholders: {}".format(majsh))
+      print("Minority Shareholders: {}".format(minsh))
+       
+      majb, minb = self._smallest.bonuses()
+      print("Bonuses: {} / {}".format(majb, minb))
+      majb=majb//len(majsh)//100*100
+      minb=minb//len(minsh)//100*100
+      print("Bonuses: {} / {}".format(majb, minb))
+      for p in majsh:
+        player=p['player']
+        player.money += majb
+        self._game._log.recordMoneyAction(player, majb)
+      for p in minsh:
+        player=p['player']
+        player.money += minb
+        self._game._log.recordMoneyAction(player, minb)
        
     # loop through to the next player with stocks in smallest, 
     def _onPlayerDone(self):
