@@ -536,18 +536,21 @@ class TileBagGame(Game, StateEngine):
     print("Minority Shareholders: {}".format(minsh))
      
     majb, minb = hotel.bonuses()
-    print("Bonuses: {} / {}".format(majb, minb))
+    payouts={'majority': {'amount': majb},
+             'minority': {'amount': minb},}
     majb=majb//len(majsh)//100*100
     minb=minb//len(minsh)//100*100
-    print("Bonuses: {} / {}".format(majb, minb))
     for p in majsh:
       player=p['player']
       player.money += majb
       self._log.recordBonusPayout(player, 'majority', majb)
+      payouts['majority'][player.name]=majb
     for p in minsh:
       player=p['player']
       player.money += minb
       self._log.recordBonusPayout(player, 'minority', minb)
+      payouts['minority'][player.name]=minb
+    return payouts
 
   class LiquidateStocks(State):
     def __init__(self, game, tile, biggest, smallest):
@@ -655,12 +658,13 @@ class TileBagGame(Game, StateEngine):
   class EndGame(State):
     def __init__(self, game):
       self._game=game
+      self._buyouts={}
        
       blah=sorted(self._game.hotels, key=lambda x: x.size, reverse=False)
       for h in blah:
         if h.size > 0:
           print("Resolving {}, size {}".format(h.name, h.size))
-          self._game._payoutBonuses(h)
+          self._buyouts[h.name]=self._game._payoutBonuses(h)
           for p in self._game._players:
             amount=p.numStocks(hname=h.name)
             print("{} has {} stocks in {}", p.name, amount, h.name)
@@ -669,6 +673,7 @@ class TileBagGame(Game, StateEngine):
               value=h.price()*amount
               p.money += value
               self._game._log.recordStockAction(p.name, h.name, -amount, value)
+              self._buyouts[h.name][p.name]={'amount':amount, 'value':value}
 
       blah=sorted(self._game._players, key=lambda x: x.money, reverse=True)
       self._game._log.recordGameMessage("Final Totals")
@@ -679,7 +684,10 @@ class TileBagGame(Game, StateEngine):
       return "End State! Cashing out the remaining hotels on the board"
 
     def serialize(self, forsave=False):
-      return { 'finalscores': [{p.name: p.money} for p in self._game._players]}
+      return { 
+          'finalscores': [{p.name: p.money} for p in self._game._players],
+          'buyouts': self._buyouts,
+          }
 
     def on_event(self, event, **kwargs):
       print("EndState doesn't handle any events, you're here for the long haul mister!")
