@@ -25,10 +25,11 @@
 <div class="topnav" id="topnav">
 </div>
 <div class="mstick" id="messagebar">
+  <div class="row" id="playername" style="text-align:center; margin:3px;"></div>
   <div class="messages">
     <div class="gamemessage" id="gamemessage"></div>
-    <div class="staticmessage" style="text-align:center">CURRENT PLAYER: <span id='currplayer'>Norm</span></div>
-    <div class="staticmessage" id="playername" style="float:middle">Guest? Click your Name Above</div>
+    <div class="staticmessage" style="text-align:right; float:right">CURRENT PLAYER: <span id='currplayer'>Norm</span></div>
+    <div class="staticmessage" id="players" style="float:middle"></div>
   </div>
 </div>
 
@@ -39,17 +40,6 @@
       <div class="row">
         <h3 class="left60">BANK</h3>
         <span class="right30 playermoney" id="playermoney">$$$$$</span>
-      </div>
-      <div class="moneycontainer">
-        <button class="minusbutton" onclick="mvalClick(-1000)" id="minus1k">-1K</button>
-        <button class="minusbutton" onclick="mvalClick(-100)" id="minus100">-100</button>
-        <button class="plusbutton" onclick="mvalClick(100)" id="plus100">+100</button>
-        <button class="plusbutton" onclick="mvalClick(1000)" id="plus1k">+1K</button>
-      </div>
-      <div class="moneyaction">
-        <button onclick="mrstClick()" id="resetmoney">Reset</button>
-        <input id="moneyval" type="number" value=0></input>
-        <button onclick="msetClick()" id="submitmoney">Submit</button>
       </div>
     </div>
     <div class="card">
@@ -162,6 +152,7 @@
   const el_moneyval=document.getElementById('moneyval'); // the widget
   const el_playerlist=document.getElementById('playerlist');
   const el_thisplayer=document.getElementById('playername');
+  const el_players=document.getElementById('players');
   const el_currplayer=document.getElementById('currplayer');
   const el_messagebar=document.getElementById('messagebar');
   const el_gamemessage=document.getElementById('gamemessage');
@@ -169,13 +160,16 @@
   const el_loop=el_outer.querySelector('#loop');
 
   // Helper functions
-  function showElement(elem) {
-    if( !elem.className.includes("visible ") ) {
-      elem.className = "visible " + elem.className;
+  const EFFECT_HIGHLIGHT='highlight'
+  const EFFECT_SHOW='visible'
+  const EFFECT_INDICATE='indicate'
+  function addEffect(effect, elem) {
+    if( !elem.className.includes(effect+" ") ) {
+      elem.className = effect + " " + elem.className;
     }
   }
-  function hideElement(elem) {
-    elem.className = elem.className.replace("visible ", "");
+  function removeEffect(effect, elem) {
+    elem.className = elem.className.replace(effect + " ", "");
   }
    
   // For TILERACK
@@ -254,7 +248,7 @@
    
     var elCnt=document.getElementById(getMultiSelectId(itemtype, h.name));
     elCnt.dataset.count=0;
-    hideElement(elCnt);
+    removeEffect(EFFECT_SHOW, elCnt);
   }
 
   function passTurn() {
@@ -262,7 +256,7 @@
 
     // Hide the button
     var elBtnPass=document.getElementById("btnPass");
-    hideElement(elBtnPass);
+    removeEffect(EFFECT_SHOW, elBtnPass);
   }
 
   function clrCnt(itemtype) {
@@ -271,7 +265,7 @@
     
     // Hide the Clear Button
     var elClrStock=document.getElementById("btnClear"+itemtype+"Cnt");
-    hideElement(elClrStock);
+    removeEffect(EFFECT_SHOW, elClrStock);
   }
    
   function onMultiSelectClick(mselem, itemtype) {
@@ -282,9 +276,9 @@
       clrCnt(itemtype); // clear all others
       mselem.innerText=reqcount
       mselem.dataset.count=reqcount;
-      showElement(mselem);
+      addEffect(EFFECT_SHOW,mselem);
       var elClrBtn=document.getElementById("btnClear"+itemtype+"Cnt");
-      showElement(elClrBtn);
+      addEffect(EFFECT_SHOW,elClrBtn);
     }
   }
 
@@ -441,7 +435,7 @@
        
       // Clear the "count" value from the element
       elw.dataset.count=0;
-      hideElement(elw);
+      removeEffect(EFFECT_SHOW, elw);
     }
     return count;
   }
@@ -456,7 +450,7 @@
     stockAction(hname, buyCount);
      
     var elClrHotel=document.getElementById("btnClearHCnt");
-    hideElement(elClrHotel);
+    removeEffect(EFFECT_SHOW, elClrHotel);
   }
    
   function sellStock(e){
@@ -468,7 +462,7 @@
     stockAction(hname, -sellCount);
      
     var elClrHotel=document.getElementById("btnClearSCnt");
-    hideElement(elClrHotel);
+    removeEffect(EFFECT_SHOW, elClrHotel);
   }
    
   async function stockAction(hname, amt){
@@ -492,37 +486,6 @@
     }
   }
    
-  /* For MONEY */
-  function mvalClick(inc) {
-    var startVal=parseInt(el_moneyval.value);
-    var newVal=startVal + inc;
-    el_moneyval.value = newVal;
-  }
-  function mrstClick() {
-    el_moneyval.value = 0;
-  }
-  async function msetClick() {
-    // make REST call to change player hotel amounts by this
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_money', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action':'money', 
-                                      'amount' : parseInt(el_moneyval.value),
-                                    })
-                },
-              );
-               
-    await response.status;
-    if( response.status != 200 ) {
-      sendGameMessage("Invalid Banking Action");
-    }
-               
-    // Reset the value in the widget for the next call
-    el_moneyval.value = 0;
-  }
   </script>
    
 <!-- ################################################################### --> 
@@ -622,10 +585,7 @@
     si.innerText=stockval;
   }
 
-  function showPlayers(pdata) {
-    var pid=pdata['id'];         // Shorthand for this function
-    var pname=pdata['name'];
-
+  function showPlayerInNav(pdata, pid, pname) {
     // Check if this id already exists, if not add it to the nav
     var pnavid="playernav_"+pid;
     var pnav=document.getElementById(pnavid);
@@ -639,6 +599,37 @@
       name.href="{{gameid}}?playerid=" + pid;
       el_topnav.appendChild(name);
     }
+  }
+
+  function showPlayerInMStick(pdata, pid, pname) {
+    // Check if this id already exists, if not add it to the nav
+    var pindid="playerind_"+pid;
+    var pind=document.getElementById(pindid);
+    if( pind === null ) {
+      // New player! yay Friends!
+       
+      // For now, each player will be a link to their page <a href="#">Link</a>
+      var name = document.createElement('span');
+      name.style.padding="2px 5px";
+      name.id=pindid;
+      name.innerText=pname;
+
+      el_players.appendChild(name);
+    }
+    else
+    {
+      // Ensure they aren't highlighted
+      removeEffect(EFFECT_HIGHLIGHT, pind);
+      removeEffect(EFFECT_INDICATE, pind);
+    }
+  }
+
+  function showPlayers(pdata) {
+    var pid=pdata['id'];         // Shorthand for this function
+    var pname=pdata['name'];
+
+    showPlayerInNav(pdata, pid, pname)
+    showPlayerInMStick(pdata, pid, pname)
   }
    
   async function rendergame(data) {
@@ -663,7 +654,7 @@
     var elBtnPass=document.getElementById("btnPass");
     if(data['game']['gamestate']['state'] != 'BuyStocks' &&
        data['game']['gamestate']['state'] != 'LiquidateStocks') { 
-      hideElement(elBtnPass);
+      removeEffect(EFFECT_SHOW, elBtnPass);
     }
 
     // GAMELOG: Show the last messages
@@ -677,11 +668,11 @@
       el_msgLog.appendChild(li);
     }
      
-    // Show All the players and their names
+    // Show All the players and their names, highlight the current one
     data['game']['players'].forEach(pdata => showPlayers(pdata));
-    var pwid=document.getElementById("playerwid_"+currpid);
+    var pwid=document.getElementById("playerind_"+currpid);
     if( pwid != null ) {
-      pwid.className = pwid.className + " currplayer";
+      addEffect(EFFECT_INDICATE, pwid);
     }
 
     // BOARD: Draw the board
@@ -704,21 +695,21 @@
       // TODO: some fancy spectator display
     } else {
       pinfo=data['game']['you']['playerdata'];
-       
+      el_thisplayer.innerText="Hi " + data['game']['you']['name'];
       // Set Current player, highlight it if it's you
-      el_thisplayer.innerText=data['game']['you']['name'];
       if( data['game']['you']['id'] == data['game']['gamestate']['currplayer']['id']) {
         var elBtnPass=document.getElementById("btnPass");
-        if(data['game']['gamestate']['state'] == 'BuyStocks'||
+        if(data['game']['gamestate']['state'] == 'BuyStocks' ||
            data['game']['gamestate']['state'] == 'LiquidateStocks') {
-          showElement(elBtnPass);
+          addEffect(EFFECT_SHOW, elBtnPass);
         }
-         
-        el_thisplayer.className = el_thisplayer.className + " currplayer";
-        el_gamestate.className = "currstate currplayer";
-      } else{
-        el_thisplayer.className = el_thisplayer.className.replace(" currplayer", "");
-        el_gamestate.className = "currstate";
+        addEffect(EFFECT_HIGHLIGHT, el_gamestate);
+        addEffect(EFFECT_HIGHLIGHT, pwid); // defined well above
+      }
+      else
+      {
+        removeEffect(EFFECT_HIGHLIGHT, el_gamestate);
+        removeEffect(EFFECT_HIGHLIGHT, pwid);
       }
       
       // PLAYER MONEY

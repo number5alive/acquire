@@ -100,9 +100,13 @@ div.messages {
   text-align: center;
 }
 
-.currplayer {
+.highlight {
   background-color: darkblue ;
   color: white;
+}
+
+.indicate {
+  color: red;
 }
 
 /* Style the topnav links */
