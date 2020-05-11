@@ -36,17 +36,38 @@ class State():
 
     def toHuman(self):
       return "Waiting for player to {}".format(str(self))
+
+class StateEventLog():
+  def __init__(self, start, end, player, event, kwargs):
+    self._start=start
+    self._end=end
+    self._player=player
+    self._event=event
+    self._kwargs=kwargs
+
+  def __repr__(self):
+    return self.__str__()
+
+  def __str__(self):
+    return "STATECHANGE: {} -> {} on {} from {} with args: {}".format(str(start), str(end), event, player.name, kwargs)
+  
  
 class StateEngine():
-  def __init__(self, start):
+  def __init__(self, start, fOnStateTx):
     self._currplayer=None
     #self._players=None
     self._start=start
     self._state=start # our current state
+    self._end=None
+    self._fOnStateTx=fOnStateTx
+    self._eventlog=[]
 
   @property
   def currplayer(self):
     return self._currplayer
+
+  def triggerEnd(self, endState):
+    self._end=endState
      
   def on_event(self, player, event, **kwargs):
     """
@@ -57,12 +78,16 @@ class StateEngine():
 
     # Let the first state have no player, otherwise enforce current player
     # presumption is that the first state WILL set the _currplayer value
-    # TODO: make sure this all works as intended, as written:
-    #       will not support concurrent actions (like stock transactions)
     ret=False
     if self._start == self._state or self._currplayer == player:
-      # The current state can keep or modify the state on return
-      ret, self._state = self._state.on_event(event, **kwargs)
+      ret, newState = self._state.on_event(event, **kwargs)
+
+      # on successful operations, make a state-tx check, and record the event
+      if ret:
+        self._fOnStateTx()
+        self._eventlog.append(StateEventLog(self._start, newState, player, event, kwargs))
+        self._state=newState
+      return ret, newState
     else:
       print("Not the current player, cannot take action")
     return ret

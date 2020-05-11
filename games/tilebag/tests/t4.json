@@ -61,64 +61,54 @@
         "11D", 
         "3C", 
         "4A", 
-        "12F", 
-        "10C", 
-        "9G"
+        "12F"
       ], 
       "board": {
         "ncols": 12, 
         "nrows": 9, 
         "occupied": [
           "10A", 
-          "7C", 
           "6C", 
+          "7C", 
           "1D", 
           "6D", 
           "3E", 
           "5E", 
+          "6E", 
           "7E", 
           "4F", 
           "5F", 
           "7F", 
           "8F", 
+          "10F", 
           "2H"
         ]
       }, 
-      "currPlayer": "515", 
+      "currPlayer": "513", 
       "gamelog": [
-        "Geoff played tile 5E", 
-        "Colleen played tile 2H", 
-        "FS&SnB played tile 5C", 
-        "Higgs played tile 6D", 
-        "Geoff spent $900", 
-        "Geoff bought 3 stocks in Imperial", 
-        "Imperial has been placed on the board at 4F", 
-        "Geoff played tile 4F", 
-        "Colleen played tile 1D", 
-        "FS&SnB spent $1200", 
-        "FS&SnB bought 3 stocks in Festival", 
-        "FS&SnB played tile 5F", 
-        "Higgs spent $1200", 
-        "Higgs bought 3 stocks in Festival", 
-        "Higgs played tile 3E", 
-        "Geoff spent $1200", 
-        "Geoff bought 3 stocks in Festival", 
-        "Festival has been placed on the board at 8E", 
-        "Geoff played tile 8E", 
-        "Geoff is the first player", 
-        "FS&SnB played tile 7F", 
-        "Higgs played tile 8F", 
-        "Geoff played tile 10A", 
-        "Colleen played tile 7C", 
-        "TileBagGame Started!", 
+        "FS&SnB played tile 10F", 
+        "Imperial has been removed from the board", 
+        "Geoff is keeping 4 stocks in Imperial", 
+        "Geoff received MINORITY shareholder bonus of 2000", 
+        "Geoff received MAJORITY shareholder bonus of 4000", 
+        "Resolving Takeover of Imperial - shareholders: ['Geoff=4 ', 'Colleen=0 ', 'Higgs=0 ', 'FS&SnB=0 ']", 
+        "*** Festival is buying out Imperial ***", 
+        "Saxxon has been removed from the board", 
+        "Geoff is keeping 2 stocks in Saxxon", 
+        "Higgs is keeping 1 stocks in Saxxon", 
+        "Higgs received MINORITY shareholder bonus of 1500", 
+        "Geoff received MAJORITY shareholder bonus of 3000", 
+        "Resolving Takeover of Saxxon - shareholders: ['Geoff=2 ', 'Higgs=1 ', 'Colleen=0 ', 'FS&SnB=0 ']", 
+        "*** Festival is buying out Saxxon ***", 
+        "Higgs played tile 6E", 
         "Game Created"
       ], 
       "gamestate": {
         "currplayer": {
-          "id": "515", 
-          "name": "Higgs"
+          "id": "513", 
+          "name": "Colleen"
         }, 
-        "message": "Waiting on Higgs to play a tile", 
+        "message": "Waiting on Colleen to play a tile", 
         "state": "PlaceTile", 
         "stateinfo": {}
       }, 
@@ -133,21 +123,24 @@
         {
           "charttype": "low", 
           "name": "Saxxon", 
-          "occupies": [
-            "7C",
-            "6C",
-            "6D"
-          ], 
+          "occupies": null, 
           "stocks": 25, 
-          "tile": "7D"
+          "tile": null
         }, 
         {
           "charttype": "mid", 
           "name": "Festival", 
           "occupies": [
+            "6E", 
+            "6D", 
+            "6C", 
+            "7C", 
+            "5E", 
+            "5F", 
+            "4F", 
             "7E", 
-            "8F", 
-            "7F"
+            "7F", 
+            "8F"
           ], 
           "stocks": 15, 
           "tile": "7E"
@@ -155,13 +148,9 @@
         {
           "charttype": "mid", 
           "name": "Imperial", 
-          "occupies": [
-            "5E", 
-            "5F", 
-            "4F"
-          ], 
+          "occupies": null, 
           "stocks": 21, 
-          "tile": "4F"
+          "tile": null
         }, 
         {
           "charttype": "mid", 
@@ -186,7 +175,7 @@
         }
       ]
     }, 
-    "id": "t3", 
+    "id": "t4", 
     "name": "TileBag", 
     "numplayers": 4, 
     "players": [
@@ -211,10 +200,10 @@
         "id": "514", 
         "name": "Geoff", 
         "playerdata": {
-          "money": 2900, 
+          "money": 11900, 
           "stocks": {
             "Festival": 4, 
-            "Imperial": 4,
+            "Imperial": 4, 
             "Saxxon": 2
           }, 
           "tiles": [
@@ -232,19 +221,19 @@
         "id": "515", 
         "name": "Higgs", 
         "playerdata": {
-          "money": 3800, 
+          "money": 5300, 
           "stocks": {
-            "Festival": 3,
-            "Saxxon" : 1
+            "Festival": 3, 
+            "Saxxon": 1
           }, 
           "tiles": [
             "11A", 
             "2F", 
-            "6E", 
             "12I", 
             "10H", 
             "9D", 
-            "4I"
+            "4I", 
+            "9G"
           ]
         }
       }, 
@@ -258,12 +247,12 @@
           }, 
           "tiles": [
             "9E", 
-            "10F", 
             "9H", 
             "3A", 
             "6A", 
             "1F", 
-            "9C"
+            "9C", 
+            "10C"
           ]
         }
       }

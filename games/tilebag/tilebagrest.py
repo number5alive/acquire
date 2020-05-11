@@ -44,6 +44,34 @@ def rest_tilebag_get_game_info(gameid):
     abort(404) #no such game
 
 # GET /games/id Get details about a specific game
+@tilebagrest_blueprint.route('/<string:gameid>', methods=['PATCH'])
+def rest_tilebag_trigger_end(gameid):
+  # Find the game they want to run
+  req_game=DataIf.getGameById(gameid)
+  if req_game is not None:
+    # Make sure the caller is someone playing this game!
+    pinfo=getCallingPlayerInfo(req_game)
+    if pinfo is not None:
+      # Get the tile they want to play
+      if request.json and 'endgame' in request.json:
+        if req_game.requestEndGame(pinfo['id']):
+          DataIf.updateGame(req_game.id)
+          return jsonify({'success':True})
+        else:
+          print("Game engine refused, likely not in an end condition")
+          abort(403) #forbidden
+      else:
+        print("No tile specified")
+    else:
+      print("we're not going to let just anyone twiddle with the game!")
+      abort(403) #forbidden
+  else:
+    print("some dummy just tried to twiddle with a non existent game")
+    abort(404)
+     
+  abort(400) # presume generic error / Bad Request
+ 
+# GET /games/id Get details about a specific game
 @tilebagrest_blueprint.route('/save/<string:gameid>', methods=['GET'])
 def rest_tilebag_save_game(gameid):
   req_game=DataIf.getGameById(gameid)

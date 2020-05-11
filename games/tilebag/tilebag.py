@@ -23,7 +23,7 @@ class TileBagGame(Game, StateEngine):
   _starturl='/tilebag/v1'
    
   def __init__(self, id):
-    StateEngine.__init__(self, TileBagGame.StartGame(self))
+    StateEngine.__init__(self, TileBagGame.StartGame(self), self._checkEndCondition)
     Game.__init__(self,id)
     self._initcomponents()
     self._log.recordGameMessage("Game Created")
@@ -39,6 +39,8 @@ class TileBagGame(Game, StateEngine):
     self.board=[]
     self._currPlayer=None
     self._gamestate=None
+    self._endcondition=False
+    self._endrequested=False
     self.tilebag=None;
     self.hotels=[Hotel(h['name'], h['chart']) for h in HOTELS]
     self._log=GameLog()
@@ -53,7 +55,7 @@ class TileBagGame(Game, StateEngine):
     self._initcomponents()
     for player in self._players:
       player.reset()
-    StateEngine.__init__(self, TileBagGame.StartGame(self))
+    StateEngine.__init__(self, TileBagGame.StartGame(self), self._checkEndCondition)
        
     # only thing from base class to reset is the "started" flag
     Game.reset(self)
@@ -70,6 +72,30 @@ class TileBagGame(Game, StateEngine):
       if player.getId() == playerid:
         return player
     return None
+
+  # End _can be_ triggered when a hotel is > size 41, or all hotels > 11
+  def _checkEndCondition(self):
+    if self._started:
+      bSize41=False
+      bAll11=True
+      bAtLeastOneHotel=False
+      for h in self.hotels:
+        if h.size >= 41:
+          bSize41 = True
+        elif h.size > 0:
+          bAtLeastOneHotel = True
+          if h.size < 11:
+            bAll11 = False
+      self._endcondition=bSize41 or (bAtLeastOneHotel and bAll11)
+      if self._endcondition:
+        print("END CONDITION Satisfied - Can be triggered by player")
+      else:
+        # cover case where an end-condition ceases to be valid
+        # i.e. requested when all are size 11, then a new hotel placed
+        self._endrequested = False 
+      return self._endcondition
+        
+    return False
 
   # ===== External Requests into the Game Engine =====
   # These will be passed on to the state machine for handling mechanics
@@ -141,6 +167,16 @@ class TileBagGame(Game, StateEngine):
   STATE_SELECTMERGELOSER='SelectMergeLoser'
   STATE_LIQUIDATESTOCKS='LiquidateStocks'
   STATE_ENDGAME='EndGame'
+
+  # current player can trigger the end of the game if the end condition is set
+  # NOTE: _endcondition flag is updated after every state change
+  def requestEndGame(self, playerId):
+    player=self._getPlayer(playerId)
+    if player == self._currplayer:
+      if self._endcondition:
+        print("END REQUESTED!")
+        self._endrequested=True
+    return self._endrequested
 
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
@@ -224,6 +260,12 @@ class TileBagGame(Game, StateEngine):
       print("Tilebag exhausted, trigger end-game state")
     else:
       self._currplayer.receiveTile(self.tilebag.takeTile())
+       
+    # turn is over, go to EndGame state instead of the next player
+    if self._endrequested:
+      return True, TileBagGame.EndGame(self)
+       
+    # otherwise, give the next player their turn
     self._currplayer=next(self._rotation)
     return True, TileBagGame.PlaceTile(self)
 
@@ -382,11 +424,9 @@ class TileBagGame(Game, StateEngine):
               cost=hotel.price() * amount
               if player.money >= cost:
                 if self._game._takeStocks(player, hotel, amount):
-                  self._game._log.recordStockAction(player.name, hotel.name, amount, -cost)
                   self._bought += amount
                   player.money -= cost
-                  self._game._log.recordMoneyAction(player.name, -cost)
-                 
+                  self._game._log.recordStockAction(player.name, hotel.name, amount, -cost)
                   if self._bought == 3:
                     return self._game.endTurnAction()
                      
@@ -482,6 +522,33 @@ class TileBagGame(Game, StateEngine):
           print("Must select hotel in the list {}".format([h.name for h in self._smalloption]))
       return False, self
 
+  # pays out majority and minority shareholders
+  # used by both LiquidateStocks and EndGame states
+  def _payoutBonuses(self, hotel, liquidate=False):
+    shareholders=[{'stocks' : p.numStocks(hotel.name), 'player':p,} for p in self._players]
+    shareholders.sort(key=lambda x: x['stocks'], reverse=True)
+
+    self._log.recordGameMessage("Resolving Takeover of {} - shareholders: {}".format(hotel.name, ["{}={} ".format(sh['player'], sh['stocks']) for sh in shareholders]))
+
+    majsh=[p for p in shareholders if p['stocks'] == shareholders[0]['stocks']]
+    minsh=[p for p in shareholders if p['stocks'] == (shareholders[1]['stocks'] if shareholders[1]['stocks'] > 0 else shareholders[0]['stocks'])]
+    print("Majority Shareholders: {}".format(majsh))
+    print("Minority Shareholders: {}".format(minsh))
+     
+    majb, minb = hotel.bonuses()
+    print("Bonuses: {} / {}".format(majb, minb))
+    majb=majb//len(majsh)//100*100
+    minb=minb//len(minsh)//100*100
+    print("Bonuses: {} / {}".format(majb, minb))
+    for p in majsh:
+      player=p['player']
+      player.money += majb
+      self._log.recordBonusPayout(player, 'majority', majb)
+    for p in minsh:
+      player=p['player']
+      player.money += minb
+      self._log.recordBonusPayout(player, 'minority', minb)
+
   class LiquidateStocks(State):
     def __init__(self, game, tile, biggest, smallest):
       self._game=game
@@ -493,7 +560,7 @@ class TileBagGame(Game, StateEngine):
       self._game._log.recordMerger(self._biggest.name, self._smallest.name)
        
       # find out maj/min shareholder bonus'
-      self._payoutBonuses(self._smallest)
+      self._game._payoutBonuses(self._smallest)
 
       # rotate forward through to a player with shares in the smallest
       # this is safe enough, *someone* has a stock, the free one 
@@ -503,31 +570,6 @@ class TileBagGame(Game, StateEngine):
        
     def toHuman(self):
       return "{} acquiring {}\nWaiting for {} to pick stock options for {} [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
-
-    def _payoutBonuses(self, hotel, liquidate=False):
-      shareholders=[{'stocks' : p.numStocks(hotel.name), 'player':p,} for p in self._game._players]
-      shareholders.sort(key=lambda x: x['stocks'], reverse=True)
-
-      self._game._log.recordGameMessage("Resolving Takeover of {} - shareholders: {}".format(self._smallest.name, ["{}={} ".format(sh['player'], sh['stocks']) for sh in shareholders]))
-
-      majsh=[p for p in shareholders if p['stocks'] == shareholders[0]['stocks']]
-      minsh=[p for p in shareholders if p['stocks'] == (shareholders[1]['stocks'] if shareholders[1]['stocks'] > 0 else shareholders[0]['stocks'])]
-      print("Majority Shareholders: {}".format(majsh))
-      print("Minority Shareholders: {}".format(minsh))
-       
-      majb, minb = hotel.bonuses()
-      print("Bonuses: {} / {}".format(majb, minb))
-      majb=majb//len(majsh)//100*100
-      minb=minb//len(minsh)//100*100
-      print("Bonuses: {} / {}".format(majb, minb))
-      for p in majsh:
-        player=p['player']
-        player.money += majb
-        self._game._log.recordBonusPayout(player, 'majority', majb)
-      for p in minsh:
-        player=p['player']
-        player.money += minb
-        self._game._log.recordBonusPayout(player, 'minority', minb)
        
     # loop through to the next player with stocks in smallest, 
     def _onPlayerDone(self):
@@ -613,10 +655,31 @@ class TileBagGame(Game, StateEngine):
   class EndGame(State):
     def __init__(self, game):
       self._game=game
-      #TODO: Resolve all hotels smallest to biggest
+       
+      blah=sorted(self._game.hotels, key=lambda x: x.size, reverse=False)
+      for h in blah:
+        if h.size > 0:
+          print("Resolving {}, size {}".format(h.name, h.size))
+          self._game._payoutBonuses(h)
+          for p in self._game._players:
+            amount=p.numStocks(hname=h.name)
+            print("{} has {} stocks in {}", p.name, amount, h.name)
+            if amount > 0:
+              self._game._returnStocks(p, h, amount)
+              value=h.price()*amount
+              p.money += value
+              self._game._log.recordStockAction(p.name, h.name, -amount, value)
+
+      blah=sorted(self._game._players, key=lambda x: x.money, reverse=True)
+      self._game._log.recordGameMessage("Final Totals")
+      for p in blah:
+        self._game._log.recordGameMessage("{}: ${:0,.2f}".format(p.name, p.money))
 
     def toHuman(self):
       return "End State! Cashing out the remaining hotels on the board"
+
+    def serialize(self, forsave=False):
+      return { 'finalscores': [{p.name: p.money} for p in self._game._players]}
 
     def on_event(self, event, **kwargs):
       print("EndState doesn't handle any events, you're here for the long haul mister!")
@@ -702,6 +765,8 @@ class TileBagGame(Game, StateEngine):
       return {
         'currPlayer': self._currplayer.serialize(False),
         'gamestate': StateEngine.serialize(self, False),
+        'endpossible': self._endcondition,
+        'endrequested': self._endrequested,
         'board': self.board.serialize(),
         'players' : [x.serialize(False) for x in self._players],
         'hotels': [h.serialize() for h in self.hotels],
