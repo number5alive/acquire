@@ -1,0 +1,274 @@
+{
+  "game": {
+    "gamedata": {
+      "bag": [
+        "2I", 
+        "8H", 
+        "3G", 
+        "2B", 
+        "2G", 
+        "10E", 
+        "7I", 
+        "3B", 
+        "10D", 
+        "8D", 
+        "5D", 
+        "2A", 
+        "9F", 
+        "8C", 
+        "4D", 
+        "8G", 
+        "2E", 
+        "12G", 
+        "11B", 
+        "1C", 
+        "10B", 
+        "8I", 
+        "10G", 
+        "1E", 
+        "11H", 
+        "3D", 
+        "11C", 
+        "12E", 
+        "5H", 
+        "7A", 
+        "6H", 
+        "5A", 
+        "3F", 
+        "4H", 
+        "12A", 
+        "4C", 
+        "4B", 
+        "9B", 
+        "7G", 
+        "11E", 
+        "8A", 
+        "1A", 
+        "6I", 
+        "9I", 
+        "12B", 
+        "5G", 
+        "3I", 
+        "6G", 
+        "7B", 
+        "6B", 
+        "12D", 
+        "11G", 
+        "2D", 
+        "5B", 
+        "9A", 
+        "1H", 
+        "7H", 
+        "11D", 
+        "3C", 
+        "4A", 
+        "12F", 
+        "10C", 
+        "9G"
+      ], 
+      "board": {
+        "ncols": 12, 
+        "nrows": 9, 
+        "occupied": [
+          "10A", 
+          "7C", 
+          "6C", 
+          "1D", 
+          "6D", 
+          "3E", 
+          "5E", 
+          "7E", 
+          "4F", 
+          "5F", 
+          "7F", 
+          "8F", 
+          "2H"
+        ]
+      }, 
+      "currPlayer": "515", 
+      "gamelog": [
+        "Geoff played tile 5E", 
+        "Colleen played tile 2H", 
+        "FS&SnB played tile 5C", 
+        "Higgs played tile 6D", 
+        "Geoff spent $900", 
+        "Geoff bought 3 stocks in Imperial", 
+        "Imperial has been placed on the board at 4F", 
+        "Geoff played tile 4F", 
+        "Colleen played tile 1D", 
+        "FS&SnB spent $1200", 
+        "FS&SnB bought 3 stocks in Festival", 
+        "FS&SnB played tile 5F", 
+        "Higgs spent $1200", 
+        "Higgs bought 3 stocks in Festival", 
+        "Higgs played tile 3E", 
+        "Geoff spent $1200", 
+        "Geoff bought 3 stocks in Festival", 
+        "Festival has been placed on the board at 8E", 
+        "Geoff played tile 8E", 
+        "Geoff is the first player", 
+        "FS&SnB played tile 7F", 
+        "Higgs played tile 8F", 
+        "Geoff played tile 10A", 
+        "Colleen played tile 7C", 
+        "TileBagGame Started!", 
+        "Game Created"
+      ], 
+      "gamestate": {
+        "currplayer": {
+          "id": "515", 
+          "name": "Higgs"
+        }, 
+        "message": "Waiting on Higgs to play a tile", 
+        "state": "PlaceTile", 
+        "stateinfo": {}
+      }, 
+      "hotels": [
+        {
+          "charttype": "low", 
+          "name": "Worldwide", 
+          "occupies": [], 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "low", 
+          "name": "Saxxon", 
+          "occupies": [
+            "7C",
+            "6C",
+            "6D"
+          ], 
+          "stocks": 25, 
+          "tile": "7D"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "Festival", 
+          "occupies": [
+            "7E", 
+            "8F", 
+            "7F"
+          ], 
+          "stocks": 15, 
+          "tile": "7E"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "Imperial", 
+          "occupies": [
+            "5E", 
+            "5F", 
+            "4F"
+          ], 
+          "stocks": 21, 
+          "tile": "4F"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "American", 
+          "occupies": [], 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "high", 
+          "name": "Continental", 
+          "occupies": [], 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "high", 
+          "name": "Tower", 
+          "occupies": [], 
+          "stocks": 25, 
+          "tile": null
+        }
+      ]
+    }, 
+    "id": "t3", 
+    "name": "TileBag", 
+    "numplayers": 4, 
+    "players": [
+      {
+        "id": "513", 
+        "name": "Colleen", 
+        "playerdata": {
+          "money": 5000, 
+          "stocks": {}, 
+          "tiles": [
+            "5I", 
+            "12H", 
+            "6E", 
+            "4G", 
+            "1B", 
+            "4E", 
+            "2C"
+          ]
+        }
+      }, 
+      {
+        "id": "514", 
+        "name": "Geoff", 
+        "playerdata": {
+          "money": 2900, 
+          "stocks": {
+            "Festival": 4, 
+            "Imperial": 4,
+            "Saxxon": 2
+          }, 
+          "tiles": [
+            "11F", 
+            "12C", 
+            "10I", 
+            "7D", 
+            "8B", 
+            "6F", 
+            "1G"
+          ]
+        }
+      }, 
+      {
+        "id": "515", 
+        "name": "Higgs", 
+        "playerdata": {
+          "money": 3800, 
+          "stocks": {
+            "Festival": 3,
+            "Saxxon" : 1
+          }, 
+          "tiles": [
+            "11A", 
+            "2F", 
+            "6E", 
+            "12I", 
+            "10H", 
+            "9D", 
+            "4I"
+          ]
+        }
+      }, 
+      {
+        "id": "516", 
+        "name": "FS&SnB", 
+        "playerdata": {
+          "money": 3800, 
+          "stocks": {
+            "Festival": 3
+          }, 
+          "tiles": [
+            "9E", 
+            "10F", 
+            "9H", 
+            "3A", 
+            "6A", 
+            "1F", 
+            "9C"
+          ]
+        }
+      }
+    ], 
+    "started": true
+  }
+}
