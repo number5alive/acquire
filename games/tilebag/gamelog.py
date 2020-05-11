@@ -1,116 +1,57 @@
 
  
-class GameAction():
-  def __init__(self, who, what, details=None):
-    self._who = who
-    self._what = what
-    self._details = details
-
-  def serialize(self, forsave=False):
-    ret={ 'action': self._what }
-    if self._who is not None:
-      ret['player'] = self._who
-    if self._details is not None:
-      ret['details'] = self._details
-    return ret
-
-  def toString(self):
-    if self._what == 'message':
-      return self._details['message']
-    elif self._what == 'playTile':
-      return "{} played tile {}".format(self._who, self._details)
-    elif self._what == 'stockAction':
-      action='bought'
-      amt=self._details['amount']
-      if amt < 0:
-        action='sold'
-        amt = -amt
-      hotel=self._details['hotel']
-      return "{} {} {} stocks in {}".format(self._who, action, amt, hotel)
-    elif self._what == 'moneyAction':
-      action='received'
-      amt=self._details
-      if amt < 0:
-        action='spent'
-        amt=-amt
-      return "{} {} ${}".format(self._who, action, amt)
-    elif self._what == 'removeHotel':
-      return "{} has been removed from the board".format(self._details)
-    elif self._what == 'placeHotel':
-      hotel=self._details['hotel']
-      location=self._details['location']
-      return "{} has been placed on the board at {}".format(hotel, location)
-    else:
-      return str(self)
-
-  def __repr__(self):
-    return str(self.serialize())
-  
 class GameLog():
   def __init__(self):
-    self._actions = []
+    self._log = []
 
-  def append(self, action):
-    self._actions.append(action)
-    print("GAMELOG: {}".format(action))
+  def append(self, message):
+    print("GAMELOG: {}".format(message))
+    self._log.append(message)
 
-  def recordAction(self, who, what, details):
-    action=GameAction(who, what, details)
-    self.append(action)
+  def recordGameMessage(self, message):
+    self.append(message)
 
-  def recordGameMessage(self, message, details=None):
-    extDetails={"message": message}
-    if details is not None:
-      extDetails['details'] = details
-    action=GameAction(None, 'message', extDetails)
-    self.append(action)
+  def recordMerger(self, big, small):
+    self.append("*** {} is buying out {} ***".format(big, small))
+
+  def recordBonusPayout(self, player, btype, amount):
+    self.append("{} received {} shareholder bonus of {}".format(player, btype.upper(), amount))
 
   def recordMoneyAction(self, player, amount):
-    action=GameAction(player, 'moneyAction', amount)
-    self.append(action)
+    self.append("{} {} ${}".format(player, "received" if amount > 0 else "spent", amount))
 
-  def recordStockAction(self, player, hotel, amount):
-    extDetails={"hotel": hotel, "amount": amount}
-    action=GameAction(player, 'stockAction', extDetails)
-    self.append(action)
+  def recordStockAction(self, player, hotel, amount, totalcost=0):
+    action="bought" if amount > 0 else "sold"
+    txcost="" if totalcost==0 else " for a total of {}".format(totalcost)
+    self.append("{} {} {} stocks in {}{}".format(player, action, amount, hotel ,txcost))
+     
+  def recordStockTrade(self, player, fromhotel, tohotel, rxamount):
+    self.append("{} traded {} stocks of {} for {} stocks in {}".format(player, rxamount*2, fromhotel, rxamount, tohotel))
 
   def recordRemoveHotelAction(self, hotel):
-    action=GameAction(None, 'removeHotel', hotel)
-    self.append(action)
+    self.append("{} has been removed from the board".format(hotel))
 
   def recordPlaceHotelAction(self, hotel, location):
-    extDetails={"hotel": hotel, "location": location}
-    action=GameAction(None, 'placeHotel', extDetails)
-    self.append(action)
+    self.append("{} has been placed on the board at {}".format(hotel, location))
 
   def recordTileAction(self, player, tilealpha):
-    action=GameAction(player, 'playTile', tilealpha)
-    self.append(action)
-    pass
+    self.append("{} played tile {}".format(player, tilealpha))
 
   def serialize(self, forsave=False, last=0):
-    actionlist=self._actions[::-1]
+    loglist=self._log[::-1]
     if last > 0:
-      actionlist=actionlist[:last]
+      loglist=loglist[:last]
 
-    return [act.toString() for act in actionlist]
+    return [log for log in loglist]
      
 if __name__ == "__main__":
-  print("---- Testing GameAction Class ----")
-  a1=GameAction('billy', 'playTile', '4B')
-  a2=GameAction('sally', 'buyStock', '{ "hotel" : "American", "amount": 3}')
-  
-  print(a1.serialize())
-  print(a2.serialize())
-  print(a2)
-   
   print("---- Testing GameLog Class ----")
   log=GameLog()
-  log.append(a1)
-  log.append(a2)
-  log.recordGameMessage('somethingKewl', 'a bunch of stuff')
+  log.recordGameMessage('somethingKewl')
+  log.recordBonusPayout('timmy', 'minOritY', 2000)
   log.recordMoneyAction('timmy', -27000)
   log.recordStockAction('frank', 'Global', 7)
+  log.recordStockTrade('frank', 'Global', 'Anglo', 6)
   log.recordPlaceHotelAction('Canadian', '7B')
   log.recordRemoveHotelAction('Spire')
   log.recordTileAction('jimmy', '5B')

@@ -661,7 +661,8 @@
     el_currplayer.innerText=currpname;
     el_gamestate.innerText=data['game']['gamestate']['message'];
     var elBtnPass=document.getElementById("btnPass");
-    if(data['game']['gamestate']['state'] != 'BuyStocks') {
+    if(data['game']['gamestate']['state'] != 'BuyStocks' &&
+       data['game']['gamestate']['state'] != 'LiquidateStocks') { 
       hideElement(elBtnPass);
     }
 
@@ -708,7 +709,8 @@
       el_thisplayer.innerText=data['game']['you']['name'];
       if( data['game']['you']['id'] == data['game']['gamestate']['currplayer']['id']) {
         var elBtnPass=document.getElementById("btnPass");
-        if(data['game']['gamestate']['state'] == 'BuyStocks') {
+        if(data['game']['gamestate']['state'] == 'BuyStocks'||
+           data['game']['gamestate']['state'] == 'LiquidateStocks') {
           showElement(elBtnPass);
         }
          

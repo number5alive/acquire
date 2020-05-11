@@ -4,7 +4,7 @@ from games.tilebag.player import TileBagPlayer
 from games.tilebag.tiles import Tile, TileBag
 from games.tilebag.board import Board
 from games.tilebag.hotels import Hotel, Stock, HOTELS
-from games.tilebag.gamelog import GameLog, GameAction
+from games.tilebag.gamelog import GameLog
 from games.tilebag.stateengine import State, StateEngine
 from itertools import cycle, islice
 
@@ -139,6 +139,8 @@ class TileBagGame(Game, StateEngine):
   STATE_PLACEHOTEL='PlaceHotel'
   STATE_SELECTMERGEWINNER='SelectMergeWinner'
   STATE_SELECTMERGELOSER='SelectMergeLoser'
+  STATE_LIQUIDATESTOCKS='LiquidateStocks'
+  STATE_ENDGAME='EndGame'
 
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
@@ -380,7 +382,7 @@ class TileBagGame(Game, StateEngine):
               cost=hotel.price() * amount
               if player.money >= cost:
                 if self._game._takeStocks(player, hotel, amount):
-                  self._game._log.recordStockAction(player.name, hotel.name, amount)
+                  self._game._log.recordStockAction(player.name, hotel.name, amount, -cost)
                   self._bought += amount
                   player.money -= cost
                   self._game._log.recordMoneyAction(player.name, -cost)
@@ -488,29 +490,32 @@ class TileBagGame(Game, StateEngine):
       self._smallest=smallest
       self._startplayer=self._game._currplayer
       print(self.toHuman())
+      self._game._log.recordMerger(self._biggest.name, self._smallest.name)
        
       # find out maj/min shareholder bonus'
-      self._payoutBonuses()
+      self._payoutBonuses(self._smallest)
 
       # rotate forward through to a player with shares in the smallest
       # this is safe enough, *someone* has a stock, the free one 
       while self._checkPlayerDone():
+        print("finding first player with stocks in {}".format(self._smallest))
         self._game._currplayer=next(self._game._rotation)
        
     def toHuman(self):
-      return "{} acquiring {}\nWaiting for {} to pick stock options [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer)
+      return "{} acquiring {}\nWaiting for {} to pick stock options for {} [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
 
-    def _payoutBonuses(self):
-      shareholders=[{'stocks' : p.numStocks(self._smallest.name), 'player':p,} for p in self._game._players]
+    def _payoutBonuses(self, hotel, liquidate=False):
+      shareholders=[{'stocks' : p.numStocks(hotel.name), 'player':p,} for p in self._game._players]
       shareholders.sort(key=lambda x: x['stocks'], reverse=True)
 
+      self._game._log.recordGameMessage("Resolving Takeover of {} - shareholders: {}".format(self._smallest.name, ["{}={} ".format(sh['player'], sh['stocks']) for sh in shareholders]))
 
       majsh=[p for p in shareholders if p['stocks'] == shareholders[0]['stocks']]
       minsh=[p for p in shareholders if p['stocks'] == (shareholders[1]['stocks'] if shareholders[1]['stocks'] > 0 else shareholders[0]['stocks'])]
       print("Majority Shareholders: {}".format(majsh))
       print("Minority Shareholders: {}".format(minsh))
        
-      majb, minb = self._smallest.bonuses()
+      majb, minb = hotel.bonuses()
       print("Bonuses: {} / {}".format(majb, minb))
       majb=majb//len(majsh)//100*100
       minb=minb//len(minsh)//100*100
@@ -518,11 +523,11 @@ class TileBagGame(Game, StateEngine):
       for p in majsh:
         player=p['player']
         player.money += majb
-        self._game._log.recordMoneyAction(player, majb)
+        self._game._log.recordBonusPayout(player, 'majority', majb)
       for p in minsh:
         player=p['player']
         player.money += minb
-        self._game._log.recordMoneyAction(player, minb)
+        self._game._log.recordBonusPayout(player, 'minority', minb)
        
     # loop through to the next player with stocks in smallest, 
     def _onPlayerDone(self):
@@ -556,6 +561,9 @@ class TileBagGame(Game, StateEngine):
            
           # Check if player is signalling the end of their turn
           if amount == 0:
+            remStocks = player.numStocks(hname=self._smallest.name)
+            if remStocks >= 0:
+              self._game._log.recordGameMessage("{} is keeping {} stocks in {}".format(self._game._currplayer.name, remStocks, self._smallest.name))
             return True, self._onPlayerDone()
             
           # Check 2-for-1
@@ -567,6 +575,7 @@ class TileBagGame(Game, StateEngine):
               if nSmallest >= 2*amount:
                 self._game._returnStocks(player, self._smallest, 2*amount)
                 self._game._takeStocks(player, self._biggest, amount)
+                self._game._log.recordStockTrade(player.name, self._smallest.name, self._biggest.name, amount)
                 
                 # make the 2-for-1 swap
                 return True, self if not self._checkPlayerDone() else self._onPlayerDone()
@@ -586,8 +595,9 @@ class TileBagGame(Game, StateEngine):
           if amount > 0 and hotel is self._smallest:
             # make sure the player has amount of smallest, sell them
             if self._game._returnStocks(player, hotel, amount):
-              player.money += hotel.price()*amount
-              self._game._log.recordStockAction(player.name, hotel.name, -amount)
+              value=hotel.price()*amount
+              player.money += value
+              self._game._log.recordStockAction(player.name, hotel.name, -amount, value)
               return True, self if not self._checkPlayerDone() else self._onPlayerDone()
             else:
               print("player doesn't have {} stocks to sell".format(amount))
@@ -598,6 +608,18 @@ class TileBagGame(Game, StateEngine):
       else:
         print("invalid event {} while in liquidate stock (only accepts buy or sell stock)".format(event))
           
+      return False, self
+
+  class EndGame(State):
+    def __init__(self, game):
+      self._game=game
+      #TODO: Resolve all hotels smallest to biggest
+
+    def toHuman(self):
+      return "End State! Cashing out the remaining hotels on the board"
+
+    def on_event(self, event, **kwargs):
+      print("EndState doesn't handle any events, you're here for the long haul mister!")
       return False, self
 
   # ===== Serialization and Deserialization of the Game object ====
@@ -637,6 +659,8 @@ class TileBagGame(Game, StateEngine):
       TileBagGame.STATE_PLACEHOTEL : TileBagGame.PlaceHotel,
       TileBagGame.STATE_SELECTMERGEWINNER : TileBagGame.SelectMergeWinner,
       TileBagGame.STATE_SELECTMERGELOSER: TileBagGame.SelectMergeLoser,
+      TileBagGame.STATE_LIQUIDATESTOCKS: TileBagGame.LiquidateStocks,
+      TileBagGame.STATE_ENDGAME: TileBagGame.EndGame,
       }
    
     # restore the state machine
