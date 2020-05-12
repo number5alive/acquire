@@ -434,7 +434,6 @@ class TileBagGame(Game, StateEngine):
                 else:
                   print("?! Internal Error")
               else:
-                # TODO: log error - not enough money
                 print("not enough money to complete transaction. cost={}*{}={}".format(hotel.price(), amount, cost))
             else:
               print("trying to buy too many stocks on your turn")
