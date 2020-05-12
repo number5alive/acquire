@@ -87,7 +87,6 @@ class StateEngine():
         self._fOnStateTx()
         self._eventlog.append(StateEventLog(self._start, newState, player, event, kwargs))
         self._state=newState
-      print("Result = {}".format(ret))
     else:
       print("Not the current player, cannot take action")
        
