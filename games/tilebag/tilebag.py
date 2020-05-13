@@ -23,7 +23,6 @@ class TileBagGame(Game, StateEngine):
   _starturl='/tilebag/v1'
    
   def __init__(self, id):
-    StateEngine.__init__(self, TileBagGame.StartGame(self), self._checkEndCondition)
     Game.__init__(self,id)
     self._initcomponents()
     self._log.recordGameMessage("Game Created")
@@ -35,9 +34,9 @@ class TileBagGame(Game, StateEngine):
     Game.__del__(self)
 
   def _initcomponents(self):
+    StateEngine.__init__(self, TileBagGame.StartGame(self), self._checkEndCondition)
     self._conflictTiles=[]
     self.board=[]
-    self._currPlayer=None
     self._gamestate=None
     self._endcondition=False
     self._endrequested=False
@@ -55,7 +54,6 @@ class TileBagGame(Game, StateEngine):
     self._initcomponents()
     for player in self._players:
       player.reset()
-    StateEngine.__init__(self, TileBagGame.StartGame(self), self._checkEndCondition)
        
     # only thing from base class to reset is the "started" flag
     Game.reset(self)
@@ -64,7 +62,7 @@ class TileBagGame(Game, StateEngine):
     return self.board
 
   @property
-  def currPlayer(self):
+  def currplayer(self):
     return self._currplayer
 
   def _getPlayer(self, playerid):
@@ -130,6 +128,11 @@ class TileBagGame(Game, StateEngine):
   def stockAction(self, playerId, hotel, amount):
     player=self._getPlayer(playerId)
     h=self._getHotelByName(hotel)
+    # validate args, h==None is actually okay here because we reuse this 
+    #   to notify "pass" on buy stocks
+    if type(amount) is not int:
+      return False
+       
     action=TileBagGame.EVENT_BUYSTOCKS if amount >= 0 else TileBagGame.EVENT_SELLSTOCKS
     amount=amount if amount >=0 else -amount
      
@@ -715,10 +718,7 @@ class TileBagGame(Game, StateEngine):
       self.hotels.append(Hotel.loadFromSavedData(hotel))
        
     # restore the game state
-    self._currPlayer=self._getPlayer(gd['currPlayer'])
-
     self._started=sd['started']
-    self._rotation = islice(cycle(self._players), self._players.index(self._currPlayer)+1, None)
      
     # lookup dictionary to convert string into the State class
     # mainly required for "save" save/restore functionality from json
@@ -736,12 +736,13 @@ class TileBagGame(Game, StateEngine):
     # restore the state machine
     sm=gd['gamestate']
     self._currplayer=self._getPlayer(sm['currplayer']['id'])
+    self._rotation = islice(cycle(self._players), self._players.index(self._currplayer)+1, None)
     stateclass=lookup_state[sm['state']]
     print("creating state class: {}".format(stateclass))
     if len(sm['stateinfo']) == 0:
       self._state=stateclass(self)
     else:
-      self._state=stateclass(self, **sm['statinfo'])
+      self._state=stateclass(self, **sm['stateinfo'])
 
   def getPlayerInfo(self, playerid):
     player=self._getPlayer(playerid)
@@ -756,7 +757,6 @@ class TileBagGame(Game, StateEngine):
   def saveGameData(self):
     if self._started:
       return { 
-        'currPlayer': self._currplayer.getId(),
         'gamestate': StateEngine.serialize(self, True),
         'board': self.board.serialize(),
         'bag': self.tilebag.serialize(),
@@ -770,7 +770,6 @@ class TileBagGame(Game, StateEngine):
   def getPublicInformation(self):
     if self._started:
       return {
-        'currPlayer': self._currplayer.serialize(False),
         'gamestate': StateEngine.serialize(self, False),
         'endpossible': self._endcondition,
         'endrequested': self._endrequested,
@@ -798,13 +797,13 @@ if __name__ == "__main__":
   tbg.run()
 
   currBoard = tbg.getBoard()
-  print("{} is the starting player".format(tbg.currPlayer.name))
+  print("{} is the starting player".format(tbg.currplayer.name))
 
   # simulate a bunch of turns
   for i in range(0,40):
-    print("{} tiles: {}".format(tbg.currPlayer.name, tbg.currPlayer.tiles))
-    tile=tbg.currPlayer.selectRandomTile()
-    tbg.playTile(tbg.currPlayer.getId(), tile)
+    print("{} tiles: {}".format(tbg.currplayer.name, tbg.currplayer.tiles))
+    tile=tbg.currplayer.selectRandomTile()
+    tbg.playTile(tbg.currplayer.getId(), tile)
    
   # stress the serialization functions
   print(">>> getPublicInformation: {}".format(tbg.getPublicInformation()))

@@ -84,7 +84,8 @@ class StateEngine():
 
       # on successful operations, make a state-tx check, and record the event
       if ret:
-        self._fOnStateTx()
+        if self._fOnStateTx is not None:
+          self._fOnStateTx()
         self._eventlog.append(StateEventLog(self._start, newState, player, event, kwargs))
         self._state=newState
     else:
@@ -104,7 +105,7 @@ if __name__ == "__main__":
     def __init__(self):
       print("TestGameEngine")
       self._blah="hello!";
-      super().__init__(TestGame.StateA(self))
+      super().__init__(TestGame.StateA(self), None)
        
     class StateA(State):
       def on_event(self, event, **kwargs):
