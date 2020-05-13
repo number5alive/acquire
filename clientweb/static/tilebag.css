@@ -25,6 +25,7 @@ body {
 
 .header h1 {
   font-size: 50px;
+  margin: 10px;
 }
  
 .header p {
@@ -71,15 +72,18 @@ div.mstick {
   overflow: hidden;
   text-align: right;
   background-color: #333;
+  transition: background-color 500ms;
+  transition: visibility 500ms;
   color: white;
 }
 
 div.messages {
   float: left;
-  /*
-  background-color: #333;
-  */
   width: 100%;
+}
+
+.error {
+  background-color:red !important;
 }
 
 .gamemessage {
@@ -88,10 +92,7 @@ div.messages {
   transition: opacity 500ms;
   width: 33%;
   text-align: left;
-}
-
-.gamemessage.waa {
-  opacity:0;
+  visibility: hidden;
 }
 
 .staticmessage {
@@ -101,8 +102,8 @@ div.messages {
 }
 
 .highlight {
-  background-color: darkblue ;
-  color: white;
+  background-color: darkblue !important;
+  color: white !important;
 }
 
 .indicate {
