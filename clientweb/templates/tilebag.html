@@ -160,8 +160,6 @@
   const el_btnEndGame=document.getElementById('btnEndGame');   
   const el_messagebar=document.getElementById('messagebar');
   const el_gamemessage=document.getElementById('gamemessage');
-  const el_outer=document.getElementById('outer');
-  const el_loop=el_outer.querySelector('#loop');
 
   // Helper functions
   const EFFECT_ERROR='error';
@@ -267,7 +265,6 @@
   function clrCnt(itemtype) {
     // Go through all count items, reset them and hide them
     HOTELS.forEach(h => _clrCnt(h, itemtype));
-    
     // Hide the Clear Button
     var elClrStock=document.getElementById("btnClear"+itemtype+"Cnt");
     removeEffect(EFFECT_SHOW, elClrStock);
@@ -656,6 +653,23 @@
     showPlayerInNav(pdata, pid, pname)
     showPlayerInMStick(pdata, pid, pname)
   }
+
+  function setTickerToString(tickerstring) {
+    elt=document.createElement('div');
+    elt.innerText=tickerstring;
+    drawTickerWithElement(elt);
+  }
+
+  function drawTickerWithElement(elt) {
+    el_outer=document.getElementById('outer');
+    el_loop=el_outer.querySelector('#loop');
+     
+    elt.className='content';
+    el_loop.innerHTML="";           // clear the stock ticker first
+    el_loop.appendChild(elt);
+    repeatContent(elt, el_outer.offsetWidth);
+    el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
+  }
    
   async function rendergame(data) {
     // For testing, we may have called this function with data
@@ -671,20 +685,12 @@
       data = await response.json();
     }
      
-    // GAMESTATE: Show the current action we're waiting on
+    // display GAMESTATE: Show the current action we're waiting on
     var currpname=data['game']['gamestate']['currplayer']['name'];
     var currpid=data['game']['gamestate']['currplayer']['id'];
     el_currplayer.innerText=data['game']['gamestate']['message'];
     el_gamestate.innerText=data['game']['gamestate']['message'];
-    var elBtnPass=document.getElementById("btnPass");
-    var state=data['game']['gamestate']['state']
-    if( state == 'EndGame') {
-      
-    }
-    if( state != 'BuyStocks' &&
-        state != 'LiquidateStocks') { 
-      removeEffect(EFFECT_SHOW, elBtnPass);
-    }
+     
     if( data['game']['endpossible'] ) {
       addEffect(EFFECT_SHOW, el_btnEndGame);
     } else {
@@ -713,16 +719,12 @@
     drawBoard(el_gameboard,data['game']['board']); // from board.js
 
     // HOTELS: Place the hotel tokens on the board
-    el_loop.innerHTML="";           // clear the stock ticker first
     elt=document.createElement('div');
-    elt.className='content';
-    el_loop.appendChild(elt);
     hotels=data['game']['hotels'];
     hotels.forEach(h => showHotel(h,elt));
      
     // Draw the stock TICKER
-    repeatContent(elt, el_outer.offsetWidth);
-    el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
+    drawTickerWithElement(elt);
 
     // see if we have a player or a spectator
     if( !data['game']['you'] ) {
@@ -763,6 +765,18 @@
       tiles=pinfo['tiles'];
       setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
       showOptions(tiles);
+       
+      // Display STATE specific elements
+      // Done last so it can override other items... damn this code is sloppy
+      var elBtnPass=document.getElementById("btnPass");
+      var state=data['game']['gamestate']['state']
+      if( state == 'EndGame') {
+        setTickerToString("Game Over ");
+      }
+      if( state != 'BuyStocks' &&
+          state != 'LiquidateStocks') { 
+        removeEffect(EFFECT_SHOW, elBtnPass);
+      }
     }
   }
   </script>
