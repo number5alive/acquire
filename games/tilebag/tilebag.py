@@ -384,6 +384,14 @@ class TileBagGame(Game, StateEngine):
     def toHuman(self):
       return "Waiting on {} to place a Hotel".format(self._game._currplayer)
 
+    def serialize(self, forsave=False):
+      validhotels=[]
+      for h in self._game.hotels:
+        if h.size == 0:
+          validhotels.append(h.name)
+           
+      return { 'validhotels': validhotels }
+
     def on_event(self, event, **kwargs):
       if event == TileBagGame.EVENT_PLACEHOTEL:
         if 'hotel' in kwargs:
@@ -410,6 +418,9 @@ class TileBagGame(Game, StateEngine):
 
     def toHuman(self):
       return "Waiting on {} to Buy Stocks".format(self._game._currplayer)
+
+    def serialize(self, forsave=False):
+      return { 'canbuy' : 3 - self._bought }
        
     def on_event(self, event, **kwargs):
       if event == TileBagGame.EVENT_BUYSTOCKS:
@@ -552,7 +563,7 @@ class TileBagGame(Game, StateEngine):
       player.money += minb
       self._log.recordBonusPayout(player, 'minority', minb)
       payouts['minority'][player.name]=minb
-    return payouts
+    return shareholders, payouts
 
   class LiquidateStocks(State):
     def __init__(self, game, tile, biggest, smallest):
@@ -565,7 +576,7 @@ class TileBagGame(Game, StateEngine):
       self._game._log.recordMerger(self._biggest.name, self._smallest.name)
        
       # find out maj/min shareholder bonus'
-      self._game._payoutBonuses(self._smallest)
+      self._shareholders, self._payouts=self._game._payoutBonuses(self._smallest)
 
       # rotate forward through to a player with shares in the smallest
       # this is safe enough, *someone* has a stock, the free one 
@@ -575,6 +586,12 @@ class TileBagGame(Game, StateEngine):
        
     def toHuman(self):
       return "{} acquiring {}\nWaiting for {} to pick stock options for {} [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
+
+    def serialize(self, forsave=False):
+      return { 'payouts': self._payouts,
+               'shareholders':  [{sh['player'].name:sh['stocks']} for sh in self._shareholders],
+               'biggest': self._biggest.name,
+               'smallest': self._smallest.name, }
        
     # loop through to the next player with stocks in smallest, 
     def _onPlayerDone(self):
