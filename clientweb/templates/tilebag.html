@@ -62,13 +62,20 @@
   </div>
   <div class="maincolumn">
     <div class="card">
-      <h2>TILES</h2>
-      <div class="tilerack" id="tilerack">
-        <!-- The following will dynamically be populated with
-        <div class="rackspace"></div>
-             And each will eventually get populated with
-        <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
-        -->
+      <div id="tilespace">
+        <h2>TILES</h2>
+        <div class="tilerack" id="tilerack">
+          <!-- The following will dynamically be populated with
+          <div class="rackspace"></div>
+               And each will eventually get populated with
+          <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
+          -->
+        </div>
+      </div>
+      <div id="spectator">
+        <h2>SPECTATORS</h2>
+        <p>So you're just watching the game?</p>
+        <div class="topnav" id="topnav">
       </div>
     </div>
     <div class="card">
@@ -124,7 +131,6 @@
   <div class="hotellist"><img src="{{ url_for('.static', filename='stockchart.jpg') }}" alt="STOCK CHART" ></img></div>
   <h2>Footer</h2>
   </div>
-  <div class="topnav" id="topnav">
 </div>
 
 <!-- ################################################################### --> 
@@ -160,19 +166,22 @@
   const el_btnEndGame=document.getElementById('btnEndGame');   
   const el_messagebar=document.getElementById('messagebar');
   const el_gamemessage=document.getElementById('gamemessage');
+  const el_tiles=document.getElementById('tilespace');
+  const el_spectator=document.getElementById('spectator');
 
   // Helper functions
+  const EFFECT_INVISIBLE='notthere';
   const EFFECT_ERROR='error';
   const EFFECT_HIGHLIGHT='highlight'
   const EFFECT_SHOW='visible'
   const EFFECT_INDICATE='indicate'
   function addEffect(effect, elem) {
-    if( !elem.className.includes(effect+" ") ) {
-      elem.className = effect + " " + elem.className;
+    if( !elem.className.includes(" " + effect) ) {
+      elem.className = elem.className + " " + effect;
     }
   }
   function removeEffect(effect, elem) {
-    elem.className = elem.className.replace(effect + " ", "");
+    elem.className = elem.className.replace(" " + effect, "");
   }
    
   // For TILERACK
@@ -729,7 +738,12 @@
     // see if we have a player or a spectator
     if( !data['game']['you'] ) {
       // TODO: some fancy spectator display
+      removeEffect(EFFECT_INVISIBLE, el_spectator);
+      addEffect(EFFECT_INVISIBLE, el_tiles);
     } else {
+      removeEffect(EFFECT_INVISIBLE, el_tiles);
+      addEffect(EFFECT_INVISIBLE, el_spectator);
+       
       pinfo=data['game']['you']['playerdata'];
       el_thisplayer.innerText=data['game']['you']['name'];
       // Set Current player, highlight it if it's you

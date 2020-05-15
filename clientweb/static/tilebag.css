@@ -102,8 +102,12 @@ div.messages {
 }
 
 .highlight {
-  background-color: darkblue !important;
-  color: white !important;
+  background-color: darkblue ;
+  color: white;
+}
+
+.notthere {
+  display: none !important;
 }
 
 .indicate {
