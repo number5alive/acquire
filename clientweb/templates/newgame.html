@@ -3,85 +3,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <head>
   <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='newgame.css') }}{{ cachefix }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
-<style>
-
-input {
-  margin: 0;
-  border: none;
-  border-radius: 0;
-  width: 50%;
-  padding: 10px;
-  float: left;
-  font-size: 16px;
-}
-.addBtn {
-  padding: 10px;
-  width: 25%;
-  background: #d9d9d9;
-  color: #555;
-  float: left;
-  text-align: center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
-  border-radius: 0;
-}
-.addBtn:hover {
-  background-color: #bbb;
-}
-
-.startBtn {
-  padding: 10px;
-  width: 100%;
-  background: #d9d9d9;
-  color: #555;
-  float: left;
-  text-align: center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
-  border-radius: 0;
-}
-.startBtn:hover {
-  background-color: #5f5;
-}
- 
-/* Remove margins and padding from the list */
-ul {
-  margin: 0;
-  padding: 0;
-}
-/* Style the list items */
-ul li {
-  cursor: pointer;
-  position: relative;
-  padding: 12px 8px 12px 40px;
-  list-style-type: none;
-  background: #eee;
-  font-size: 18px;
-  transition: 0.2s;
-  
-  /* make the list items unselectable */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-/* Style the close button */
-.close {
-  position: absolute;
-  right: 0;
-  top: 0;
-  padding: 12px 16px 12px 16px;
-}
-
-.close:hover {
-  background-color: #f44336;
-  color: white;
-}
    
-</style>
+  <script src="{{ url_for('.static', filename='lobbyrest.js') }}{{ cachefix }}"></script>
+    
 </head>
 <body>
 
@@ -106,9 +32,13 @@ ul li {
   </div>
 </div>
 
-<span onclick="startGame()" id="startBtn" class="startBtn">Start the Game!</span>
+<span onclick="startGame(game_data)" id="startBtn" class="startBtn">Start the Game!</span>
 
 <script>
+ 
+// query state of game (exists, players, running)
+var game_data=callREST_getGameInfo();
+ 
 // Let the user hit "enter" when entering names
 var input = document.getElementById("myInput");
 
@@ -151,19 +81,34 @@ function addPlayerToList() {
   li.appendChild(span);
 }
 
-async function startGame() {
+showGameInfo(game_data);
+async function showGameInfo(data) {
+  await data.then(data => console.log(data) ).catch(err => console.log("game doesn't exist, clicking start will create it") );
+  // TODO: show existing players and the state of the game (not started)
+}
 
-  console.log("asking to create all the players");
-  var bRet=addAllPlayers();
+async function startGame(data) {
+  var bRet=true;
+  // Get the game data, if it doesn't exist, create the game
+  await data.catch(err => bRet=callREST_createGame());
   await bRet;
-  if( bRet ) {
-    console.log("players all created (?), starting the game");
-    callREST_startGame();
-    location.reload();
+
+  // add players to the game and try to start it
+  if( bRet) {
+    console.log("asking to create all the players");
+    bRet=addAllPlayers();
+    await bRet;
+    if( bRet ) {
+      console.log("players all created (?), starting the game");
+      callREST_startGame();
+      location.reload();
+    }
+    else {
+      console.log("must've failed to add a player... that's awkward");
+    }
   }
-  else
-  {
-    console.log("must've failed to add a player... that's awkward");
+  else {
+    console.log("Failed to create the game")
   }
 }
  
@@ -196,7 +141,40 @@ async function addAllPlayers() {
   }
   return true;
 }
+
+async function callREST_getGameInfo() {
+  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_get_game_info', gameid=gameid) }}");
+   
+  await response.status;
+  if( response.status != 200 ) {
+    return Promise.reject(response.status);
+  }
+   
+  return response.json();
+}
   
+async function callREST_createGame() {
+  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_make_game', gameid=gameid) }}", {
+              method: 'POST', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                              'gametype' : 'TileBag',
+                              'gameid' : "{{gameid}}", })
+                },
+              );
+                 
+    await response.status;
+    if( response.status == 200 || response.status == 201) {
+      return true;
+    } else {
+      console.log("Failed to create a new game");
+    }
+    return false;
+}
+ 
 async function callREST_addPlayer(player) {
   const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_join_game', gameid=gameid) }}", {
               method: 'POST', 
@@ -234,6 +212,7 @@ async function callREST_startGame() {
     } else {
     }
 }
+
 
 </script>
 

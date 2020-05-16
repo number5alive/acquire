@@ -34,13 +34,8 @@ def lobby_new_game(gameid):
    
   # see if the game exists, and if not, create it
   req_game=DataIf.getGameById(gameid)
-  if req_game is None:
+  if req_game is None or not req_game.started:
     print("trying to start a new game?")
-    # for now, we only have TileBag on the server, so default to that
-    req_game=DataIf.createGame("TileBag", gameid)
- 
-  # if the game hasn't started, show the page for adding players and starting
-  if not req_game.started:
     return render_template('newgame.html', gameid=gameid, lobbyrest=BASEURI, cachefix=CACHEFIX)
 
   else:
