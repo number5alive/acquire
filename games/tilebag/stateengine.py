@@ -79,8 +79,9 @@ class StateEngine():
     # Let the first state have no player, otherwise enforce current player
     # presumption is that the first state WILL set the _currplayer value
     ret=False
+    errmsg="Not the current player, cannot take action"
     if self._start == self._state or self._currplayer == player:
-      ret, newState = self._state.on_event(event, **kwargs)
+      ret, errmsg, newState = self._state.on_event(event, **kwargs)
 
       # on successful operations, make a state-tx check, and record the event
       if ret:
@@ -88,10 +89,8 @@ class StateEngine():
           self._fOnStateTx()
         self._eventlog.append(StateEventLog(self._start, newState, player, event, kwargs))
         self._state=newState
-    else:
-      print("Not the current player, cannot take action")
        
-    return ret
+    return ret, errmsg
 
   def serialize(self, forsave=False):
     return { 'currplayer' : self._currplayer,
@@ -109,24 +108,22 @@ if __name__ == "__main__":
        
     class StateA(State):
       def on_event(self, event, **kwargs):
+        errmsg="Invalid event in A"
         print("StateA")
         if event == 'hi':
           self._game._currplayer = 'timmy'
           print("Hit 'hi' event from 'StateB', testing _currplayer access {}".format(self._game._currplayer))
-          return True, TestGame.StateB(self._game)
-        else:
-          print("invalidA")
-        return False, self
+          return True, "", TestGame.StateB(self._game)
+        return False, errmsg, self
 
     class StateB(State):
       def on_event(self, event, **kwargs):
+        errmsg="Invalid event in B"
         print("StateB")
         if event == 'bye':
           print("Hit event 'bye' from 'StateB', testing Game access {}".format(self._game._blah))
-          return True, TestGame.StateA(self._game)
-        else:
-          print("invalidB")
-        return False, self
+          return True, "", TestGame.StateA(self._game)
+        return False, errmsg, self
 
       def toHuman(self):
         return "Waiting for something something StateB something"

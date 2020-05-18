@@ -46,6 +46,9 @@ def rest_tilebag_get_game_info(gameid):
 # GET /games/id Get details about a specific game
 @tilebagrest_blueprint.route('/<string:gameid>', methods=['PATCH'])
 def rest_tilebag_trigger_end(gameid):
+  errno=404
+  errmsg="No Such Game"
+
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -54,22 +57,20 @@ def rest_tilebag_trigger_end(gameid):
     if pinfo is not None:
       # Get the tile they want to play
       if request.json and 'endgame' in request.json:
-        if req_game.requestEndGame(pinfo['id']):
+        ret, errmsg = req_game.requestEndGame(pinfo['id'])
+        if ret:
           DataIf.updateGame(req_game.id)
           return jsonify({'success':True})
         else:
-          print("Game engine refused, likely not in an end condition")
-          abort(403) #forbidden
+          errno=403 #forbidden, errmsg set by game engine
       else:
-        print("No tile specified")
+        errmsg="Invalid Request: endgame key is not present"
     else:
-      print("we're not going to let just anyone twiddle with the game!")
-      abort(403) #forbidden
-  else:
-    print("some dummy just tried to twiddle with a non existent game")
-    abort(404)
-     
-  abort(400) # presume generic error / Bad Request
+      errmsg="Invalid user - not part of this game"
+      errno=403 #forbidden
+
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
  
 # GET /games/id Get details about a specific game
 @tilebagrest_blueprint.route('/save/<string:gameid>', methods=['GET'])
@@ -84,6 +85,9 @@ def rest_tilebag_save_game(gameid):
 # PATCH /games/<id>/board place a tile in the game
 @tilebagrest_blueprint.route('/<string:gameid>/board', methods=['PATCH'])
 def rest_tilebag_placetile(gameid):
+  errno=404
+  errmsg="No Such Game"
+
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -94,23 +98,29 @@ def rest_tilebag_placetile(gameid):
       if 'tile' in request.json:
         req_tile=request.json['tile']
         # Pass the request into the game and see if it gets approved
-        if req_game.playTile(pinfo['id'], alpha=req_tile):
+        ret, errmsg=req_game.playTile(pinfo['id'], alpha=req_tile)
+        if ret:
           DataIf.updateGame(req_game.id)
           return jsonify({'success':True})
+        else:
+          errno=403 #forbidden, errmsg set by game engine
       else:
-        print("No tile specified")
+        errmsg="No tile specified"
     else:
-      print("we're not going to let just anyone twiddle with the game!")
-      abort(403) #forbidden
+      errmsg="Invalid user - not part of this game"
+      errno=403 #forbidden
   else:
-    print("some dummy just tried to twiddle with a non existent game")
-    abort(404)
+    pass # invalid game
      
-  abort(400) # presume generic error / Bad Request
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
    
 # PATCH /games/<id>/hotels place a hotel on/off the board
 @tilebagrest_blueprint.route('/<string:gameid>/hotels', methods=['PATCH'])
 def rest_tilebag_placehotel(gameid):
+  errno=404
+  errmsg="No Such Game"
+
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -125,25 +135,27 @@ def rest_tilebag_placehotel(gameid):
         if req_tile == "":
           req_tile=None
 
-        if req_game.placeHotel(pinfo['id'], req_hotel, req_tile):
+        ret, errmsg=req_game.placeHotel(pinfo['id'], req_hotel, req_tile)
+        if ret:
           DataIf.updateGame(req_game.id)
           return jsonify({'success':True})
         else:
-          print("Game Engine refused the hotel move")
+          errno=403 #forbidden, errmsg set by game engine
       else:
-        print("No tile, or No hotel in hotel action")
+        errmsg="No tile, or No hotel in hotel action"
     else:
-      print("we're not going to let just anyone twiddle with the game!")
-      abort(403)
-  else:
-    print("some dummy just tried to twiddle with a non existent game")
-    abort(404)
+      errmsg="Invalid user - not part of this game"
+      errno=403 #forbidden
      
-  abort(400) # presume generic error / Bad Request
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
 
 # PATCH /games/<id>/stocks get or return stocks
 @tilebagrest_blueprint.route('/<string:gameid>/stocks', methods=['PATCH'])
 def rest_tilebag_stocks(gameid):
+  errno=404
+  errmsg="No Such Game"
+
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -155,25 +167,27 @@ def rest_tilebag_stocks(gameid):
         # all good, make the appropriate call to the game engine
         req_hotel=request.json['hotel']
         req_amount=request.json['amount']
-        if req_game.stockAction(pinfo['id'], req_hotel, req_amount):
+        ret, errmsg = req_game.stockAction(pinfo['id'], req_hotel, req_amount)
+        if ret:
           DataIf.updateGame(req_game.id)
           return jsonify({'success':True})
         else:
-          print("Game engine refused the request")
+          errno=403 #forbidden
       else:
-        print("no 'hotel' and/or no 'amount' in stock request")
+        errmsg="no 'hotel' and/or no 'amount' in stock request"
     else:
-      print("we're not going to let just anyone twiddle with the game!")
-      abort(403) # forbidden
-  else:
-    print("some dummy just tried to twiddle with a non existent game")
-    abort(404)
+      errmsg="Invalid user - not part of this game"
+      errno=403 #forbidden
      
-  abort(400) # presume generic error / Bad Request
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
    
 # PATCH /games/<id>/money get or return money
 @tilebagrest_blueprint.route('/<string:gameid>/money', methods=['PATCH'])
 def rest_tilebag_money(gameid):
+  errno=404
+  errmsg="No Such Game"
+
   # Find the game they want to run
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
@@ -184,18 +198,17 @@ def rest_tilebag_money(gameid):
       if 'amount' in request.json:
         # all good, make the appropriate call to the game engine
         req_amount=request.json['amount']
-        if req_game.moneyAction(pinfo['id'], req_amount):
+        ret, errmsg=req_game.moneyAction(pinfo['id'], req_amount)
+        if ret:
           DataIf.updateGame(req_game.id)
           return jsonify({'success':True})
         else:
-          print("Game engine refused the request")
+          errno=403 #forbidden
       else:
-        print("no 'amount' in money request")
+        errmsg="no 'amount' in money request"
     else:
-      print("we're not going to let just anyone twiddle with the game!")
-      abort(403)
-  else:
-    print("some dummy just tried to twiddle with a non existent game")
-    abort(404)
+      errmsg="Invalid user - not part of this game"
+      errno=403 #forbidden
      
-  abort(400) # presume generic error / Bad Request
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno

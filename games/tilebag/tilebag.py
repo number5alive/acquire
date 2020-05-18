@@ -100,23 +100,25 @@ class TileBagGame(Game, StateEngine):
 
   def run(self):
     if not super().run():
-      print("Unable to start the game - probably not enough players")
-      return False;
+      return False, "Unable to start the game - probably not enough players"
 
     return self.on_event(None, 'StartGame')
 
   def moneyAction(self, playerId, amount):
+    errmsg="Game Hasn't Started"
     if self._started:
       player=self._getPlayer(playerId)
       if player and type(amount) is int:
         if amount > 0 or player.money >= -amount:
           player.money += amount
           self._log.recordMoneyAction(player.name, amount)
-          return True
+          return True, ""
         else:
-          print("moneyAction: Subtracting more than the player has")
+          errmsg="Subtracting more than the player has"
+      else:
+        errmsg="Invalidly formated moneyAction request"
 
-    return False
+    return False, errmsg
 
   def _getHotelByName(self, hname):
     for h in self.hotels:
@@ -131,7 +133,7 @@ class TileBagGame(Game, StateEngine):
     # validate args, h==None is actually okay here because we reuse this 
     #   to notify "pass" on buy stocks
     if type(amount) is not int:
-      return False
+      return False, "Invalidly formatted stockAction request"
        
     action=TileBagGame.EVENT_BUYSTOCKS if amount >= 0 else TileBagGame.EVENT_SELLSTOCKS
     amount=amount if amount >=0 else -amount
@@ -174,12 +176,15 @@ class TileBagGame(Game, StateEngine):
   # current player can trigger the end of the game if the end condition is set
   # NOTE: _endcondition flag is updated after every state change
   def requestEndGame(self, playerId):
+    errmsg="Not the Current Player"
     player=self._getPlayer(playerId)
     if player == self._currplayer:
       if self._endcondition:
-        print("END REQUESTED!")
+        errmsg="All Good, END REQUESTED!"
         self._endrequested=True
-    return self._endrequested
+      else:
+        errmsg="Can't trigger end state, condition not met!"
+    return self._endrequested, errmsg
 
   # set alpha to None to remove it from the board
   # set it to a tile position to place it on the board
@@ -193,8 +198,7 @@ class TileBagGame(Game, StateEngine):
       else:
         return self.on_event(player, TileBagGame.EVENT_PLACEHOTEL, hotel=hotel)
            
-    print("invalid hotel, or invalid tile location")
-    return False
+    return False, "invalid hotel, or invalid tile location"
 
   # REMOVE HOTEL - If it's a remove, resolve conflictTiles
   def _removeHotel(self, hotel):
@@ -247,8 +251,7 @@ class TileBagGame(Game, StateEngine):
       if alpha is not None:
         tile=Tile.newTileFromAlpha(alpha)
       else:
-        print("Invalid argument to playTile")
-        return False
+        return False, "Invalid argument to playTile"
 
     return self.on_event(self._getPlayer(playerId), 'PlaceTile', tile=tile)
 
@@ -266,11 +269,11 @@ class TileBagGame(Game, StateEngine):
        
     # turn is over, go to EndGame state instead of the next player
     if self._endrequested:
-      return True, TileBagGame.EndGame(self)
+      return True, "", TileBagGame.EndGame(self)
        
     # otherwise, give the next player their turn
     self._currplayer=next(self._rotation)
-    return True, TileBagGame.PlaceTile(self)
+    return True, "", TileBagGame.PlaceTile(self)
 
   class StartGame(State):
     def toHuman(self):
@@ -304,15 +307,16 @@ class TileBagGame(Game, StateEngine):
             player.receiveTile(self._game.tilebag.takeTile())
 
         # good to go, flip into the main game state cycle
-        return True, TileBagGame.PlaceTile(self._game)
+        return True, "", TileBagGame.PlaceTile(self._game)
 
-      return False, self
+      return False, "ILLEGAL EVENT - StartGame when not in StartGame State", self
 
   class PlaceTile(State):
     def toHuman(self):
       return "Waiting on {} to play a tile".format(self._game._currplayer)
 
     def on_event(self, event, **kwargs):
+      errmsg="ILLEGAL EVENT - {} when in state PlaceTile".format(event)
       if event == 'PlaceTile':
         tile=kwargs.get('tile',None)
         if tile in self._game._currplayer.tiles:
@@ -337,9 +341,7 @@ class TileBagGame(Game, StateEngine):
           #       All hotels on the board and this would make another)
           bWouldMakeNewHotel=len(conn) > 0 and len(hn) == 0
           if (ofSize11 >= 2) or (bAllHotelsOnBoard and bWouldMakeNewHotel):
-            # TODO: send a message back to the user that this is bad
-            print("ERROR - Illegal Tile Move")
-            return False, self
+            return False, "ERROR - Illegal Tile Move", self
            
           # NOTE: this tile MIGHT be between two tiles, in that case we need
           #       to ensure it doesn't cause a "merger" until one of those
@@ -355,25 +357,23 @@ class TileBagGame(Game, StateEngine):
           print("Played Tile: {}".format(tile))
            
           if len(self._game._conflictTiles) > 0:
-            return True, self._game._resolveMerger(self._game, tile)
+            return True, "", self._game._resolveMerger(self._game, tile)
            
           # more than one tile borders, and none are hotels, New Hotel!
           if bWouldMakeNewHotel:
-            return True, TileBagGame.PlaceHotel(self._game, tile)
+            return True, "", TileBagGame.PlaceHotel(self._game, tile)
            
           # If there's no stocks to buy, skip to next person
           if not bStocksAvailable:
             return self._game.endTurnAction()
              
           # Default after playing a tile is to buy stocks
-          return True, TileBagGame.BuyStocks(self._game)
+          return True, "", TileBagGame.BuyStocks(self._game)
         else:
-          print("{} is not in {}".format(tile, self._game._currplayer.tiles))
-      else:
-        print("In PlaceTile, event was {}".format(event))
+          errmsg="{} is not in {}".format(tile, self._game._currplayer.tiles)
 
       # if we get down here, we didn't succeed at playing the tile
-      return False, self
+      return False, errmsg, self
 
   class PlaceHotel(State):
     def __init__(self, game, tile):
@@ -393,6 +393,7 @@ class TileBagGame(Game, StateEngine):
       return { 'validhotels': validhotels }
 
     def on_event(self, event, **kwargs):
+      errmsg="ILLEGAL EVENT - {} when in state PlaceHotel".format(event)
       if event == TileBagGame.EVENT_PLACEHOTEL:
         if 'hotel' in kwargs:
           hotel=kwargs['hotel']
@@ -401,14 +402,14 @@ class TileBagGame(Game, StateEngine):
             hotel.setPosition(self._alpha, occupies=conn)
             self._game._takeStocks(self._game._currplayer, hotel, 1)
             self._game._log.recordPlaceHotelAction(hotel.name, self._alpha)
-            return True, TileBagGame.BuyStocks(self._game)
+            return True, "", TileBagGame.BuyStocks(self._game)
           else:
-            print("Hotel is already on the board!")
+            errmsg="Hotel is already on the board!"
         else:
-          print("invalid arguments to PlaceTile event")
+          errmsg="invalid arguments to PlaceTile event"
       else:
-        print("Invalid event {} while waiting for hotel to be placed".format(event))
-      return False, self
+        errmsg="Invalid event {} while waiting for hotel to be placed".format(event)
+      return False, errmsg, self
        
   class BuyStocks(State):
     def __init__(self, game):
@@ -423,6 +424,7 @@ class TileBagGame(Game, StateEngine):
       return { 'canbuy' : 3 - self._bought }
        
     def on_event(self, event, **kwargs):
+      errmsg="ILLEGAL EVENT - {} when in state BuyStocks".format(event)
       if event == TileBagGame.EVENT_BUYSTOCKS:
         if 'amount' in kwargs:
           amount=kwargs['amount']
@@ -444,21 +446,19 @@ class TileBagGame(Game, StateEngine):
                   if self._bought == 3:
                     return self._game.endTurnAction()
                      
-                  return True, self
+                  return True, "", self
                 else:
-                  print("?! Internal Error")
+                  errmsg="Not enough stocks left to complete this transaction"
               else:
-                print("not enough money to complete transaction. cost={}*{}={}".format(hotel.price(), amount, cost))
+                errmsg="not enough money to complete transaction. cost={}*{}={}".format(hotel.price(), amount, cost)
             else:
-              print("trying to buy too many stocks on your turn")
+              errmsg="trying to buy too many stocks on your turn"
           else:
-            print("invalid arguments. Is the hotel on the board?!)")
+            errmsg="invalid arguments. Is the hotel on the board?!"
         else:
-          print("invalid arguments in BuyStocks event")
-      else:
-        print("Invalid event {} while in BuyStocks".format(event))
+          errmsg="invalid arguments in BuyStocks event"
          
-      return False, self
+      return False, errmsg, self
 
   # NOTE: Not a class, a factory method to determine which state to land in
   def _resolveMerger(self, game, tile, biggest=None, smallest=None):
@@ -507,13 +507,14 @@ class TileBagGame(Game, StateEngine):
       return { 'bigoption' : [h.name for h in self._bigoption], }
 
     def on_event(self, event, **kwargs):
+      errmsg="ILLEGAL EVENT - {} when in state SelectMergeWinner".format(event)
       if event == TileBagGame.EVENT_PLACEHOTEL:
         hotel=kwargs.get('hotel', None)
         if hotel in self._bigoption:
-          return True, self._game._resolveMerger(self._game, self._tile, biggest=hotel)
+          return True, "", self._game._resolveMerger(self._game, self._tile, biggest=hotel)
         else:
-          print("Must select hotel in the list {}".format([h.name for h in self._bigoption]))
-      return False, self
+          errmsg="Must select hotel in the list {}".format([h.name for h in self._bigoption])
+      return False, errmsg, self
        
   class SelectMergeLoser(State):
     def __init__(self, game, tile, biggest, smalloption):
@@ -527,13 +528,14 @@ class TileBagGame(Game, StateEngine):
       return "Waiting for {} to select the hotel that will BE acquired by {} - between:{}".format(self._game._currplayer, self._biggest.name, [h.name for h in self._smalloption])
 
     def on_event(self, event, **kwargs):
+      errmsg="ILLEGAL EVENT - {} when in state PlaceHotel".format(event)
       if event == TileBagGame.EVENT_REMOVEHOTEL:
         hotel=kwargs.get('hotel', None)
         if hotel in self._smalloption:
-          return True, self._game._resolveMerger(self._game, self._tile, biggest=self._biggest, smallest=hotel)
+          return True, "", self._game._resolveMerger(self._game, self._tile, biggest=self._biggest, smallest=hotel)
         else:
-          print("Must select hotel in the list {}".format([h.name for h in self._smalloption]))
-      return False, self
+          errmsg="Must select hotel in the list {}".format([h.name for h in self._smalloption])
+      return False, errmsg, self
 
   # pays out majority and minority shareholders
   # used by both LiquidateStocks and EndGame states
@@ -618,6 +620,7 @@ class TileBagGame(Game, StateEngine):
       # just a shorter form since we use this a lot
       player=self._game.currplayer
        
+      errmsg="ILLEGAL EVENT - {} when in state LiquidateStocks".format(event)
       if event == TileBagGame.EVENT_BUYSTOCKS:
         if 'amount' in kwargs:
           amount=kwargs['amount']
@@ -628,7 +631,7 @@ class TileBagGame(Game, StateEngine):
             remStocks = player.numStocks(hname=self._smallest.name)
             if remStocks >= 0:
               self._game._log.recordGameMessage("{} is keeping {} stocks in {}".format(self._game._currplayer.name, remStocks, self._smallest.name))
-            return True, self._onPlayerDone()
+            return True, "", self._onPlayerDone()
             
           # Check 2-for-1
           if hotel is self._biggest:
@@ -642,15 +645,15 @@ class TileBagGame(Game, StateEngine):
                 self._game._log.recordStockTrade(player.name, self._smallest.name, self._biggest.name, amount)
                 
                 # make the 2-for-1 swap
-                return True, self if not self._checkPlayerDone() else self._onPlayerDone()
+                return True, "", self if not self._checkPlayerDone() else self._onPlayerDone()
               else:
-                print("Player doesn't have enough stocks for swap {}".format(nSmallest))
+                errmsg="Player doesn't have enough stocks for swap {}".format(nSmallest)
             else:
-              print("Big hotel doesn't have enough stocks: {}".format(hotel.nstocks))
+              errmsg="Big hotel doesn't have enough stocks: {}".format(hotel.nstocks)
           else:
-            print("Invalid Buy action in Liquidate - can only be for biggest hotel: {}".format(self._biggest))
+            errmsg="Invalid Buy action in Liquidate - can only be for biggest hotel: {}".format(self._biggest)
         else:
-          print("Invalid args to Liquidate Stock Event (buy/keep)")
+          errmsg="Invalid args to Liquidate Stock Event (buy/keep)"
       elif event == TileBagGame.EVENT_SELLSTOCKS:
         if 'amount' in kwargs:
           amount=kwargs['amount']
@@ -662,17 +665,15 @@ class TileBagGame(Game, StateEngine):
               value=hotel.price()*amount
               player.money += value
               self._game._log.recordStockAction(player.name, hotel.name, -amount, value)
-              return True, self if not self._checkPlayerDone() else self._onPlayerDone()
+              return True, "", self if not self._checkPlayerDone() else self._onPlayerDone()
             else:
-              print("player doesn't have {} stocks to sell".format(amount))
+              errmsg="player doesn't have {} stocks to sell".format(amount)
           else:
-            print("Sell action has to be >0 ({}) and for {} ({})".format(amount, self._smallest.name, hotel))
+            errmsg="Sell action has to be >0 ({}) and for {} ({})".format(amount, self._smallest.name, hotel)
         else:
-          print("Invalid args to Liquidate Stock Event (sell)")
-      else:
-        print("invalid event {} while in liquidate stock (only accepts buy or sell stock)".format(event))
+          errmsg="Invalid args to Liquidate Stock Event (sell)"
           
-      return False, self
+      return False, errmsg, self
 
   class EndGame(State):
     def __init__(self, game):
@@ -709,8 +710,7 @@ class TileBagGame(Game, StateEngine):
           }
 
     def on_event(self, event, **kwargs):
-      print("EndState doesn't handle any events, you're here for the long haul mister!")
-      return False, self
+      return False, "EndState doesn't handle any events, you're here for the long haul mister!", self
 
   # ===== Serialization and Deserialization of the Game object ====
   # both for the clients, as well as for saving and restoring state
