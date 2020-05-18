@@ -528,7 +528,7 @@ class TileBagGame(Game, StateEngine):
       return "Waiting for {} to select the hotel that will BE acquired by {} - between:{}".format(self._game._currplayer, self._biggest.name, [h.name for h in self._smalloption])
 
     def on_event(self, event, **kwargs):
-      errmsg="ILLEGAL EVENT - {} when in state PlaceHotel".format(event)
+      errmsg="ILLEGAL EVENT - {} when in state SelectMergeLoser".format(event)
       if event == TileBagGame.EVENT_REMOVEHOTEL:
         hotel=kwargs.get('hotel', None)
         if hotel in self._smalloption:
@@ -693,7 +693,9 @@ class TileBagGame(Game, StateEngine):
               value=h.price()*amount
               p.money += value
               self._game._log.recordStockAction(p.name, h.name, -amount, value)
-              self._buyouts[h.name][p.name]={'amount':amount, 'value':value}
+              #TODO: add the value of amount sold to this list
+              # the code below borks, because of how we return buyout information in _payoutBonuses above
+              #self._buyouts[h.name][p.name]={'amount':amount, 'value':value}
 
       blah=sorted(self._game._players, key=lambda x: x.money, reverse=True)
       self._game._log.recordGameMessage("Final Totals")

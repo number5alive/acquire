@@ -10,6 +10,7 @@
   <!-- Include our javascript helpers -->
   <script src="{{ url_for('.static', filename='board.js') }}{{ cachefix }}"></script>
   <script src="{{ url_for('.static', filename='tiles.js') }}{{ cachefix }}"> </script>
+  <script src="{{ url_for('.static', filename='tbREST.js') }}{{ cachefix }}"> </script>
     
    <!-- And our WebSocket helper -->
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
@@ -370,93 +371,31 @@
   }
    
   async function sendEndGameRequest() {
-    // make REST call to change player hotel amounts by this
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'endgame':'yeahletsdoit', 
-                                    })
-                },
-              );
-               
-    await response.status;
-    if( response.status != 200 ) {
-      sendGameMessage("Refused to set End Game state");
-    }
+    await tbREST_requestEndGame("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}")
+            .catch( err => { sendGameMessage(err.message); });
   }
-   
      
   async function makeGameMove(tile)
   {
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action':'placetile', 
-                                        'tile':tile.innerText})
-                },
-              );
-                 
-    await response.status;
-    if( response.status == 200 ) {
-      tile.parentNode.removeChild(tile);
-    } else if( response.status == 400 ) {
-      sendGameMessage("Not your turn");
-    } else {
-      sendGameMessage("Invalid Game Move");
-    }
+    await tbREST_placetile("{{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid=gameid, playerid=playerid) }}", tile.innerText)
+            .then( result => tile.parentNode.removeChild(tile) )
+            .catch( err => { sendGameMessage(err.message);
+                          });
   }
    
   /* For HOTELS */
   async function placeHotel(e){
     hel=e.detail.tile;
-     
-    // make REST call to change player hotel amounts by this
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action':'placeHotel', 
-                                      'hotel' : hel.id,
-                                      'tile' : 'lastplaced',
-                                    })
-                },
-              );
-               
-    await response.status;
-    if( response.status != 200 ) {
-      sendGameMessage("Invalid Hotel Action");
-    }
+    await tbREST_placeHotel("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", hel.id, 'lastplaced')
+            .catch( err => { sendGameMessage(err.message);
+                          });
   }
 
   async function removeHotel(e){
     hel=e.detail.tile;
-     
-    // make REST call to change player hotel amounts by this
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action':'placeHotel', 
-                                      'hotel' : hel.id,
-                                      'tile' : null,
-                                    })
-                },
-              );
-               
-    await response.status;
-    if( response.status != 200 ) {
-      sendGameMessage("Invalid Remove-Hotel Action");
-    }
+    await tbREST_placeHotel("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", hel.id, null)
+            .catch( err => { sendGameMessage(err.message);
+                          });
   }
 
   function getCountFromMultSelect(itemtype, hname) {
@@ -503,23 +442,10 @@
    
   async function stockAction(hname, amt){
     // make REST call to change player hotel amounts by this
-    const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid=gameid, playerid=playerid) }}", {
-                method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action':'buystocks', 
-                                      'hotel' : hname,
-                                      'amount' : amt,
-                                    })
-                },
-              );
-               
-    await response.status;
-    if( response.status != 200 ) {
-      sendGameMessage("Invalid Stock Action");
-    }
+    await tbREST_stockAction("{{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid=gameid, playerid=playerid) }}", hname, amt)
+            .catch( err => {
+                            sendGameMessage(err.message);
+                           });
   }
    
   </script>
@@ -683,15 +609,8 @@
   async function rendergame(data) {
     // For testing, we may have called this function with data
     if( data === undefined ) {
-      const response = await fetch("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}");
-       
-      await response.status;
-      if( response.status != 200 ) {
-        sendGameMessage("Unable to get game state ?");
-        return;
-      }
-       
-      data = await response.json();
+      data=await tbREST_getGameState("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}")
+            .catch( err => { sendGameMessage(err.message); return;});
     }
      
     // display GAMESTATE: Show the current action we're waiting on
@@ -797,16 +716,14 @@
          
           
 <!-- ################################################################### --> 
-<!-- ## Javascript for loading / initializing the game (or demo) -->
+<!-- ## Javascript for loading / initializing the game -->
 <!-- ################################################################### --> 
   <script>
-  if( {{debug}} ) {
-    loadForDebug();
-  } else {
-    loadForReal();
-  }
+
+  // Set up the game
+  setupWebSocket();
+  rendergame();
   sendGameMessage("Welcome!", false);
-  
 
   function setupWebSocket() {
 
@@ -827,26 +744,6 @@
         console.log("WS:Update");
         rendergame();
       });
-  }
-  
-  function loadForReal(){
-    setupWebSocket();
-    rendergame();
-  }
-   
-  // When loading for twiddling with the client layout (no server to help)
-  function loadForDebug(){
-    tiles=gettiles();
-    async function gettiles()
-    {
-        const response = await fetch("{{ url_for('testview_blueprint.get_tiles') }}");
-        const data = await response.json();
-        tiles=data['tiles'];
-        setTiles("rackspace", tiles, [[acquireBoard,'playtile']]);
-        showOptions(tiles);
-         
-        return tiles
-    }
   }
   
   </script>
