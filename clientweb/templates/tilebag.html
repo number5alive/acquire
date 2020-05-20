@@ -20,44 +20,23 @@
 
 <div class="header">
   <h1>TileBag!</h1>
-  <p>Drag and Drop to make Game Actions</p>
 </div>
 
-</div>
 <div class="mstick" id="messagebar">
   <div class="messages">
+    <div class="gamestate" id="gamestate"></div>
     <div class="gamemessage" id="gamemessage"></div>
-    <div class="staticmessage" style="text-align:right; float:right"><span id='currplayer'></span></div>
-    <div class="staticmessage" id="players" style="float:middle"></div>
   </div>
 </div>
 
 <div class="row">
   <div class="infocolumn">
-    <h2 style="text-align:center">PLAYER INFO</h2>
-    <div class="row" id="playername" style="text-align:center; margin:3px;"></div>
-    <div class="card">
-      <div class="row">
-        <h3 class="left60">BANK</h3>
-        <span class="right30 playermoney" id="playermoney">$$$$$</span>
-      </div>
+    <h2 style="text-align:center">PLAYERS</h2>
+    <div class="playerlist" id="playerlist">
+      <!-- This will get populated with the player names -->
     </div>
+    <h2 style="text-align:center">GAME LOG</h2>
     <div class="card">
-      <div class=row>
-        <h3 class="left60">STOCK MARKET</h3>
-        <button class="clr right30" onclick="clrCnt('S')" id="btnClearSCnt">Clear</button>
-      </div>
-      <div class="stockrack" id="stockrack">
-        <!-- The following will dynamically be populated with
-        <div class="stockspace">M</div> -->
-      </div>
-    </div>
-    <div class="gamelog card">
-      <div class=row>
-        <h3 class="left60">GAME LOG</h3>
-        <button class="clr right30" onclick="passTurn()" id="btnPass">End Turn</button>
-      </div>
-      <div class="currstate" id="gamestate"></div>
       <div class="messagelog"><ul id="messagelog"></ul></div>
     </div>
   </div>
@@ -76,7 +55,7 @@
       <div id="spectator">
         <h2>SPECTATORS</h2>
         <p>So you're just watching the game?</p>
-        <div class="topnav" id="topnav">
+        <div class="topnav" id="players">
       </div>
     </div>
     <div class="card">
@@ -95,7 +74,7 @@
         <div class="boardcolumn">
           <div class=row>
             <h2 class="left60">BOARD</h2>
-            <button onclick="onEndGame()" class="right30 clr" id="btnEndGame">End Game</button>
+            <button onclick="onEndGame()" class="right30 clr" id="btnEndGame">Trigger Game End</button>
           </div>
           <div class="acquireBoard" style="height:300px;" id="acquireBoard"></div>
           <div class="row">
@@ -117,7 +96,7 @@
   <div class="card">
   <button type="button" class="collapsible">Instructions</button>
   <div class="content">
-    <p>Instruction: All game actions are completed by dragging elements</p>
+    <p>Instruction: Most game actions are completed by dragging elements</p>
     <ul style="text-align:left">
       <li>Place a Tile - Drag tile to the board</li>
       <li>Buy a Stock - Drag hotel to the stock market</li>
@@ -125,7 +104,6 @@
       <li>Place a Hotel - Click a tile on the board, Drag hotel to the board</li>
       <li>Remove a Hotel - Drag hotel to the "Remove" area</li>
     </ul>
-    <p>Note: you are responsible for all game mechanics and logic beyond this (for now). I.e. you will have to determine the price of stocks, pay that from your wallet, and reconcile any hotel mergers. This logic might make it into the next version, so stay tuned!</p>
   </div>
   </div>
   <div class="card">
@@ -151,22 +129,22 @@
    ];
     
   // The main window components we'll reference the most
+  const el_gamestate=document.getElementById('gamestate');
+  const el_gamemessage=document.getElementById('gamemessage');
+  const el_playerlist=document.getElementById('playerlist');
+   
   const el_topnav=document.getElementById("topnav");
   const el_hotellist=document.getElementById("hotellist");
   const el_rmhotelzone=document.getElementById("rmhotelzone");
   const el_stockrack=document.getElementById("stockrack");
   const el_tilerack=document.getElementById("tilerack");
   const el_gameboard=document.getElementById("acquireBoard")
-  const el_gamestate=document.getElementById('gamestate');
   const el_pmoney=document.getElementById('playermoney');
   const el_moneyval=document.getElementById('moneyval'); // the widget
-  const el_playerlist=document.getElementById('playerlist');
-  const el_thisplayer=document.getElementById('playername');
   const el_players=document.getElementById('players');
   const el_currplayer=document.getElementById('currplayer');
   const el_btnEndGame=document.getElementById('btnEndGame');   
   const el_messagebar=document.getElementById('messagebar');
-  const el_gamemessage=document.getElementById('gamemessage');
   const el_tiles=document.getElementById('tilespace');
   const el_spectator=document.getElementById('spectator');
 
@@ -184,164 +162,6 @@
   function removeEffect(effect, elem) {
     elem.className = elem.className.replace(" " + effect, "");
   }
-   
-  // For TILERACK
-  // Dynamically create the spots for the tiles
-  // <div class="rackspace"></div>
-  for(var i=0; i<7; i++){
-    var rs=document.createElement('div');
-    rs.className="rackspace";
-    el_tilerack.append(rs);
-  }
-   
-  // Draw the BOARD
-  drawBoard(el_gameboard); // from board.js - draws an empty board
-
-  // Called when a hotel tile starts or stops being dragged
-  function onHotelDrag(hotel, done=false) {
-    // TODO: See if the hotel is on the board or not
-    if( !done ) {
-      el_rmhotelzone.innerText = "Drop Here to Remove";
-    }
-    else {
-      el_rmhotelzone.innerText = "Hotel Removal Zone";
-    }
-  }
-
-  function getMultiSelectId(itemtype, hname) {
-    return "ms_" + itemtype + "_" + hname;
-  }
-
-  function addMultiSelect(hostelm, itemtype) {
-    var ms = document.createElement('span');
-    ms.className="mscount";
-    ms.id = getMultiSelectId(itemtype, hostelm.dataset.hotel);
-    ms.dataset.count=0;
-    hostelm.appendChild(ms);
-    hostelm.onclick=function() {onMultiSelectClick(ms, itemtype);};
-  }
-   
-  // Dynamically add the HOTELS tokens to the page
-  const buildHotelName = function(hotel){
-    // First Create the space for the hotel item
-    var hs=document.createElement('div');
-    hs.className="hotelspace";
-    //el_hotellist.appendChild(hs);
-    el_hotellist.insertBefore(hs, el_rmhotelzone.parentNode);
-     
-    // Then create the individual hotel and put it in that space
-    var hi = document.createElement('div');
-    hi.className="hotelitem";
-    hi.id = hotel.name;
-    hi.dataset.hotel=hotel.name;
-    hs.appendChild(hi);
-    hi.innerText=hotel.name;
-    hi.dataset.hasmoved=false;
-    hi.style.backgroundColor=hi.style.backgroundColor + " " +  hotel.color;
-    hi.style.borderColor=hotel.color;
-
-    // Create the "hidden" multi-select count part
-    addMultiSelect(hi, "H");
-     
-    // Create the remaining stock count part
-    var sc = document.createElement('span');
-    sc.className="rmstockcount";
-    sc.id = "sc_" + hotel.name;
-    sc.innerText="#";
-    hi.appendChild(sc)
-     
-    // drop hotel on stocks to buy stock, on board to place hotel
-    makeTileDragable(hi, [[el_stockrack, 'buystock'],
-                          [el_gameboard, 'placehotel'],
-                          [el_rmhotelzone, 'rmhotel']], onHotelDrag);
-  }
-  HOTELS.forEach(h => buildHotelName(h));
-
-  function _clrCnt(h, itemtype) {
-   
-    var elCnt=document.getElementById(getMultiSelectId(itemtype, h.name));
-    elCnt.dataset.count=0;
-    removeEffect(EFFECT_SHOW, elCnt);
-  }
-
-  function passTurn() {
-    stockAction("Passing", 0);
-
-    // Hide the button
-    var elBtnPass=document.getElementById("btnPass");
-    removeEffect(EFFECT_SHOW, elBtnPass);
-  }
-
-  function clrCnt(itemtype) {
-    // Go through all count items, reset them and hide them
-    HOTELS.forEach(h => _clrCnt(h, itemtype));
-    // Hide the Clear Button
-    var elClrStock=document.getElementById("btnClear"+itemtype+"Cnt");
-    removeEffect(EFFECT_SHOW, elClrStock);
-  }
-
-  function onMultiSelectClick(mselem, itemtype) {
-    if( mselem.parentElement.dataset.hasmoved == "false" )
-    {
-      var reqcount=parseInt(mselem.dataset.count);
-      reqcount = isNaN(reqcount) ? 1 : reqcount+1;
-      clrCnt(itemtype); // clear all others
-      mselem.innerText=reqcount
-      mselem.dataset.count=reqcount;
-      addEffect(EFFECT_SHOW,mselem);
-      var elClrBtn=document.getElementById("btnClear"+itemtype+"Cnt");
-      addEffect(EFFECT_SHOW,elClrBtn);
-    }
-  }
-
-  // Dynamically add the "buy/sell" STOCKS widgets to the page
-  const buildStockWidget = function(hotel){
-    // First Create the space for the stock item
-    var ss=document.createElement('div');
-    ss.className="stockspace";
-    el_stockrack.append(ss);
-     
-    // Then create the individual stock and put it in that space
-    var si=document.createElement('div');
-    si.className="stockitem";
-    si.id = "st_" + hotel.short;
-    si.dataset.hotel=hotel.name; // required for multi-select
-    si.style.backgroundColor=hotel.color;
-    ss.append(si);
-     
-    // Create the "hidden" multi-select count part
-    addMultiSelect(si, "S");
-     
-    var sia=document.createElement('div');
-    sia.className="stockcount";
-    var sib=document.createElement('div');
-    sia.id=si.id + "_cnt";
-    sia.innerText=0;
-    sib.innerText=hotel.short;
-    si.append(sia);
-    si.append(sib);
-     
-    makeTileDragable(si, [[el_hotellist, 'sellstock']]);
-  }
-  HOTELS.forEach(h => buildStockWidget(h));
-   
-  enableCollapsables();
-  function enableCollapsables() {
-    var coll = document.getElementsByClassName("collapsible");
-    var i;
-
-    for (i = 0; i < coll.length; i++) {
-      coll[i].addEventListener("click", function() {
-        this.classList.toggle("active");
-        var content = this.nextElementSibling;
-        if (content.style.display === "block") {
-          content.style.display = "none";
-        } else {
-          content.style.display = "block";
-        }
-      });
-    }
-  }
   </script>
       
 <!-- ################################################################### --> 
@@ -350,7 +170,7 @@
   <script>
   el_gameboard.addEventListener('playtile', tileDropped);
   el_gameboard.addEventListener('placehotel', placeHotel);
-  el_stockrack.addEventListener('buystock', buyStock);
+  //el_stockrack.addEventListener('buystock', buyStock);
   el_hotellist.addEventListener('sellstock', sellStock);
   el_rmhotelzone.addEventListener('rmhotel', removeHotel);
 
@@ -396,6 +216,66 @@
     await tbREST_placeHotel("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", hel.id, null)
             .catch( err => { sendGameMessage(err.message);
                           });
+  }
+
+  // Called when a hotel tile starts or stops being dragged
+  function onHotelDrag(hotel, done=false) {
+    // TODO: See if the hotel is on the board or not
+    if( !done ) {
+      el_rmhotelzone.innerText = "Drop Here to Remove";
+    }
+    else {
+      el_rmhotelzone.innerText = "Hotel Removal Zone";
+    }
+  }
+
+  function getMultiSelectId(itemtype, hname) {
+    return "ms_" + itemtype + "_" + hname;
+  }
+
+  function addMultiSelect(hostelm, itemtype) {
+    var ms = document.createElement('span');
+    ms.className="mscount";
+    ms.id = getMultiSelectId(itemtype, hostelm.dataset.hotel);
+    ms.dataset.count=0;
+    hostelm.appendChild(ms);
+    hostelm.onclick=function() {onMultiSelectClick(ms, itemtype);};
+  }
+
+  function _clrCnt(h, itemtype) {
+    var elCnt=document.getElementById(getMultiSelectId(itemtype, h.name));
+    elCnt.dataset.count=0;
+    removeEffect(EFFECT_SHOW, elCnt);
+  }
+
+  function passTurn() {
+    stockAction("Passing", 0);
+
+    // Hide the button
+    var elBtnPass=document.getElementById("btnPass");
+    removeEffect(EFFECT_SHOW, elBtnPass);
+  }
+
+  function clrCnt(itemtype) {
+    // Go through all count items, reset them and hide them
+    HOTELS.forEach(h => _clrCnt(h, itemtype));
+    // Hide the Clear Button
+    var elClrStock=document.getElementById("btnClear"+itemtype+"Cnt");
+    removeEffect(EFFECT_SHOW, elClrStock);
+  }
+
+  function onMultiSelectClick(mselem, itemtype) {
+    if( mselem.parentElement.dataset.hasmoved == "false" )
+    {
+      var reqcount=parseInt(mselem.dataset.count);
+      reqcount = isNaN(reqcount) ? 1 : reqcount+1;
+      clrCnt(itemtype); // clear all others
+      mselem.innerText=reqcount
+      mselem.dataset.count=reqcount;
+      addEffect(EFFECT_SHOW,mselem);
+      var elClrBtn=document.getElementById("btnClear"+itemtype+"Cnt");
+      addEffect(EFFECT_SHOW,elClrBtn);
+    }
   }
 
   function getCountFromMultSelect(itemtype, hname) {
@@ -460,13 +340,13 @@
     el_gamemessage.innerText=message;
      
     // Set the message, show it, and schedule the fade-out timer
-    addEffect(EFFECT_SHOW, el_gamemessage)
+    removeEffect(EFFECT_INVISIBLE, el_gamemessage)
     if( error ) {
-      addEffect(EFFECT_ERROR, el_messagebar);
+      addEffect(EFFECT_ERROR, el_gamemessage);
     }
     setTimeout(function(){
-      removeEffect(EFFECT_ERROR, el_messagebar);
-      removeEffect(EFFECT_SHOW, el_gamemessage);
+      removeEffect(EFFECT_ERROR, el_gamemessage);
+      addEffect(EFFECT_INVISIBLE, el_gamemessage);
       }, 2500);
   }
      
@@ -520,17 +400,6 @@
     hel.style.opacity=decksize + 0.2;
   }
    
-  // For the stock ticker
-  function repeatContent(el, till) {
-    let html = el.innerHTML;
-    let counter = 0; // prevents infinite loop
-
-    while (el.offsetWidth < till && counter < 100) {
-        el.innerHTML += html;
-        counter += 1;
-    }
-  }
-
   // game info only includes stocks we have, the rest are Zero
   function updateStocks(h, pstocks) {
     var stockval=0;
@@ -542,20 +411,32 @@
     si.innerText=stockval;
   }
 
-  function showPlayerInNav(pdata, pid, pname) {
-    // Check if this id already exists, if not add it to the nav
-    var pnavid="playernav_"+pid;
-    var pnav=document.getElementById(pnavid);
-    if( pnav === null ) {
-      // New player! yay Friends!
-       
-      // For now, each player will be a link to their page <a href="#">Link</a>
-      var name = document.createElement('a');
-      name.id=pnavid;
-      name.innerText=pname;
-      name.href="{{gameid}}?playerid=" + pid;
-      el_topnav.appendChild(name);
+  // For the stock TICKER
+  function repeatTickerContent(el, till) {
+    let html = el.innerHTML;
+    let counter = 0; // prevents infinite loop
+
+    while (el.offsetWidth < till && counter < 100) {
+        el.innerHTML += html;
+        counter += 1;
     }
+  }
+
+  function setTickerToString(tickerstring) {
+    elt=document.createElement('div');
+    elt.innerText=tickerstring;
+    drawTickerWithElement(elt);
+  }
+
+  function drawTickerWithElement(elt) {
+    el_outer=document.getElementById('outer');
+    el_loop=el_outer.querySelector('#loop');
+     
+    elt.className='content';
+    el_loop.innerHTML="";           // clear the stock ticker first
+    el_loop.appendChild(elt);
+    repeatTickerContent(elt, el_outer.offsetWidth);
+    el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
   }
 
   function showPlayerInMStick(pdata, pid, pname) {
@@ -581,42 +462,123 @@
     }
   }
 
-  function showPlayers(pdata) {
+  const HTML_PLAYER_NAME='<div class="row"><div class="left60">YYYYYY</div><span class="right30 activeind" id="pactive_XXXXXX"></span></div>';
+   
+  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="row"><div class="left60">STOCK MARKET</div><span class="right30 playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
+   
+  function showPlayers(pdata, you) {
     var pid=pdata['id'];         // Shorthand for this function
     var pname=pdata['name'];
 
-    showPlayerInNav(pdata, pid, pname)
+    // Create a container for the player to show up
+    var elc=document.createElement('div');
+    elc.className="card";
+    elc.id='playerind_'+pid;
+    el_playerlist.appendChild(elc);
+       
+    // Create the details of the player
+    var elps=document.createElement('div');
+    if( you ) {
+      elps.innerHTML=HTML_ACTIVE_PLAYER;
+    } else {
+      elps.innerHTML=HTML_PLAYER_NAME;
+    }
+    elps.innerHTML = elps.innerHTML.replace(/XXXXXX/g, pid);
+    elps.innerHTML = elps.innerHTML.replace(/YYYYYY/g, pname);
+    elc.appendChild(elps);
+
+    if( you ) {
+      // Dynamically add the "buy/sell" STOCKS widgets to the page
+      const buildStockWidget = function(hotel){
+        // First Create the space for the stock item
+        var ss=document.createElement('div');
+        ss.className="stockspace";
+        var elsr=document.getElementById("stockrack");
+        elsr.append(ss);
+         
+        // Then create the individual stock and put it in that space
+        var si=document.createElement('div');
+        si.className="stockitem";
+        si.id = "st_" + hotel.short;
+        si.dataset.hotel=hotel.name; // required for multi-select
+        si.style.backgroundColor=hotel.color;
+        ss.append(si);
+         
+        // Create the "hidden" multi-select count part
+        addMultiSelect(si, "S");
+         
+        var sia=document.createElement('div');
+        sia.className="stockcount";
+        var sib=document.createElement('div');
+        sia.id=si.id + "_cnt";
+        sia.innerText=0;
+        sib.innerText=hotel.short;
+        si.append(sia);
+        si.append(sib);
+         
+        makeTileDragable(si, [[el_hotellist, 'sellstock']]);
+      }
+      HOTELS.forEach(h => buildStockWidget(h));
+    }
+
+/*
+       
+    var pwid=document.getElementById("playerind_"+currpid);
     showPlayerInMStick(pdata, pid, pname)
+*/
   }
 
-  function setTickerToString(tickerstring) {
-    elt=document.createElement('div');
-    elt.innerText=tickerstring;
-    drawTickerWithElement(elt);
-  }
-
-  function drawTickerWithElement(elt) {
-    el_outer=document.getElementById('outer');
-    el_loop=el_outer.querySelector('#loop');
+  function setupGameSpecificStaticParts(data) {
+    // PLAYERS
+    var players=data['game']['players']; // shorthand for player list
+    var pdata=null;  // THIS player
+    var start=0; // Index into the player list for THIS player
      
-    elt.className='content';
-    el_loop.innerHTML="";           // clear the stock ticker first
-    el_loop.appendChild(elt);
-    repeatContent(elt, el_outer.offsetWidth);
-    el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
+    // always show the player at the top of the player list
+    if( data['game']['you'] ) {
+      pdata=data['game']['you'];
+      for(var i=0; i<players.length; i++)
+      {
+        if( pdata['id'] == players[i]['id'] ){
+          start=i;
+          break;
+        }
+      }
+    }
+
+    // show all of the players in a list
+    for(var i=0; i<players.length; i++)
+    {
+      showPlayers(players[(start+i)%players.length], i==0 ? pdata : null);
+    }
   }
    
+  var bInitialRender=true;
   async function rendergame(data) {
-    // For testing, we may have called this function with data
+    // You may have realized that no where do we call this function with
+    // data defined... that may change if I supply the game state info in the
+    // websocket poke
     if( data === undefined ) {
       data=await tbREST_getGameState("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}")
             .catch( err => { sendGameMessage(err.message); return;});
     }
      
+    if( bInitialRender ) {
+      setupGameSpecificStaticParts(data);
+      bInitialRender = false;
+    }
+     
+    if( !data['game']['you'] ) {
+      renderSpectatorView(data)
+    } else {
+      renderPlayerView(data)
+    }
+     
+   /*
     // display GAMESTATE: Show the current action we're waiting on
     var currpname=data['game']['gamestate']['currplayer']['name'];
     var currpid=data['game']['gamestate']['currplayer']['id'];
-    el_currplayer.innerText=data['game']['gamestate']['message'];
+    //el_currplayer.innerText=data['game']['gamestate']['message'];
     el_gamestate.innerText=data['game']['gamestate']['message'];
      
     if( data['game']['endpossible'] ) {
@@ -636,8 +598,7 @@
       el_msgLog.appendChild(li);
     }
      
-    // Show All the players and their names, highlight the current one
-    data['game']['players'].forEach(pdata => showPlayers(pdata));
+    // Highlight the current player
     var pwid=document.getElementById("playerind_"+currpid);
     if( pwid != null ) {
       addEffect(EFFECT_INDICATE, pwid);
@@ -648,7 +609,7 @@
 
     // HOTELS: Place the hotel tokens on the board
     elt=document.createElement('div');
-    hotels=data['game']['hotels'];
+    var hotels=data['game']['hotels'];
     hotels.forEach(h => showHotel(h,elt));
      
     // Draw the stock TICKER
@@ -664,7 +625,6 @@
       addEffect(EFFECT_INVISIBLE, el_spectator);
        
       pinfo=data['game']['you']['playerdata'];
-      el_thisplayer.innerText=data['game']['you']['name'];
       // Set Current player, highlight it if it's you
       if( data['game']['you']['id'] == data['game']['gamestate']['currplayer']['id']) {
         // Show the "pass" button when at the buy or trade stocks states
@@ -675,26 +635,22 @@
         }
         // Make it obvious it is your turn
         addEffect(EFFECT_HIGHLIGHT, el_gamestate);
-        addEffect(EFFECT_HIGHLIGHT, pwid); // defined well above
-        addEffect(EFFECT_HIGHLIGHT, el_messagebar);
         sendGameMessage("Your Turn...", false);
       }
       else
       {
         // Not your turn
         removeEffect(EFFECT_HIGHLIGHT, el_gamestate);
-        removeEffect(EFFECT_HIGHLIGHT, pwid);
-        removeEffect(EFFECT_HIGHLIGHT, el_messagebar);
       }
       
-      // PLAYER MONEY
+      // MONEY
       el_pmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(pinfo['money']);
 
       // STOCKS
       stocks=pinfo['stocks'];
       HOTELS.forEach(h => updateStocks(h, stocks));
 
-      // PLAYER TILE RACK
+      // TILE RACK
       tiles=pinfo['tiles'];
       setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
       showOptions(tiles);
@@ -711,6 +667,7 @@
         removeEffect(EFFECT_SHOW, elBtnPass);
       }
     }
+    */
   }
   </script>
          
@@ -722,28 +679,97 @@
 
   // Set up the game
   setupWebSocket();
+  setupStaticGameParts();
   rendergame();
   sendGameMessage("Welcome!", false);
+   
+  function setupStaticGameParts() {
+    // For TILERACK
+    // Dynamically create the spots for the tiles
+    // <div class="rackspace"></div>
+    for(var i=0; i<7; i++){
+      var rs=document.createElement('div');
+      rs.className="rackspace";
+      el_tilerack.append(rs);
+    }
+     
+    // Draw the BOARD
+    drawBoard(el_gameboard); // from board.js - draws an empty board
+   
+    // Dynamically add the HOTELS tokens to the page
+    const buildhotelname = function(hotel){
+      // first create the space for the hotel item
+      var hs=document.createElement('div');
+      hs.classname="hotelspace";
+      //el_hotellist.appendChild(hs);
+      el_hotellist.insertBefore(hs, el_rmhotelzone.parentNode);
+       
+      // then create the individual hotel and put it in that space
+      var hi = document.createElement('div');
+      hi.className="hotelitem";
+      hi.id = hotel.name;
+      hi.dataset.hotel=hotel.name;
+      hs.appendChild(hi);
+      hi.innerText=hotel.name;
+      hi.dataset.hasmoved=false;
+      hi.style.backgroundColor=hi.style.backgroundColor + " " +  hotel.color;
+      hi.style.borderColor=hotel.color;
+
+      // create the "hidden" multi-select count part
+      addMultiSelect(hi, "h");
+       
+      // create the remaining stock count part
+      var sc = document.createElement('span');
+      sc.className="rmstockcount";
+      sc.id = "sc_" + hotel.name;
+      sc.innerText="#";
+      hi.appendChild(sc)
+       
+      // drop hotel on stocks to buy stock, on board to place hotel
+      makeTileDragable(hi, [[el_stockrack, 'buystock'],
+                            [el_gameboard, 'placehotel'],
+                            [el_rmhotelzone, 'rmhotel']], onHotelDrag);
+    }
+    //HOTELS.forEach(h => buildhotelname(h));
+     
+    enableCollapsables();
+  }
 
   function setupWebSocket() {
+    var url=location.protocol + '//{{ serverroot }}';
+    var socket = io.connect(url, {
+                   'transports': ['websocket'],
+                   'reconnection': true,
+                 'reconnectionDelay': 1000,
+                 'reconnectionDelayMax': 5000,
+                 'reconnectionAttempts': 5,
+              });
+    socket.emit('join', {'room':'{{ gameid }}'});     
+    socket.on('connect', function() {
+        console.log("*** WS:Connected: " + url);
+    });
 
-      var url=location.protocol + '//{{ serverroot }}';
-      var socket = io.connect(url, {
-                     'transports': ['websocket'],
-                     'reconnection': true,
-                     'reconnectionDelay': 1000,
-                     'reconnectionDelayMax': 5000,
-                     'reconnectionAttempts': 5,
-                  });
-      socket.emit('join', {'room':'{{ gameid }}'});     
-      socket.on('connect', function() {
-          console.log("*** WS:Connected: " + url);
-      });
+    socket.on('update', function(data) {
+      console.log("WS:Update");
+      rendergame();
+    });
+  }
+   
+  function enableCollapsables() {
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
 
-      socket.on('update', function(data) {
-        console.log("WS:Update");
-        rendergame();
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
       });
+    }
   }
   
   </script>

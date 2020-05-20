@@ -41,22 +41,19 @@ body {
 .row {
   width: 100%;
 }
+
+.overlay {
+  background: rgba(10,10,10,0);
+}
  
 .left60 {
   float: left;
   width: 60%;
 }
 
-.left60 {
-  float: left;
-  width: 60%;
-  margin: 5px 2px;
-}
-
 .right30 {
   float: right;
   width: 30%;
-  margin: 5px 2px;
 }
 
 .clr {
@@ -87,12 +84,10 @@ div.messages {
 }
 
 .gamemessage {
-  float: left;
-  opacity:1;
-  transition: opacity 500ms;
-  width: 33%;
-  text-align: left;
-  visibility: hidden;
+  width: 100%;
+  color: white;
+  text-align: center;
+  text-size: normal;
 }
 
 .staticmessage {
@@ -162,7 +157,6 @@ div.messages {
 border: 1px solid red; 
 */
 .stockspace{
-  /* Make tilespaces so they can contain tiles */
   /*
   border: 1px solid red; 
   */
@@ -216,11 +210,11 @@ border: 1px solid red;
   clear: both;
 }
 
-.currstate {
-  font-size: small;
+.gamestate {
+  font-size: large;
   width: 100%;
   text-align: center;
-  border-bottom: 1px solid red;
+  color: white;
 }
 
 .messagelog {
@@ -251,12 +245,6 @@ border: 1px solid red;
   background: #ccc;
 }
  
-.currstate {
-  font-size: small;
-  width: 100%;
-  text-align: center;
-  border-bottom: 1px solid red;
-}
 /* TILES Basically a "row" */
 .tilerack {
   border-radius: 5px;
@@ -272,7 +260,6 @@ border: 1px solid red;
 border: 1px solid red; 
 */
 .rackspace{
-  /* Make tilespaces so they can contain tiles */
   /*
   border: 1px solid red; 
   */
@@ -472,39 +459,24 @@ border: 1px solid red;
 /* PLAYERS */
 .playerlist {
   border-radius: 5px;
-  background-color: teal;
-  height: 70px;
   margin-left: 2%;
   margin-right: 2%;
   padding-left: 2%; /* adjust math for individual tile container */
 }
 
 .playerspace {
-  /* Make tilespaces so they can contain tiles */
-  /*
   border: 1px solid green; 
-  */
-  position: relative;
-  height: 0;
-/*  overflow: hidden;
-  padding-top: 12%;*/
-   
+  background-color: teal;
   font-size: medium;
    
   /* Show players in columns of two */
-  float: left;
-  width: 45%;
+  width: 100%;
   min-height: 25px;
-  margin-bottom:3px;
-  margin-top:3px;
-  margin-left: 1%;
-  margin-right: 1%;
+  margin: 3px 1%;
+  border-radius: 5px;
 }
 
 .playeritem {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
 
@@ -512,7 +484,6 @@ border: 1px solid red;
    
   text-align: left;
   padding-bottom: 1px;
-  cursor: move;
   border-radius: 5px;
 }
 
@@ -528,6 +499,7 @@ border: 1px solid red;
   background-color: white;
   padding: 5px;
   margin-top: 10px;
+  border-radius: 5px;
 }
 
 /* Clear floats after the columns */
