@@ -41,22 +41,33 @@
     </div>
   </div>
   <div class="maincolumn">
-    <div class="card">
-      <div id="tilespace">
-        <h2>TILES</h2>
-        <div class="tilerack" id="tilerack">
-          <!-- The following will dynamically be populated with
-          <div class="rackspace"></div>
-               And each will eventually get populated with
-          <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
-          -->
-        </div>
+    <div class="card notthere" id="vspectator">
+      <h2>SPECTATORS</h2>
+      <p>So you're just watching the game?</p>
+      <div class="topnav" id="players"></div>
+    </div>
+    <div class="card notthere" id="vtiles">
+      <h2>TILES</h2>
+      <div class="tilerack" id="tilerack">
+        <!-- The following will dynamically be populated with
+        <div class="rackspace"></div>
+             And each will eventually get populated with
+        <div class="tile"><ctext>X</ctext><rtext>X</rtext></div>
+        -->
       </div>
-      <div id="spectator">
-        <h2>SPECTATORS</h2>
-        <p>So you're just watching the game?</p>
-        <div class="topnav" id="players">
-      </div>
+    </div>
+    <div class="card notthere" id="vbuystocks">
+      <h2>BUY STOCKS</h2>
+      <button onclick="passTurn()" id="btnPass">Pass</button>
+    </div>
+    <div class="card notthere" id="vselecthotel">
+      <h2>SELECT HOTEL</h2>
+    </div>
+    <div class="card notthere" id="vstockoptions">
+      <h2>STOCK OPTIONS</h2>
+    </div>
+    <div class="card notthere" id="vendgameinfo">
+      <h2>END GAME SUMMARY</h2>
     </div>
     <div class="card">
       <div class="row">
@@ -66,9 +77,6 @@
             <button onclick="clrCnt('H')" class="right30 clr" id="btnClearHCnt">Clear</button>
           </div>
           <div class="hotellist" id="hotellist">
-            <div class="rmhotelzone">
-              <div class="rmhotelitem" id="rmhotelzone" style="border:none">Hotel Removal Zone</div>
-            </div>
           </div>
         </div>
         <div class="boardcolumn">
@@ -132,28 +140,24 @@
   const el_gamestate=document.getElementById('gamestate');
   const el_gamemessage=document.getElementById('gamemessage');
   const el_playerlist=document.getElementById('playerlist');
-   
-  const el_topnav=document.getElementById("topnav");
   const el_hotellist=document.getElementById("hotellist");
-  const el_rmhotelzone=document.getElementById("rmhotelzone");
-  const el_stockrack=document.getElementById("stockrack");
-  const el_tilerack=document.getElementById("tilerack");
   const el_gameboard=document.getElementById("acquireBoard")
-  const el_pmoney=document.getElementById('playermoney');
-  const el_moneyval=document.getElementById('moneyval'); // the widget
-  const el_players=document.getElementById('players');
-  const el_currplayer=document.getElementById('currplayer');
-  const el_btnEndGame=document.getElementById('btnEndGame');   
-  const el_messagebar=document.getElementById('messagebar');
-  const el_tiles=document.getElementById('tilespace');
-  const el_spectator=document.getElementById('spectator');
+  const el_tilerack=document.getElementById("tilerack");
+   
+  // The game UI "cards" that come and go based on state
+  const el_vspectator=document.getElementById("vspectator");
+  const el_vtiles=document.getElementById("vtiles");
+  const el_vbuystocks=document.getElementById("vbuystocks");
+  const el_vselecthotel=document.getElementById("vselecthotel");
+  const el_vstockoptions=document.getElementById("vstockoptions");
+  const el_vendgameinfo=document.getElementById("vendgameinfo");
 
   // Helper functions
-  const EFFECT_INVISIBLE='notthere';
+  const EFFECT_REMOVED='notthere';
   const EFFECT_ERROR='error';
-  const EFFECT_HIGHLIGHT='highlight'
-  const EFFECT_SHOW='visible'
-  const EFFECT_INDICATE='indicate'
+  const EFFECT_HIGHLIGHT='highlight';
+  const EFFECT_SHOW='visible';
+  const EFFECT_INDICATE='indicate';
   function addEffect(effect, elem) {
     if( !elem.className.includes(" " + effect) ) {
       elem.className = elem.className + " " + effect;
@@ -172,7 +176,6 @@
   el_gameboard.addEventListener('placehotel', placeHotel);
   //el_stockrack.addEventListener('buystock', buyStock);
   el_hotellist.addEventListener('sellstock', sellStock);
-  el_rmhotelzone.addEventListener('rmhotel', removeHotel);
 
   /* For TILES */
   function tileDropped(e){
@@ -220,13 +223,6 @@
 
   // Called when a hotel tile starts or stops being dragged
   function onHotelDrag(hotel, done=false) {
-    // TODO: See if the hotel is on the board or not
-    if( !done ) {
-      el_rmhotelzone.innerText = "Drop Here to Remove";
-    }
-    else {
-      el_rmhotelzone.innerText = "Hotel Removal Zone";
-    }
   }
 
   function getMultiSelectId(itemtype, hname) {
@@ -340,13 +336,13 @@
     el_gamemessage.innerText=message;
      
     // Set the message, show it, and schedule the fade-out timer
-    removeEffect(EFFECT_INVISIBLE, el_gamemessage)
+    removeEffect(EFFECT_REMOVED, el_gamemessage)
     if( error ) {
       addEffect(EFFECT_ERROR, el_gamemessage);
     }
     setTimeout(function(){
       removeEffect(EFFECT_ERROR, el_gamemessage);
-      addEffect(EFFECT_INVISIBLE, el_gamemessage);
+      addEffect(EFFECT_REMOVED, el_gamemessage);
       }, 2500);
   }
      
@@ -439,29 +435,6 @@
     el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
   }
 
-  function showPlayerInMStick(pdata, pid, pname) {
-    // Check if this id already exists, if not add it to the nav
-    var pindid="playerind_"+pid;
-    var pind=document.getElementById(pindid);
-    if( pind === null ) {
-      // New player! yay Friends!
-       
-      // For now, each player will be a link to their page <a href="#">Link</a>
-      var name = document.createElement('span');
-      name.style.padding="2px 5px";
-      name.id=pindid;
-      name.innerText=pname;
-
-      el_players.appendChild(name);
-    }
-    else
-    {
-      // Ensure they aren't highlighted
-      removeEffect(EFFECT_HIGHLIGHT, pind);
-      removeEffect(EFFECT_INDICATE, pind);
-    }
-  }
-
   const HTML_PLAYER_NAME='<div class="row"><div class="left60">YYYYYY</div><span class="right30 activeind" id="pactive_XXXXXX"></span></div>';
    
   const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="row"><div class="left60">STOCK MARKET</div><span class="right30 playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
@@ -472,7 +445,7 @@
 
     // Create a container for the player to show up
     var elc=document.createElement('div');
-    elc.className="card";
+    elc.className="card playercard";
     elc.id='playerind_'+pid;
     el_playerlist.appendChild(elc);
        
@@ -488,7 +461,7 @@
     elc.appendChild(elps);
 
     if( you ) {
-      // Dynamically add the "buy/sell" STOCKS widgets to the page
+      // Dynamically add the STOCKS widgets to the player area
       const buildStockWidget = function(hotel){
         // First Create the space for the stock item
         var ss=document.createElement('div');
@@ -504,9 +477,6 @@
         si.style.backgroundColor=hotel.color;
         ss.append(si);
          
-        // Create the "hidden" multi-select count part
-        addMultiSelect(si, "S");
-         
         var sia=document.createElement('div');
         sia.className="stockcount";
         var sib=document.createElement('div');
@@ -515,20 +485,13 @@
         sib.innerText=hotel.short;
         si.append(sia);
         si.append(sib);
-         
-        makeTileDragable(si, [[el_hotellist, 'sellstock']]);
       }
       HOTELS.forEach(h => buildStockWidget(h));
     }
-
-/*
-       
-    var pwid=document.getElementById("playerind_"+currpid);
-    showPlayerInMStick(pdata, pid, pname)
-*/
   }
 
-  function setupGameSpecificStaticParts(data) {
+  // render things that will stay static for the rest of the game
+  function renderInitialGameParts(data) {
     // PLAYERS
     var players=data['game']['players']; // shorthand for player list
     var pdata=null;  // THIS player
@@ -553,40 +516,11 @@
     }
   }
    
-  var bInitialRender=true;
-  async function rendergame(data) {
-    // You may have realized that no where do we call this function with
-    // data defined... that may change if I supply the game state info in the
-    // websocket poke
-    if( data === undefined ) {
-      data=await tbREST_getGameState("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}")
-            .catch( err => { sendGameMessage(err.message); return;});
-    }
-     
-    if( bInitialRender ) {
-      setupGameSpecificStaticParts(data);
-      bInitialRender = false;
-    }
-     
-    if( !data['game']['you'] ) {
-      renderSpectatorView(data)
-    } else {
-      renderPlayerView(data)
-    }
-     
-   /*
-    // display GAMESTATE: Show the current action we're waiting on
-    var currpname=data['game']['gamestate']['currplayer']['name'];
-    var currpid=data['game']['gamestate']['currplayer']['id'];
-    //el_currplayer.innerText=data['game']['gamestate']['message'];
+  // Elements that every viewer should see
+  function renderCommonView(data) {
+    // GAMESTATE
     el_gamestate.innerText=data['game']['gamestate']['message'];
      
-    if( data['game']['endpossible'] ) {
-      addEffect(EFFECT_SHOW, el_btnEndGame);
-    } else {
-      removeEffect(EFFECT_SHOW, el_btnEndGame);
-    }
-
     // GAMELOG: Show the last messages
     var el_msgLog=document.getElementById("messagelog");
     var msgs=data['game']['gamelog'];
@@ -599,14 +533,19 @@
     }
      
     // Highlight the current player
-    var pwid=document.getElementById("playerind_"+currpid);
-    if( pwid != null ) {
-      addEffect(EFFECT_INDICATE, pwid);
+    var currpid=data['game']['gamestate']['currplayer']['id'];    
+    var elp=document.getElementById("playerind_"+currpid);
+    var x = document.querySelectorAll(".playercard");
+    for(var i = 0; i < x.length; i++) {
+      if( x[i] != elp ){
+        removeEffect(EFFECT_INDICATE, x[i]);
+      }
     }
-
+    addEffect(EFFECT_INDICATE, elp);
+     
     // BOARD: Draw the board
     drawBoard(el_gameboard,data['game']['board']); // from board.js
-
+     
     // HOTELS: Place the hotel tokens on the board
     elt=document.createElement('div');
     var hotels=data['game']['hotels'];
@@ -615,45 +554,112 @@
     // Draw the stock TICKER
     drawTickerWithElement(elt);
 
-    // see if we have a player or a spectator
-    if( !data['game']['you'] ) {
-      // TODO: some fancy spectator display
-      removeEffect(EFFECT_INVISIBLE, el_spectator);
-      addEffect(EFFECT_INVISIBLE, el_tiles);
+  }
+   
+  // Elements that are unique to a spectator
+  function renderSpectatorView(data) {
+    removeEffect(EFFECT_REMOVED, el_spectator);
+  }
+   
+  function renderPlayerViewWhenActive(data) {
+    var state=data['game']['gamestate']['state']
+    switch( state ) {
+    case 'EndGame':
+      removeEffect(EFFECT_REMOVED, el_vendgameinfo);
+      break;
+    case 'BuyStocks':
+      removeEffect(EFFECT_REMOVED, el_vbuystocks);
+      break;
+    case 'SelectMergeWinner':
+    case 'SelectMergeLoser':
+    case 'PlaceHotel':
+      removeEffect(EFFECT_REMOVED, el_vselecthotel);
+      break;
+    case 'LiquidateStocks':
+      removeEffect(EFFECT_REMOVED, el_vstockoptions);
+      break;
+    }
+  }
+
+  // Elements that are unique to the palyer
+  function renderPlayerView(data) {
+    var pinfo=data['game']['you']['playerdata'];
+    var currpid=data['game']['gamestate']['currplayer']['id'];
+    var thispid=data['game']['you']['id'];
+     
+    // MONEY
+    var elpmoney=document.getElementById('playermoney');
+    elpmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(pinfo['money']);
+
+    // STOCKS
+    stocks=pinfo['stocks'];
+    HOTELS.forEach(h => updateStocks(h, stocks));
+
+    // TILE RACK
+    tiles=pinfo['tiles'];
+    setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
+    showOptions(tiles);
+
+    // GAME STATE Specific views (reset what's visible every time)
+    addEffect(EFFECT_REMOVED, el_vendgameinfo);
+    addEffect(EFFECT_REMOVED, el_vbuystocks);
+    addEffect(EFFECT_REMOVED, el_vselecthotel);
+    addEffect(EFFECT_REMOVED, el_vstockoptions);
+    removeEffect(EFFECT_REMOVED, el_vtiles); // tiles always visible? TBD
+    if( thispid == currpid ) {
+      addEffect(EFFECT_HIGHLIGHT, el_gamestate);
+      renderPlayerViewWhenActive(data);
     } else {
-      removeEffect(EFFECT_INVISIBLE, el_tiles);
-      addEffect(EFFECT_INVISIBLE, el_spectator);
+      removeEffect(EFFECT_HIGHLIGHT, el_gamestate);
+    }
+
+  }
+   
+  var bInitialRender=true;
+  async function rendergame(data) {
+    // You may have realized that no where do we call this function with
+    // data defined... that may change if I supply the game state info in the
+    // websocket poke
+    if( data === undefined ) {
+      data=await tbREST_getGameState("{{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid=gameid, playerid=playerid) }}")
+            .catch( err => { sendGameMessage(err.message); return;});
+    }
+
+    // some things, like the player info needs to be dynamically created,
+    // but only once
+    if( bInitialRender ) {
+      renderInitialGameParts(data);
+      bInitialRender = false;
+    }
+
+    // some things are shown regardless of who's viewing
+    renderCommonView(data)
+     
+    if( data['game']['you'] ) {
+      // some things are only for the player
+      renderPlayerView(data)
+    } else {
+      // some things are for spectators
+      renderSpectatorView(data)
+    }
+     
+   /*
+    // display GAMESTATE: Show the current action we're waiting on
+    var currpname=data['game']['gamestate']['currplayer']['name'];
+    var currpid=data['game']['gamestate']['currplayer']['id'];
+    //el_currplayer.innerText=data['game']['gamestate']['message'];
+     
+    if( data['game']['endpossible'] ) {
+      addEffect(EFFECT_SHOW, el_btnEndGame);
+    } else {
+      removeEffect(EFFECT_SHOW, el_btnEndGame);
+    }
+
+    } else {
+      removeEffect(EFFECT_REMOVED, el_vtiles);
+      addEffect(EFFECT_REMOVED, el_spectator);
        
-      pinfo=data['game']['you']['playerdata'];
-      // Set Current player, highlight it if it's you
-      if( data['game']['you']['id'] == data['game']['gamestate']['currplayer']['id']) {
-        // Show the "pass" button when at the buy or trade stocks states
-        var elBtnPass=document.getElementById("btnPass");
-        if(data['game']['gamestate']['state'] == 'BuyStocks' ||
-           data['game']['gamestate']['state'] == 'LiquidateStocks') {
-          addEffect(EFFECT_SHOW, elBtnPass);
-        }
-        // Make it obvious it is your turn
-        addEffect(EFFECT_HIGHLIGHT, el_gamestate);
-        sendGameMessage("Your Turn...", false);
-      }
-      else
-      {
-        // Not your turn
-        removeEffect(EFFECT_HIGHLIGHT, el_gamestate);
-      }
       
-      // MONEY
-      el_pmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(pinfo['money']);
-
-      // STOCKS
-      stocks=pinfo['stocks'];
-      HOTELS.forEach(h => updateStocks(h, stocks));
-
-      // TILE RACK
-      tiles=pinfo['tiles'];
-      setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
-      showOptions(tiles);
        
       // Display STATE specific elements
       // Done last so it can override other items... damn this code is sloppy
@@ -697,12 +703,11 @@
     drawBoard(el_gameboard); // from board.js - draws an empty board
    
     // Dynamically add the HOTELS tokens to the page
-    const buildhotelname = function(hotel){
+    const buildHotelName = function(hotel){
       // first create the space for the hotel item
       var hs=document.createElement('div');
-      hs.classname="hotelspace";
-      //el_hotellist.appendChild(hs);
-      el_hotellist.insertBefore(hs, el_rmhotelzone.parentNode);
+      hs.className="hotelspace";
+      el_hotellist.appendChild(hs);
        
       // then create the individual hotel and put it in that space
       var hi = document.createElement('div');
@@ -716,7 +721,7 @@
       hi.style.borderColor=hotel.color;
 
       // create the "hidden" multi-select count part
-      addMultiSelect(hi, "h");
+      addMultiSelect(hi, "H");
        
       // create the remaining stock count part
       var sc = document.createElement('span');
@@ -726,11 +731,11 @@
       hi.appendChild(sc)
        
       // drop hotel on stocks to buy stock, on board to place hotel
-      makeTileDragable(hi, [[el_stockrack, 'buystock'],
+      makeTileDragable(hi, [/*[el_stockrack, 'buystock'],*/
                             [el_gameboard, 'placehotel'],
-                            [el_rmhotelzone, 'rmhotel']], onHotelDrag);
+                            /*[el_rmhotelzone, 'rmhotel']*/], onHotelDrag);
     }
-    //HOTELS.forEach(h => buildhotelname(h));
+    HOTELS.forEach(h => buildHotelName(h));
      
     enableCollapsables();
   }

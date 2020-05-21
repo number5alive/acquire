@@ -106,7 +106,7 @@ div.messages {
 }
 
 .indicate {
-  color: red;
+  border: 3px solid darkblue !important;
 }
 
 /* Style the topnav links */
