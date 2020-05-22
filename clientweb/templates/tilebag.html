@@ -42,9 +42,18 @@
   </div>
   <div class="maincolumn">
     <div class="card notthere" id="vspectator">
-      <h2>SPECTATORS</h2>
-      <p>So you're just watching the game?</p>
-      <div class="topnav" id="players"></div>
+      <div class="rrow">
+        <span class="p3 dbg left">
+          <h2>SPECTATORS</h2>
+        </span>
+        <span class="p6 dbg left centered">
+          <p>Are you just watching? Or are you one of these players?</p>
+        </span>
+      </div>
+      <div class="rrow dbg" style="margin: 10px">
+        <span class="p12 dbg left centered" id="playerlinks">
+        </span>
+      </div>
     </div>
     <div class="card notthere" id="vtiles">
       <h2>TILES</h2>
@@ -603,9 +612,27 @@
 
   }
    
+  function showPlayerLinks(pdata) {
+    var elpl=document.getElementById('playerlinks');
+    var pid=pdata['id'];         // Shorthand for this function
+    var pname=pdata['name'];
+
+     
+    var name = document.createElement('a');
+     
+    var div=document.createElement('span');
+    div.className="rectangle";
+    div.innerText=pname;
+    name.appendChild(div);
+
+    name.href="{{gameid}}?playerid=" + pid;
+    elpl.appendChild(name);
+  }
+      
   // Elements that are unique to a spectator
   function renderSpectatorView(data) {
-    removeEffect(EFFECT_REMOVED, el_spectator);
+    removeEffect(EFFECT_REMOVED, el_vspectator);
+    data['game']['players'].forEach(pdata => showPlayerLinks(pdata));
   }
    
   const HTML_HOTEL_SELECT=' <label class="radio-label"> <input class="radio-input" type="radio" name="hotels" value="XXXXXX" checked> <div class="rectangle" id="hsel_XXXXXX"><div class="slant">XXXXXX</div></div> </label>'
@@ -731,10 +758,6 @@
     }
      
    /*
-    // display GAMESTATE: Show the current action we're waiting on
-    var currpname=data['game']['gamestate']['currplayer']['name'];
-    var currpid=data['game']['gamestate']['currplayer']['id'];
-    //el_currplayer.innerText=data['game']['gamestate']['message'];
      
     if( data['game']['endpossible'] ) {
       addEffect(EFFECT_SHOW, el_btnEndGame);
@@ -742,22 +765,12 @@
       removeEffect(EFFECT_SHOW, el_btnEndGame);
     }
 
-    } else {
-      removeEffect(EFFECT_REMOVED, el_vtiles);
-      addEffect(EFFECT_REMOVED, el_spectator);
-       
-      
-       
       // Display STATE specific elements
       // Done last so it can override other items... damn this code is sloppy
       var elBtnPass=document.getElementById("btnPass");
       var state=data['game']['gamestate']['state']
       if( state == 'EndGame') {
         setTickerToString("Game Over ");
-      }
-      if( state != 'BuyStocks' &&
-          state != 'LiquidateStocks') { 
-        removeEffect(EFFECT_SHOW, elBtnPass);
       }
     }
     */
