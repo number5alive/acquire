@@ -57,11 +57,49 @@
       </div>
     </div>
     <div class="card notthere" id="vbuystocks">
-      <h2>BUY STOCKS</h2>
-      <button onclick="passTurn()" id="btnPass">Pass</button>
+      <div class="rrow">
+        <span class="p3 left">
+          <h2>BUY STOCKS</h2>
+        </span>
+        <span class="p6 left">
+          <p style="text-align: center">You should ... Buy Stocks</p>
+        </span>
+      </div>
+      <div class="rrow">
+        <span class="p12 left centered" id="bslist">
+          <!--
+            <label class="radio-label">
+            <input class="radio-input" type="radio" name="hotels" value="XXXXXX" checked>
+            <div class="rectangle">XXXXXX</div>
+            </label>
+          -->
+        </span>
+      </div>
+      <div class="rrow">
+        <span class="p12 right centered" style="margin-top: 10px">
+          <button onclick="passTurn()" id="btnPass">Pass</button>
+        </span>
+      </div>
     </div>
     <div class="card notthere" id="vselecthotel">
-      <h2>SELECT HOTEL</h2>
+      <div class="rrow">
+        <span class="p3 left">
+          <h2>SELECT HOTEL</h2>
+        </span>
+        <span class="p6 left">
+          <p style="text-align: center" id="hselmsg">Select a Hotel</p>
+        </span>
+      </div>
+      <div class="rrow">
+        <span class="p12 left centered" id="selhotellist">
+          <!-- Will be automatically populated with the hotel options -->
+        </span>
+      </div>
+      <div class="rrow">
+        <span class="p12 right centered" style="margin-top: 10px">
+          <button onclick="selectHotel()" id="btnHSel">Select Hotel</button>
+        </span>
+      </div>
     </div>
     <div class="card notthere" id="vstockoptions">
       <h2>STOCK OPTIONS</h2>
@@ -72,17 +110,17 @@
     <div class="card">
       <div class="row">
         <div class="hotelcolumn">
-          <div class=row>
-            <h2 class="left60">HOTELS</h2>
-            <button onclick="clrCnt('H')" class="right30 clr" id="btnClearHCnt">Clear</button>
+          <div class=rrow>
+            <h2 class="p8 left">HOTELS</h2>
+            <button onclick="clrCnt('H')" class="p4 right clr" id="btnClearHCnt">Clear</button>
           </div>
           <div class="hotellist" id="hotellist">
           </div>
         </div>
         <div class="boardcolumn">
           <div class=row>
-            <h2 class="left60">BOARD</h2>
-            <button onclick="onEndGame()" class="right30 clr" id="btnEndGame">Trigger Game End</button>
+            <h2 class="p8 left">BOARD</h2>
+            <button onclick="onEndGame()" class="p4 right clr" id="btnEndGame">Trigger Game End</button>
           </div>
           <div class="acquireBoard" style="height:300px;" id="acquireBoard"></div>
           <div class="row">
@@ -209,7 +247,10 @@
   /* For HOTELS */
   async function placeHotel(e){
     hel=e.detail.tile;
-    await tbREST_placeHotel("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", hel.id, 'lastplaced')
+    _placeHotel(hel.id);
+  }
+  async function _placeHotel(hotel) {
+    await tbREST_placeHotel("{{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid=gameid, playerid=playerid) }}", hotel, 'lastplaced')
             .catch( err => { sendGameMessage(err.message);
                           });
   }
@@ -242,6 +283,12 @@
     var elCnt=document.getElementById(getMultiSelectId(itemtype, h.name));
     elCnt.dataset.count=0;
     removeEffect(EFFECT_SHOW, elCnt);
+  }
+
+  function selectHotel() {
+    var hsel=document.querySelector('input[name="hotels"]:checked').value;
+
+    _placeHotel(hsel);
   }
 
   function passTurn() {
@@ -435,9 +482,9 @@
     el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
   }
 
-  const HTML_PLAYER_NAME='<div class="row"><div class="left60">YYYYYY</div><span class="right30 activeind" id="pactive_XXXXXX"></span></div>';
+  const HTML_PLAYER_NAME='<div class="row"><div class="p8 left">YYYYYY</div><span class="p4 right activeind" id="pactive_XXXXXX"></span></div>';
    
-  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="row"><div class="left60">STOCK MARKET</div><span class="right30 playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
+  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="row"><div class="p8 left">STOCK MARKET</div><span class="p4 right playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
    
   function showPlayers(pdata, you) {
     var pid=pdata['id'];         // Shorthand for this function
@@ -561,6 +608,44 @@
     removeEffect(EFFECT_REMOVED, el_spectator);
   }
    
+  const HTML_HOTEL_SELECT=' <label class="radio-label"> <input class="radio-input" type="radio" name="hotels" value="XXXXXX" checked> <div class="rectangle" id="hsel_XXXXXX"><div class="slant">XXXXXX</div></div> </label>'
+  function buildviewSelectHotel(data) {
+    var elhl=document.getElementById("selhotellist");
+    elhl.innerHTML="";
+
+    // Can only buy stocks for a hotel on the board
+    var ghotels=data['game']['hotels'];
+    for(var i=0; i<ghotels.length; i++) {
+      if( !ghotels[i].tile ) {
+        let h=HOTELS.find(o => o.name === ghotels[i].name);
+         
+        elhl.innerHTML=elhl.innerHTML+HTML_HOTEL_SELECT.replace(/XXXXXX/g,ghotels[i].name);
+        elhl.innerHTML=elhl.innerHTML.replace(/YYYYYY/g,i);
+        var newh=document.getElementById("hsel_"+h.name);
+        newh.style.backgroundColor=h.color;
+        newh.style.borderColor=h.color;
+      }
+    }
+  }
+  function buildviewBuyStocks(data) {
+    var elhl=document.getElementById("bslist");
+    elhl.innerHTML="";
+
+    // Can only buy stocks for a hotel on the board
+    var ghotels=data['game']['hotels'];
+    for(var i=0; i<ghotels.length; i++) {
+      if( ghotels[i].tile ) {
+        let h=HOTELS.find(o => o.name === ghotels[i].name);
+         
+        elhl.innerHTML=elhl.innerHTML+HTML_HOTEL_SELECT.replace(/XXXXXX/g,ghotels[i].name);
+        elhl.innerHTML=elhl.innerHTML.replace(/YYYYYY/g,i);
+        var newh=document.getElementById("hsel_"+h.name);
+        newh.style.backgroundColor=h.color;
+        newh.style.borderColor=h.color;
+      }
+    }
+  }
+   
   function renderPlayerViewWhenActive(data) {
     var state=data['game']['gamestate']['state']
     switch( state ) {
@@ -568,11 +653,13 @@
       removeEffect(EFFECT_REMOVED, el_vendgameinfo);
       break;
     case 'BuyStocks':
+      buildviewBuyStocks(data);
       removeEffect(EFFECT_REMOVED, el_vbuystocks);
       break;
     case 'SelectMergeWinner':
     case 'SelectMergeLoser':
     case 'PlaceHotel':
+      buildviewSelectHotel(data);
       removeEffect(EFFECT_REMOVED, el_vselecthotel);
       break;
     case 'LiquidateStocks':
