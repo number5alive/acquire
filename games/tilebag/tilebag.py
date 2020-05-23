@@ -527,6 +527,9 @@ class TileBagGame(Game, StateEngine):
     def toHuman(self):
       return "Waiting for {} to select the hotel that will BE acquired by {} - between:{}".format(self._game._currplayer, self._biggest.name, [h.name for h in self._smalloption])
 
+    def serialize(self, forsave=False):
+      return { 'smalloption' : [h.name for h in self._smalloption], }
+
     def on_event(self, event, **kwargs):
       errmsg="ILLEGAL EVENT - {} when in state SelectMergeLoser".format(event)
       if event == TileBagGame.EVENT_REMOVEHOTEL:

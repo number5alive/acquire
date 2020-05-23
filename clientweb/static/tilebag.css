@@ -122,21 +122,34 @@ h2 {
   border-radius: 5px;
   margin: 4px 4px;
   text-align: center;
-  padding-top: 30px;
 }
 
 .slant {
+  position: relative;
+  top: 30px;
+  left: 0;
   transform: rotate(45deg);
   margin: 0 auto;
 }
 
-.merph {
-  display: inline-block;
-  margin: 0 auto;
+.bcount {
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: right;
+  visibility: hidden;
+}
+
+.scount {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  text-align: bottom;
 }
 
 .blah {
-  text-align: center;
+  position: relative;
+  height: 100%;
 }
 
 .clr {
@@ -583,6 +596,7 @@ border: 1px solid red;
   padding: 5px;
   margin-top: 10px;
   border-radius: 5px;
+  color: black;
 }
 
 /* Clear floats after the columns */

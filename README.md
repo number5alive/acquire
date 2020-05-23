@@ -27,3 +27,6 @@ NOTE: run these apps from the root folder via:
 # to play the game
 Run the server (see above). Then navigate to <localhost:5000/somestring>, it'll let you create and start a game.
  
+# to load a save game (or a test one)
+$ curl -i -H "Content-Type: application/json" -X POST -d @t3.json http://localhost:5000/gamelobby/v1/games
+
