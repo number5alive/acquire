@@ -113,6 +113,7 @@ h2 {
 }
 
 .rectangle {
+  user-select:none;
   display: inline-block;
   height: 80px;
   width: 60px;
