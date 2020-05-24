@@ -58,7 +58,7 @@ h2 {
 /* Clear floats after the columns */
 .rrow:after {
   content: "";
-  display: table;
+  display: grid;
   clear: both;
 }
  
@@ -73,6 +73,9 @@ h2 {
 }
 .centered {
   text-align: center;
+}
+.empty:before {
+  content: "\200b";
 }
 /* presume at 12column layout: 2 3 4 6 12 */
 .p2 { width: 16%; }
@@ -144,7 +147,7 @@ h2 {
 .scount {
   position: absolute;
   bottom: 0;
-  left: 0;
+  left: 5px;
   text-align: bottom;
 }
 

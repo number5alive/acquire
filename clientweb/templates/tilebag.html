@@ -71,27 +71,35 @@
           <h2>STOCK OPTIONS</h2>
         </span>
         <span class="p6 left">
-          <p style="text-align: center" id="hselmsg">Exercise you Stock Options<br>[2-for-1 | Sell | Keep]</p>
+          <p style="text-align: center" id="hselmsg">Click on Hotel to Exercise your Stock Options<br>You have <b id="soTradeAmount" style="color:red"></b> Stocks<br>[Trade 2-for-1 | Sell | Keep]</p>
         </span>
       </div>
-      <div class="rrow dbg">
-        <span class="p2 dbg left"></span>
-        <span class="p4 dbg left"> <!-- Trade Side -->
-          <div class="rrow">
-            <span class="p3 dbg left" id="soTradeWinner"></span>
-            <span class="p3 dbg left">
-              <button onclick="soTradeClearCounts()" id="btnClearSOTCnt" disabled>Clear</button>
+      <div class="rrow">
+        <span class="p2 left empty"></span>
+        <span class="p4 left"> <!-- Trade Side -->
+          <div class="rrow centered">
+            <i>Trade Stocks</i>
+          </div>
+          <div class="rrow centered" style="border-right: 5px solid darkblue">
+            <span class="p2 left empty"></span>
+            <span class="p3 left" style:"text-align:right" id="soTradeWinner"></span>
+            <span class="p3 left centered">
               <button onclick="soTrade()" id="btnSOTrade" disabled>2:1</button>
             </span>
-            <span class="p3 dbg left" id="soTradeLoser"></span>
+            <span class="p3 left" style:"text-align:left" id="soTradeLoser"></span>
+            <span class="p2 right empty"></span>
           </div>
         </span>
-        <span class="p2 dbg right"></span>
-        <span class="p4 dbg right"> <!-- Sell Side -->
-          <div class="rrow dbg">
-            <span class="p6 dbg left" id="soSellLoser"></span>
-            <span class="p6 dbg right"> 
-              <button onclick="soClearCounts()" id="btnClearSOSCnt" disabled>Clear</button>
+        <span class="p2 right empty"></span>
+        <span class="p4 right"> <!-- Sell Side -->
+          <div class="rrow">
+            <div class="p12 centered">
+              <i>Sell Stocks</i>             
+            </div>
+          </div>
+          <div class="rrow">
+            <span class="p6 left centered" id="soSellLoser"></span>
+            <span class="p6 right centered"> 
               <button onclick="soSellStocks()" id="btnSOSell" disabled>Sell</button>
             </span>
           </div>
@@ -100,6 +108,7 @@
       <div class="rrow"> <!-- Keep Side -->
         <span class="p12 right centered" style="margin-top: 10px">
           <button onclick="soPassTurn()" id="btnSOKeep">Pass</button>
+          <button onclick="soClearCounts()" id="btnClearSOSCnt" disabled>Clear</button>
         </span>
       </div>
     </div>
@@ -348,7 +357,9 @@
     HOTELS.forEach(h => _clrCnt(h, itemtype));
     // Hide the Clear Button
     var elClrStock=document.getElementById("btnClear"+itemtype+"Cnt");
-    removeEffect(EFFECT_SHOW, elClrStock);
+    if( elClrStock ) {
+      removeEffect(EFFECT_SHOW, elClrStock);
+    }
   }
 
   function onMultiSelectClick(mselem, itemtype, maxbuy) {
@@ -750,7 +761,7 @@
     document.getElementById('btnBuyStocks').disabled=false;
   }
 
-  const HTML_STOCK_SELECT='<div class="rectangle" id="bs_XXXXXX" onclick="onStockClick(\'XXXXXX\')"><div class="blah"><div class="slant">XXXXXX</div><div class="scount" id="bssc_XXXXXX">##</div><div class="mscount" id="ms_BS_XXXXXX">XX</div></div></div>'
+  const HTML_STOCK_SELECT='<div class="rectangle" id="bs_XXXXXX" onclick="onStockClick(\'XXXXXX\')"><div class="blah"><div class="slant">XXXXXX</div><div class="scount" id="bssc_XXXXXX"></div><div class="mscount" id="ms_BS_XXXXXX">XX</div></div></div>'
   function addHotelsToStock(data, hlist) {
     var elhl=document.getElementById("bslist");
     elhl.innerHTML="";
@@ -794,7 +805,7 @@
     stockAction("Passing", 0);
   }
 
-  const HTML_STOCK_WIDGET='<div class="rectangle" id="TTTTTT_HHHHHH" OCOCOC><div class="blah"><div class="slant">HHHHHH</div><div class="scount" id="sc_TTTTTT_HHHHHH">##</div><div class="mscount" id="ms_TTTTTT_HHHHHH">XX</div></div></div>'
+  const HTML_STOCK_WIDGET='<div class="rectangle" id="TTTTTT_HHHHHH" OCOCOC><div class="blah"><div class="slant">HHHHHH</div><div class="scount" id="sc_TTTTTT_HHHHHH"></div><div class="mscount" id="ms_TTTTTT_HHHHHH">XX</div></div></div>'
   function createStockWidget(elp, h, itemtype, onclk) {
     // Build the HTML that will represent the widget
     var innerHTML=HTML_STOCK_WIDGET.replace(/HHHHHH/g,h.name);
@@ -816,17 +827,30 @@
     newh.style.borderColor=h.color;
   }
 
+  function soTrade() {
+    var eltw=document.getElementById('soTradeWinner');
+    var currTrade=getCountFromMultSelect('SOT', eltw.dataset.hotel);
+
+    stockAction(eltw.dataset.hotel, currTrade);
+
+    soClearCounts();
+  }
+
   function soSellStocks() {
     var hname=document.getElementById('soSellLoser').dataset.hotel;
     
     stockAction(hname, -getCountFromMultSelect('SOS', hname));
+
+    soClearCounts();
   }
 
   function soClearCounts() {
     clrCnt('SOS');
+    clrCnt('SOT');
 
     // hide the buttons until the user selects something
     document.getElementById('btnSOSell').disabled=true;
+    document.getElementById('btnSOTrade').disabled=true;
     document.getElementById('btnClearSOSCnt').disabled=true;
   }
 
@@ -843,6 +867,12 @@
     mselem.innerText=count;
     mselem.dataset.count=count;
     addEffect(EFFECT_SHOW,mselem);
+  }
+
+  function clearMultiSelectCount(mselem) {
+    mselem.innerText=0;
+    mselem.dataset.count=0;
+    removeEffect(EFFECT_SHOW,mselem);
   }
    
   // Loser Hotel clicked for trade
@@ -869,8 +899,9 @@
        setMultiSelectCount(document.getElementById(getMultiSelectId('SOT', eltl.dataset.hotel)), currTx); 
        setMultiSelectCount(document.getElementById(getMultiSelectId('SOT', eltw.dataset.hotel)), currRx); 
 
-       // TODO: Make sure the clear button shows
-       // TODO: use the same clear button for both Trade and Sell options
+      // make sure the clear and the trade button show
+      document.getElementById('btnSOTrade').disabled=false;
+      document.getElementById('btnClearSOSCnt').disabled=false;
     }
   }
    
@@ -894,10 +925,7 @@
     var sellMax=parseInt(data['game']['you']['playerdata']['stocks'][hl.name]);
     document.getElementById('sc_SOS_'+hl.name).innerText=sellMax;
     document.getElementById('sc_SOT_'+hl.name).innerText=sellMax;
-    // Can only trade if there are at least two shares
-    if( sellMax >= 2 ) {
-      document.getElementById('btnSOTrade').disabled=false;
-    }
+    document.getElementById('soTradeAmount').innerText=sellMax;
      
     // Save the values we'll need to refer back to
     let hwd=data['game']['hotels'].find(o => o.name === hw.name);
