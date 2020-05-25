@@ -30,6 +30,7 @@
         <span class="p8 left" style="text-align:center;font-size:x-large;">
           <em id="mergeWinner"></em> is Buying out <em id="mergeLoser"></em>
         </span>
+         
       </div>
       <div class="rrow" style="text-align:left">
         <span class="p4 left">Shareholders:<br><span class="textinfo" id="mergeShareholders"></span>
@@ -84,10 +85,10 @@
     </div>
     <div class="card notthere" id="vstockoptions">
       <div class="rrow">
-        <span class="p3 dbg left">
+        <span class="p3 left">
           <h2>STOCK OPTIONS</h2>
         </span>
-        <span class="p6 dbg left">
+        <span class="p6 left">
           <p style="text-align: center" id="hselmsg">Click on Hotel to Exercise your Stock Options<br>You have <b id="soTradeAmount" style="color:red"></b> Stocks<br>[Trade 2-for-1 | Sell | Keep]</p>
         </span>
       </div>
@@ -153,15 +154,15 @@
   <div class="maincolumn">
     <div class="card notthere" id="vspectator">
       <div class="rrow">
-        <span class="p3 dbg left">
+        <span class="p4 left">
           <h2>SPECTATORS</h2>
         </span>
-        <span class="p6 dbg left centered">
+        <span class="p6 left centered">
           <p>Are you just watching? Or are you one of these players?</p>
         </span>
       </div>
-      <div class="rrow dbg" style="margin: 10px">
-        <span class="p12 dbg left centered" id="playerlinks">
+      <div class="rrow" style="margin: 10px;">
+        <span class="p12 left centered" id="playerlinks">
         </span>
       </div>
     </div>
@@ -177,7 +178,7 @@
     </div>
     <div class="card">
       <div class="row">
-        <div class="hotelcolumn">
+        <div class="hotelcolumn notthere">
           <div class=rrow>
             <h2 class="p8 left">HOTELS</h2>
             <button onclick="clrCnt('H')" class="p4 right clr" id="btnClearHCnt">Clear</button>
@@ -187,7 +188,7 @@
         </div>
         <div class="boardcolumn">
           <div class=row>
-            <h2 class="p8 left">BOARD</h2>
+            <h2 class="p8 left centered">BOARD</h2>
             <button onclick="onEndGame()" class="p4 right clr" id="btnEndGame">Trigger Game End</button>
           </div>
           <div class="acquireBoard" style="height:300px;" id="acquireBoard"></div>
@@ -689,13 +690,14 @@
     var elpl=document.getElementById('playerlinks');
     var pid=pdata['id'];         // Shorthand for this function
     var pname=pdata['name'];
-
      
     var name = document.createElement('a');
      
     var div=document.createElement('span');
     div.className="rectangle";
     div.innerText=pname;
+    div.style.color="white";
+    div.style.paddingTop="20px";
     name.appendChild(div);
 
     name.href="{{gameid}}?playerid=" + pid;
@@ -952,6 +954,7 @@
     // Show the amount of stocks everyone had
     var sh=data['game']['gamestate']['stateinfo']['shareholders'];
     var shtext="";
+    elsh.innerText="";
     for( var i=0; i<sh.length;i++ ) {
       for( var [key, value] of Object.entries(sh[i]) ){
         shtext=shtext+key+":"+value+"; ";
@@ -962,6 +965,7 @@
     // Show who got the majority bonus
     var maj=data['game']['gamestate']['stateinfo']['payouts']['majority'];
     var majtext="";
+    elmaj.innerText="";
     for( var [key, value] of Object.entries(maj) ){
       if(key != "amount") {
         majtext=majtext+key+":"+value+"; ";
@@ -972,6 +976,7 @@
     // Show who got the minority bonus
     var min=data['game']['gamestate']['stateinfo']['payouts']['minority'];
     var mintext="";
+    elmin.innerText="";
     for( var [key, value] of Object.entries(min) ){
       if(key != "amount") {
         mintext=mintext+key+":"+value+"; ";
@@ -1092,17 +1097,20 @@
     if( bInitialRender ) {
       renderInitialGameParts(data);
       bInitialRender = false;
+       
+      if( !data['game']['you'] ) {
+        // some things are for spectators
+        renderSpectatorView(data)
+      }
     }
 
     // some things are shown regardless of who's viewing
     renderCommonView(data)
      
+    // And some things are just for us!
     if( data['game']['you'] ) {
       // some things are only for the player
       renderPlayerView(data)
-    } else {
-      // some things are for spectators
-      renderSpectatorView(data)
     }
      
    /*
