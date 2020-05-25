@@ -22,7 +22,24 @@
   <div class="messages">
     <div class="gamestate" id="gamestate"></div>
     <div class="gamemessage" id="gamemessage"></div>
-  </div>
+    <div class="card notthere" id="vmergedetails">
+      <div class="rrow">
+        <span class="p3 left">
+          <h2>MERGER!</h2>
+        </span>
+        <span class="p8 left" style="text-align:center;font-size:x-large;">
+          <em id="mergeWinner"></em> is Buying out <em id="mergeLoser"></em>
+        </span>
+      </div>
+      <div class="rrow" style="text-align:left">
+        <span class="p4 left">Shareholders:<br><span class="textinfo" id="mergeShareholders"></span>
+        </span>
+        <span class="p4 left">Majority Bonus:<br><span class="textinfo" id="mergeMajBonus"></span>
+        </span>
+        <span class="p4 left">Minority Bonus:<br><span class="textinfo" id="mergeMinBonus"></span>
+        </span>
+      </div>
+    </div>
     <div class="card notthere" id="vbuystocks">
       <div class="rrow">
         <span class="p3 left">
@@ -67,10 +84,10 @@
     </div>
     <div class="card notthere" id="vstockoptions">
       <div class="rrow">
-        <span class="p3 left">
+        <span class="p3 dbg left">
           <h2>STOCK OPTIONS</h2>
         </span>
-        <span class="p6 left">
+        <span class="p6 dbg left">
           <p style="text-align: center" id="hselmsg">Click on Hotel to Exercise your Stock Options<br>You have <b id="soTradeAmount" style="color:red"></b> Stocks<br>[Trade 2-for-1 | Sell | Keep]</p>
         </span>
       </div>
@@ -115,6 +132,7 @@
     <div class="card notthere" id="vendgameinfo">
       <h2>END GAME SUMMARY</h2>
     </div>
+  </div>
 </div>
  
 <div class="header">
@@ -182,6 +200,7 @@
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -237,6 +256,7 @@
   const el_vtiles=document.getElementById("vtiles");
   const el_vbuystocks=document.getElementById("vbuystocks");
   const el_vselecthotel=document.getElementById("vselecthotel");
+  const el_vmergedetails=document.getElementById("vmergedetails");
   const el_vstockoptions=document.getElementById("vstockoptions");
   const el_vendgameinfo=document.getElementById("vendgameinfo");
 
@@ -655,6 +675,14 @@
     // Draw the stock TICKER
     drawTickerWithElement(elt);
 
+    // Everyone gets to see the details of a Merger
+    if( data['game']['gamestate']['state'] == 'LiquidateStocks' ) {
+      buildviewMergeDetails(data);
+      removeEffect(EFFECT_REMOVED, el_vmergedetails);
+    } else {
+      addEffect(EFFECT_REMOVED, el_vmergedetails);
+    }
+       
   }
    
   function showPlayerLinks(pdata) {
@@ -757,8 +785,9 @@
     var mselem=document.getElementById(getMultiSelectId('BS', h.name)); 
     onMultiSelectClick(mselem, 'BS', elhl.dataset.maxbuy);
 
-    // show the "buy" object
+    // show the "buy" and the "clear" button
     document.getElementById('btnBuyStocks').disabled=false;
+    document.getElementById('btnClearBSCnt').disabled=false;
   }
 
   const HTML_STOCK_SELECT='<div class="rectangle" id="bs_XXXXXX" onclick="onStockClick(\'XXXXXX\')"><div class="blah"><div class="slant">XXXXXX</div><div class="scount" id="bssc_XXXXXX"></div><div class="mscount" id="ms_BS_XXXXXX">XX</div></div></div>'
@@ -903,6 +932,52 @@
       document.getElementById('btnSOTrade').disabled=false;
       document.getElementById('btnClearSOSCnt').disabled=false;
     }
+  }
+
+  function buildviewMergeDetails(data) {
+    var elmw=document.getElementById('mergeWinner');
+    var elml=document.getElementById('mergeLoser');
+    var elsh=document.getElementById('mergeShareholders');
+    var elmaj=document.getElementById('mergeMajBonus');
+    var elmin=document.getElementById('mergeMinBonus');
+
+    let hw=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['biggest']);
+    let hl=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['smallest']);
+
+    elmw.innerText=hw.name;
+    elmw.style.color=hw.color;
+    elml.innerText=hl.name;
+    elml.style.color=hl.color;
+
+    // Show the amount of stocks everyone had
+    var sh=data['game']['gamestate']['stateinfo']['shareholders'];
+    var shtext="";
+    for( var i=0; i<sh.length;i++ ) {
+      for( var [key, value] of Object.entries(sh[i]) ){
+        shtext=shtext+key+":"+value+"; ";
+      }
+    }
+    elsh.innerText=elsh.innerText+shtext.slice(0,-1);
+
+    // Show who got the majority bonus
+    var maj=data['game']['gamestate']['stateinfo']['payouts']['majority'];
+    var majtext="";
+    for( var [key, value] of Object.entries(maj) ){
+      if(key != "amount") {
+        majtext=majtext+key+":"+value+"; ";
+      }
+    }
+    elmaj.innerText=elmaj.innerText+majtext.slice(0,-1);
+
+    // Show who got the minority bonus
+    var min=data['game']['gamestate']['stateinfo']['payouts']['minority'];
+    var mintext="";
+    for( var [key, value] of Object.entries(min) ){
+      if(key != "amount") {
+        mintext=mintext+key+":"+value+"; ";
+      }
+    }
+    elmin.innerText=elmin.innerText+mintext.slice(0,-1);
   }
    
   function buildviewStockOptions(data) {

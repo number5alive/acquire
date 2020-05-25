@@ -23,6 +23,11 @@ body {
   background: white;
 }
 
+.textinfo {
+  font-size: small;
+  font-family: Arial;
+}
+
 .header h1 {
   font-size: 50px;
   margin: 10px;
@@ -88,7 +93,7 @@ h2 {
 .dbg{
   border: 1px solid red; 
 }
- 
+
 /* HIDE RADIO */
 [type=radio] { 
   position: absolute;
