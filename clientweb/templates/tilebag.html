@@ -400,7 +400,30 @@
     }
   }
 
-  function getCountFromMultSelect(itemtype, hname) {
+  function getMultiSelectMaxCount(itemtype, hname) {
+    var elw=document.getElementById(getMultiSelectId(itemtype, hname));
+    var count = 0;
+    if( elw != undefined )
+    {
+      count=parseInt(elw.dataset.maxcount);
+      if( isNaN(count) || count == 0) {
+        count = 0;
+      }
+    }
+    return count;
+  }
+   
+  function setMultiSelectMaxCount(itemtype, hname, maxcount) {
+    var elw=document.getElementById(getMultiSelectId(itemtype, hname));
+    var count = 0;
+    if( elw != undefined )
+    {
+      elw.dataset.maxcount=maxcount;
+    }
+    return count;
+  }
+   
+  function getMultiSelectCount(itemtype, hname) {
     var elw=document.getElementById(getMultiSelectId(itemtype, hname));
     var count = 0;
     if( elw != undefined )
@@ -418,7 +441,7 @@
     // called with a hotelitem object
     var hotel=e.detail.tile;
     var hname=hotel.dataset.hotel;
-    var buyCount=getCountFromMultSelect('H', hname);
+    var buyCount=getMultiSelectCount('H', hname);
      
     stockAction(hname, buyCount);
      
@@ -430,7 +453,7 @@
     // called with a stockitem object
     var si=e.detail.tile;
     var hname=si.dataset.hotel;
-    var sellCount=getCountFromMultSelect('S', hname);
+    var sellCount=getMultiSelectCount('S', hname);
        
     stockAction(hname, -sellCount);
      
@@ -756,6 +779,9 @@
   function bsClearCounts() {
     // loop through hotel widgets, clear the counts
     clrCnt('BS');
+     
+    var elhl=document.getElementById("bslist");
+    elhl.dataset.currbuy = 0;
 
     // hide the "buy" button
     document.getElementById('btnBuyStocks').disabled=false;
@@ -764,35 +790,51 @@
   function bsBuyStocks() {
     var elhl=document.getElementById("bslist");
     
-    // send the request into the server
-    stockAction(elhl.dataset.lastclicked, getCountFromMultSelect('BS', elhl.dataset.lastclicked));
+    // loop through all the hotels, see if it has a number, try to buy it
+    for( var i=0;i<HOTELS.length;i++ )
+    {
+      // See what the count is, if it's bigger than one, try to buy it
+      var count=getMultiSelectCount('BS', HOTELS[i].name);
+      if( count > 0 ) {
+        stockAction(HOTELS[i].name, count);
+      }
+    }
   }
 
   function bsPassTurn() {
     stockAction("Passing", 0);
 
     // Hide the button
-    var elBtnPass=document.getElementById("btnPass");
+    var elBtnPass=document.getElementById("btnPassTurn");
     removeEffect(EFFECT_SHOW, elBtnPass);
   }
 
-  function onStockClick(hname) {
+  function onBuyStockClick(hname) {
     let h=HOTELS.find(o => o.name === hname);
      
-    // Set the "lastclicked" indicator to save us searching later
+    // Only allow clicks up to the max total for all stocks
     var elhl=document.getElementById("bslist");
-    elhl.dataset.lastclicked=h.name;
-     
-    // remove any existing counts from other objects, and bump this by one
-    var mselem=document.getElementById(getMultiSelectId('BS', h.name)); 
-    onMultiSelectClick(mselem, 'BS', elhl.dataset.maxbuy);
+    var maxbuy=parseInt(elhl.dataset.maxbuy);
+    var currbuy=parseInt(elhl.dataset.currbuy);
+    if( currbuy < maxbuy ) {
+      // Only allow clicks per-stock up to the max for that stock
+      var currmscount=getMultiSelectCount('BS', h.name);
+      var maxmscount=getMultiSelectMaxCount('BS', h.name);
 
-    // show the "buy" and the "clear" button
-    document.getElementById('btnBuyStocks').disabled=false;
-    document.getElementById('btnClearBSCnt').disabled=false;
+      if( currmscount < maxmscount ) {
+        // bump the count by one, update the UI buttons
+        setMultiSelectCount('BS', h.name, currmscount+1);
+         
+        elhl.dataset.currbuy = currbuy +1;
+
+        // show the "buy" and the "clear" button
+        document.getElementById('btnBuyStocks').disabled=false;
+        document.getElementById('btnClearBSCnt').disabled=false;
+      }
+    }
   }
 
-  const HTML_STOCK_SELECT='<div class="rectangle" id="bs_XXXXXX" onclick="onStockClick(\'XXXXXX\')"><div class="blah"><div class="slant">XXXXXX</div><div class="scount" id="bssc_XXXXXX"></div><div class="mscount" id="ms_BS_XXXXXX">XX</div></div></div>'
+  const HTML_STOCK_SELECT='<div class="rectangle" id="bs_XXXXXX" onclick="onBuyStockClick(\'XXXXXX\')"><div class="blah"><div class="slant">XXXXXX</div><div class="scount" id="bssc_XXXXXX"></div><div class="mscount" id="ms_BS_XXXXXX">XX</div></div></div>'
   function addHotelsToStock(data, hlist) {
     var elhl=document.getElementById("bslist");
     elhl.innerHTML="";
@@ -812,21 +854,29 @@
     // Set the buttons to their initial state
     document.getElementById('btnClearBSCnt').disabled=true;
     document.getElementById('btnBuyStocks').disabled=true;
+     
+    var elhl=document.getElementById("bslist");
+    elhl.innerHTML="";
 
     // Can only buy stocks for a hotel on the board
     var ghotels=data['game']['hotels'];
     var hlist=[]; // the list of hotels we WANT to add to the display
     for(var i=0; i<ghotels.length; i++) {
       if( ghotels[i].tile ) {
-        hlist.push(ghotels[i].name);
+        //hlist.push(ghotels[i].name);
+        let hl=HOTELS.find(o => o.name === ghotels[i].name);
+        var elbsh=createStockWidget(elhl, hl, 'BS', 'onBuyStockClick("'+hl.name+'")');
+        setMultiSelectMaxCount('BS', hl.name, ghotels[i].stocks);
+        if( ghotels[i].stocks == 0 ) {
+          elbsh.style.opacity="22%";
+        }
       }
     }
-    addHotelsToStock(data, hlist);
      
     // Set the window text
-    var elhl=document.getElementById("bslist");
     var maxbuy=data['game']['gamestate']['stateinfo']['canbuy'];
     elhl.dataset.maxbuy=maxbuy;
+    elhl.dataset.currbuy=0;
      
     var elmsg=document.getElementById("bsMessage");
     elmsg.innerText="Click to buy up to " + maxbuy + " stocks total";
@@ -849,18 +899,19 @@
 
     // Create it and add it to the parent element
     elp.dataset.hotel=h.name;
-    elp.innerHTML="";
-    elp.innerHTML=innerHTML;
+    elp.innerHTML=elp.innerHTML+innerHTML;
      
     // Set the style of the new widget to match the hotel colour scheme
     var newh=document.getElementById(itemtype+"_"+h.name);
     newh.style.backgroundColor=h.color;
     newh.style.borderColor=h.color;
+
+    return newh;
   }
 
   function soTrade() {
     var eltw=document.getElementById('soTradeWinner');
-    var currTrade=getCountFromMultSelect('SOT', eltw.dataset.hotel);
+    var currTrade=getMultiSelectCount('SOT', eltw.dataset.hotel);
 
     stockAction(eltw.dataset.hotel, currTrade);
 
@@ -870,7 +921,7 @@
   function soSellStocks() {
     var hname=document.getElementById('soSellLoser').dataset.hotel;
     
-    stockAction(hname, -getCountFromMultSelect('SOS', hname));
+    stockAction(hname, -getMultiSelectCount('SOS', hname));
 
     soClearCounts();
   }
@@ -894,10 +945,13 @@
     document.getElementById('btnSOSell').disabled=false;
   }
 
-  function setMultiSelectCount(mselem, count) {
-    mselem.innerText=count;
-    mselem.dataset.count=count;
-    addEffect(EFFECT_SHOW,mselem);
+  function setMultiSelectCount(itemtype, hname, count) {
+    var mselem=document.getElementById(getMultiSelectId(itemtype, hname));
+    if( mselem != undefined ) {
+      mselem.innerText=count;
+      mselem.dataset.count=count;
+      addEffect(EFFECT_SHOW,mselem);
+    }
   }
 
   function clearMultiSelectCount(mselem) {
@@ -912,7 +966,7 @@
     var eltl=document.getElementById('soTradeLoser');
 
     // find out the current counts in the widgets
-    var currTx=getCountFromMultSelect('SOT', eltl.dataset.hotel);
+    var currTx=getMultiSelectCount('SOT', eltl.dataset.hotel);
     var currRx=currTx/2;
     console.log("trading " + currTx + " for " + currRx);
 
@@ -927,8 +981,8 @@
     // Make sure we can bump the numbers like this
     if( currTx <= exstToTx && currRx <= exstToRx )
     {
-       setMultiSelectCount(document.getElementById(getMultiSelectId('SOT', eltl.dataset.hotel)), currTx); 
-       setMultiSelectCount(document.getElementById(getMultiSelectId('SOT', eltw.dataset.hotel)), currRx); 
+       setMultiSelectCount('SOT', eltl.dataset.hotel, currTx); 
+       setMultiSelectCount('SOT', eltw.dataset.hotel, currRx); 
 
       // make sure the clear and the trade button show
       document.getElementById('btnSOTrade').disabled=false;
@@ -960,7 +1014,7 @@
         shtext=shtext+key+":"+value+"; ";
       }
     }
-    elsh.innerText=elsh.innerText+shtext.slice(0,-1);
+    elsh.innerText=elsh.innerText+shtext.slice(0,-2);
 
     // Show who got the majority bonus
     var maj=data['game']['gamestate']['stateinfo']['payouts']['majority'];
@@ -971,7 +1025,7 @@
         majtext=majtext+key+":"+value+"; ";
       }
     }
-    elmaj.innerText=elmaj.innerText+majtext.slice(0,-1);
+    elmaj.innerText=elmaj.innerText+majtext.slice(0,-2);
 
     // Show who got the minority bonus
     var min=data['game']['gamestate']['stateinfo']['payouts']['minority'];
@@ -982,7 +1036,7 @@
         mintext=mintext+key+":"+value+"; ";
       }
     }
-    elmin.innerText=elmin.innerText+mintext.slice(0,-1);
+    elmin.innerText=elmin.innerText+mintext.slice(0,-2);
   }
    
   function buildviewStockOptions(data) {
@@ -994,6 +1048,11 @@
     // Get the names of the winner and loser hotels
     let hw=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['biggest']);
     let hl=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['smallest']);
+     
+    // Flush the view from any previous rendering
+    eltw.innerHTML="";
+    eltl.innerHTML="";
+    elsl.innerHTML="";
      
     // Create a widget for the trade transaction
     createStockWidget(eltw, hw, 'SOT', 'onsoTrade("W")');
