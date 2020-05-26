@@ -20,6 +20,7 @@
 
 <div class="mstick" id="messagebar">
   <div class="messages">
+    <div class="endstatemessage notthere" id="endstatemessage">End condition(s) statisfied - current player can choose to trigger the end</div>
     <div class="gamestate" id="gamestate"></div>
     <div class="gamemessage" id="gamemessage"></div>
     <div class="card notthere" id="vmergedetails">
@@ -33,11 +34,11 @@
          
       </div>
       <div class="rrow" style="text-align:left">
-        <span class="p4 left">Shareholders:<br><span class="textinfo" id="mergeShareholders"></span>
+        <span class="p4 left">Shareholders: <span class="textinfo" id="mergeSharePrice"></span><br><span class="textinfo" id="mergeShareholders"></span>
         </span>
-        <span class="p4 left">Majority Bonus:<br><span class="textinfo" id="mergeMajBonus"></span>
+        <span class="p4 left">Majority Bonus: <span class="textinfo" id="mergeMajBonusAmt"></span><br><span class="textinfo" id="mergeMajBonus"></span>
         </span>
-        <span class="p4 left">Minority Bonus:<br><span class="textinfo" id="mergeMinBonus"></span>
+        <span class="p4 left">Minority Bonus: <span class="textinfo" id="mergeMinBonusAmt"></span><br><span class="textinfo" id="mergeMinBonus"></span>
         </span>
       </div>
     </div>
@@ -251,6 +252,8 @@
   const el_hotellist=document.getElementById("hotellist");
   const el_gameboard=document.getElementById("acquireBoard")
   const el_tilerack=document.getElementById("tilerack");
+  const el_btnEndGame=document.getElementById("btnEndGame");
+  const el_endstatemessage=document.getElementById("endstatemessage");
    
   // The game UI "cards" that come and go based on state
   const el_vspectator=document.getElementById("vspectator");
@@ -582,7 +585,7 @@
 
   const HTML_PLAYER_NAME='<div class="row"><div class="p8 left">YYYYYY</div><span class="p4 right activeind" id="pactive_XXXXXX"></span></div>';
    
-  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="row"><div class="p8 left">STOCK MARKET</div><span class="p4 right playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
+  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="rrow"><span class="p6 left">STOCK MARKET</span><span class="p6 right playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
    
   function showPlayers(pdata, you) {
     var pid=pdata['id'];         // Shorthand for this function
@@ -859,17 +862,17 @@
     elhl.innerHTML="";
 
     // Can only buy stocks for a hotel on the board
+    // Create a widget for those stocks, complete with the details we need
     var ghotels=data['game']['hotels'];
-    var hlist=[]; // the list of hotels we WANT to add to the display
     for(var i=0; i<ghotels.length; i++) {
       if( ghotels[i].tile ) {
-        //hlist.push(ghotels[i].name);
         let hl=HOTELS.find(o => o.name === ghotels[i].name);
         var elbsh=createStockWidget(elhl, hl, 'BS', 'onBuyStockClick("'+hl.name+'")');
         setMultiSelectMaxCount('BS', hl.name, ghotels[i].stocks);
         if( ghotels[i].stocks == 0 ) {
           elbsh.style.opacity="22%";
         }
+        addPriceToStockWidget('BS', hl, ghotels[i]);
       }
     }
      
@@ -886,7 +889,13 @@
     stockAction("Passing", 0);
   }
 
-  const HTML_STOCK_WIDGET='<div class="rectangle" id="TTTTTT_HHHHHH" OCOCOC><div class="blah"><div class="slant">HHHHHH</div><div class="scount" id="sc_TTTTTT_HHHHHH"></div><div class="mscount" id="ms_TTTTTT_HHHHHH">XX</div></div></div>'
+  function addPriceToStockWidget(itemtype, hotel, hinfo) {
+    var elcost=document.getElementById('c_'+itemtype+'_'+hotel.name);
+    elcost.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(hinfo.price); 
+    elcost.style.color=hotel.color;
+  }
+
+  const HTML_STOCK_WIDGET='<div class="block"><div class="rectangle" id="TTTTTT_HHHHHH" OCOCOC><div class="blah"><div class="slant">HHHHHH</div><div class="scount" id="sc_TTTTTT_HHHHHH"></div><div class="mscount" id="ms_TTTTTT_HHHHHH">XX</div></div></div><div class="textinfo" id="c_TTTTTT_HHHHHH"></div></div>';
   function createStockWidget(elp, h, itemtype, onclk) {
     // Build the HTML that will represent the widget
     var innerHTML=HTML_STOCK_WIDGET.replace(/HHHHHH/g,h.name);
@@ -994,18 +1003,24 @@
     var elmw=document.getElementById('mergeWinner');
     var elml=document.getElementById('mergeLoser');
     var elsh=document.getElementById('mergeShareholders');
+    var elshamt=document.getElementById('mergeSharePrice');
     var elmaj=document.getElementById('mergeMajBonus');
+    var elmajamt=document.getElementById('mergeMajBonusAmt');
     var elmin=document.getElementById('mergeMinBonus');
+    var elminamt=document.getElementById('mergeMinBonusAmt');
 
     let hw=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['biggest']);
+    let hwi=data['game']['hotels'].find(o => o.name === hw.name);
     let hl=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['smallest']);
+    let hli=data['game']['hotels'].find(o => o.name === hl.name);
 
-    elmw.innerText=hw.name;
+    elmw.innerText=hw.name+"("+hwi.occupies.length+")";
     elmw.style.color=hw.color;
-    elml.innerText=hl.name;
+    elml.innerText=hl.name+"("+hli.occupies.length+")";
     elml.style.color=hl.color;
 
     // Show the amount of stocks everyone had
+    elshamt.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(hli.price); 
     var sh=data['game']['gamestate']['stateinfo']['shareholders'];
     var shtext="";
     elsh.innerText="";
@@ -1021,8 +1036,11 @@
     var majtext="";
     elmaj.innerText="";
     for( var [key, value] of Object.entries(maj) ){
+      value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(value); 
       if(key != "amount") {
         majtext=majtext+key+":"+value+"; ";
+      } else {
+        elmajamt.innerText=value;
       }
     }
     elmaj.innerText=elmaj.innerText+majtext.slice(0,-2);
@@ -1032,8 +1050,11 @@
     var mintext="";
     elmin.innerText="";
     for( var [key, value] of Object.entries(min) ){
+      value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(value); 
       if(key != "amount") {
         mintext=mintext+key+":"+value+"; ";
+      } else {
+        elminamt.innerText=value;
       }
     }
     elmin.innerText=elmin.innerText+mintext.slice(0,-2);
@@ -1045,9 +1066,11 @@
     var eltl=document.getElementById('soTradeLoser');
     var elsl=document.getElementById('soSellLoser');
       
-    // Get the names of the winner and loser hotels
+    // Get the info (UI and gamestate) for the winner and loser hotels 
     let hw=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['biggest']);
+    let hwi=data['game']['hotels'].find(o => o.name === hw.name);
     let hl=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['smallest']);
+    let hli=data['game']['hotels'].find(o => o.name === hl.name);
      
     // Flush the view from any previous rendering
     eltw.innerHTML="";
@@ -1059,6 +1082,7 @@
     createStockWidget(eltl, hl, 'SOT', 'onsoTrade("L")');
     // Create a widget for the sell transaction
     createStockWidget(elsl, hl, 'SOS', 'onsoLHSellClk("'+hl.name+'")');
+    addPriceToStockWidget('SOS', hl, hli);
 
     // display the amount of stocks the player has to sell
     var sellMax=parseInt(data['game']['you']['playerdata']['stocks'][hl.name]);
@@ -1067,8 +1091,7 @@
     document.getElementById('soTradeAmount').innerText=sellMax;
      
     // Save the values we'll need to refer back to
-    let hwd=data['game']['hotels'].find(o => o.name === hw.name);
-    eltw.dataset.max=hwd.stocks;
+    eltw.dataset.max=hwi.stocks;
     eltl.dataset.max=sellMax;
   }
    
@@ -1105,6 +1128,10 @@
       removeEffect(EFFECT_REMOVED, el_vstockoptions);
       break;
     }
+     
+    if( data['game']['endpossible'] ) {
+      addEffect(EFFECT_SHOW, el_btnEndGame);
+    }
   }
 
   // Elements that are unique to the palyer
@@ -1138,6 +1165,17 @@
     } else {
       removeEffect(EFFECT_HIGHLIGHT, el_gamestate);
     }
+     
+    if( data['game']['endpossible'] ) {
+      removeEffect(EFFECT_REMOVED, el_endstatemessage);
+    } else {
+      addEffect(EFFECT_REMOVED, el_endstatemessage);
+    }
+     
+    if( data['game']['endrequested'] ) {
+      el_endstatemessage.innerText="End of game has been triggered. Game will end at the end of the current player's turn";
+      el_endstatemessage.style.backgroundColor="lightgreen";
+    }
 
   }
    
@@ -1170,6 +1208,9 @@
     if( data['game']['you'] ) {
       // some things are only for the player
       renderPlayerView(data)
+    } else {
+      // And if not, clean up some UI elements
+      removeEffect(EFFECT_SHOW, el_btnEndGame);
     }
      
    /*

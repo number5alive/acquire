@@ -1,0 +1,585 @@
+{
+  "game": {
+    "gamedata": {
+      "bag": [
+        "3E", 
+        "12A", 
+        "6B", 
+        "1B", 
+        "7C", 
+        "10D", 
+        "10H", 
+        "8C", 
+        "6A", 
+        "3I", 
+        "9G", 
+        "9H", 
+        "8D", 
+        "5G", 
+        "2G", 
+        "8E"
+      ], 
+      "board": {
+        "ncols": 12, 
+        "nrows": 9, 
+        "occupied": [
+          "1A", 
+          "2A", 
+          "3A", 
+          "4A", 
+          "5A", 
+          "7A", 
+          "8A", 
+          "9A", 
+          "10A", 
+          "11A", 
+          "2B", 
+          "3B", 
+          "4B", 
+          "5B", 
+          "7B", 
+          "8B", 
+          "9B", 
+          "10B", 
+          "11B", 
+          "12B", 
+          "1C", 
+          "2C", 
+          "3C", 
+          "5C", 
+          "6C", 
+          "9C", 
+          "10C", 
+          "11C", 
+          "12C", 
+          "4D", 
+          "5D", 
+          "6D", 
+          "7D", 
+          "9D", 
+          "11D", 
+          "12D", 
+          "4E", 
+          "5E", 
+          "6E", 
+          "7E", 
+          "9E", 
+          "10E", 
+          "11E", 
+          "12E", 
+          "1F", 
+          "2F", 
+          "3F", 
+          "5F", 
+          "6F", 
+          "7F", 
+          "9F", 
+          "10F", 
+          "11F", 
+          "12F", 
+          "1G", 
+          "3G", 
+          "6G", 
+          "11G", 
+          "12G", 
+          "3H", 
+          "4H", 
+          "5H", 
+          "6H", 
+          "7H", 
+          "11H", 
+          "12H", 
+          "7I", 
+          "8I", 
+          "9I", 
+          "10I", 
+          "12I"
+        ]
+      }, 
+      "gamelog": [
+        "Eloise: $16,500.00", 
+        "Chester: $46,200.00", 
+        "Steve: $62,600.00", 
+        "Final Totals", 
+        "Steve sold -11 stocks in Tower for a total of 12100", 
+        "Chester sold -9 stocks in Tower for a total of 9900", 
+        "Eloise sold -5 stocks in Tower for a total of 5500", 
+        "Chester received MINORITY shareholder bonus of 5500", 
+        "Steve received MAJORITY shareholder bonus of 11000", 
+        "Resolving Takeover of Tower - shareholders: ['Steve=11 ', 'Chester=9 ', 'Eloise=5 ']", 
+        "Steve sold -13 stocks in Festival for a total of 13000", 
+        "Chester sold -7 stocks in Festival for a total of 7000", 
+        "Eloise sold -5 stocks in Festival for a total of 5000", 
+        "Chester received MINORITY shareholder bonus of 5000", 
+        "Steve received MAJORITY shareholder bonus of 10000", 
+        "Resolving Takeover of Festival - shareholders: ['Steve=13 ', 'Chester=7 ', 'Eloise=5 ']", 
+        "Chester played tile 1G", 
+        "American has been removed from the board", 
+        "Steve sold -9 stocks in American for a total of 4500", 
+        "Chester sold -10 stocks in American for a total of 5000", 
+        "Eloise sold -6 stocks in American for a total of 3000", 
+        "Steve received MINORITY shareholder bonus of 2500", 
+        "Chester received MAJORITY shareholder bonus of 5000", 
+        "Resolving Takeover of American - shareholders: ['Chester=10 ', 'Steve=9 ', 'Eloise=6 ']", 
+        "*** Tower is buying out American ***", 
+        "Eloise played tile 7H", 
+        "Steve played tile 10F", 
+        "Chester played tile 7D", 
+        "Eloise played tile 7F", 
+        "Steve played tile 9D", 
+        "Chester played tile 9F", 
+        "Eloise played tile 9E", 
+        "Steve played tile 9B", 
+        "Chester played tile 3C", 
+        "Eloise played tile 7E", 
+        "Steve played tile 11E", 
+        "Chester played tile 7A", 
+        "Continental has been removed from the board", 
+        "Steve sold -4 stocks in Continental for a total of 1600", 
+        "Eloise sold -2 stocks in Continental for a total of 800", 
+        "Eloise received MINORITY shareholder bonus of 2000", 
+        "Steve received MAJORITY shareholder bonus of 4000", 
+        "Resolving Takeover of Continental - shareholders: ['Steve=4 ', 'Eloise=2 ', 'Chester=0 ']", 
+        "*** Festival is buying out Continental ***", 
+        "Eloise played tile 8A", 
+        "Steve bought 3 stocks in Continental for a total of -1200", 
+        "Continental has been placed on the board at 8B", 
+        "Steve played tile 8B", 
+        "Chester played tile 7B", 
+        "Eloise played tile 9A", 
+        "Steve played tile 11G", 
+        "Chester bought 1 stocks in American for a total of -500", 
+        "Chester played tile 9C", 
+        "Eloise played tile 4B", 
+        "Steve bought 3 stocks in American for a total of -1500", 
+        "Steve played tile 10A", 
+        "Chester bought 3 stocks in American for a total of -1500", 
+        "Chester played tile 12I", 
+        "Eloise played tile 12C", 
+        "Steve bought 3 stocks in American for a total of -1500", 
+        "Steve played tile 10C", 
+        "Chester bought 3 stocks in American for a total of -1500", 
+        "Chester played tile 6C", 
+        "Eloise played tile 12B", 
+        "Steve bought 3 stocks in American for a total of -1500", 
+        "Steve played tile 6D", 
+        "Chester bought 3 stocks in American for a total of -1500", 
+        "Chester played tile 10B", 
+        "Eloise bought 3 stocks in American for a total of -1500", 
+        "Eloise played tile 10I", 
+        "Steve bought 3 stocks in Festival for a total of -2400", 
+        "Steve played tile 9I", 
+        "Chester bought 3 stocks in Festival for a total of -2400", 
+        "Worldwide has been removed from the board", 
+        "Eloise traded 4 stocks of Worldwide for 2 stocks in Festival", 
+        "Steve traded 8 stocks of Worldwide for 4 stocks in Festival", 
+        "Chester sold -1 stocks in Worldwide for a total of 300", 
+        "Chester traded 2 stocks of Worldwide for 1 stocks in Festival", 
+        "Eloise received MINORITY shareholder bonus of 1500", 
+        "Steve received MAJORITY shareholder bonus of 3000", 
+        "Resolving Takeover of Worldwide - shareholders: ['Steve=8 ', 'Eloise=4 ', 'Chester=3 ']", 
+        "*** Festival is buying out Worldwide ***", 
+        "Chester played tile 12F", 
+        "Eloise played tile 11F", 
+        "Steve bought 1 stocks in Festival for a total of -700", 
+        "Steve bought 2 stocks in Worldwide for a total of -600", 
+        "Continental has been removed from the board", 
+        "Chester sold -4 stocks in Continental for a total of 3200", 
+        "Eloise is keeping 2 stocks in Continental", 
+        "Steve traded 6 stocks of Continental for 3 stocks in Tower", 
+        "Chester received MINORITY shareholder bonus of 4000", 
+        "Steve received MAJORITY shareholder bonus of 8000", 
+        "Resolving Takeover of Continental - shareholders: ['Steve=6 ', 'Chester=4 ', 'Eloise=2 ']", 
+        "*** Tower is buying out Continental ***", 
+        "Steve played tile 6H", 
+        "Chester bought 3 stocks in Worldwide for a total of -900", 
+        "Chester played tile 12E", 
+        "Eloise bought 2 stocks in American for a total of -600", 
+        "American has been placed on the board at 7I", 
+        "Eloise played tile 7I", 
+        "Steve bought 2 stocks in Continental for a total of -1600", 
+        "Steve bought 1 stocks in Worldwide for a total of -300", 
+        "American has been removed from the board", 
+        "Chester sold -1 stocks in American for a total of 700", 
+        "Chester traded 6 stocks of American for 3 stocks in Tower", 
+        "Eloise sold -1 stocks in American for a total of 700", 
+        "Eloise traded 2 stocks of American for 1 stocks in Tower", 
+        "Steve sold -1 stocks in American for a total of 700", 
+        "Steve traded 4 stocks of American for 2 stocks in Tower", 
+        "Steve received MINORITY shareholder bonus of 3500", 
+        "Chester received MAJORITY shareholder bonus of 7000", 
+        "Resolving Takeover of American - shareholders: ['Chester=7 ', 'Steve=5 ', 'Eloise=3 ']", 
+        "*** Tower is buying out American ***", 
+        "Steve played tile 3A", 
+        "Chester bought 3 stocks in Tower for a total of -2700", 
+        "Chester played tile 6G", 
+        "Imperial has been removed from the board", 
+        "Chester is keeping 1 stocks in Imperial", 
+        "Chester received MINORITY shareholder bonus of 1500", 
+        "Chester received MAJORITY shareholder bonus of 3000", 
+        "Resolving Takeover of Imperial - shareholders: ['Chester=1 ', 'Eloise=0 ', 'Steve=0 ']", 
+        "*** Tower is buying out Imperial ***", 
+        "Eloise played tile 5B", 
+        "Steve played tile 5H", 
+        "Imperial has been placed on the board at 5A", 
+        "Chester played tile 5A", 
+        "Eloise played tile 8I", 
+        "Steve bought 1 stocks in Festival for a total of -600", 
+        "Steve played tile 4A", 
+        "Chester played tile 4H", 
+        "Eloise played tile 1C", 
+        "Steve bought 1 stocks in Festival for a total of -600", 
+        "Steve bought 2 stocks in American for a total of -1200", 
+        "Steve played tile 12G", 
+        "Chester played tile 6E", 
+        "Eloise played tile 2C", 
+        "Steve bought 3 stocks in Continental for a total of -2100", 
+        "Steve played tile 11A", 
+        "Chester played tile 11B", 
+        "Imperial has been removed from the board", 
+        "Steve traded 4 stocks of Imperial for 2 stocks in Tower", 
+        "Steve received MINORITY shareholder bonus of 1500", 
+        "Steve received MAJORITY shareholder bonus of 3000", 
+        "Resolving Takeover of Imperial - shareholders: ['Steve=4 ', 'Eloise=0 ', 'Chester=0 ']", 
+        "*** Tower is buying out Imperial ***", 
+        "Eloise played tile 5E", 
+        "Steve bought 3 stocks in Imperial for a total of -900", 
+        "Imperial has been placed on the board at 6F", 
+        "Steve played tile 6F", 
+        "Chester played tile 5F", 
+        "Eloise bought 1 stocks in Worldwide for a total of -200", 
+        "Eloise bought 1 stocks in American for a total of -500", 
+        "Eloise played tile 3B", 
+        "Steve bought 3 stocks in Worldwide for a total of -600", 
+        "Steve played tile 10E", 
+        "Chester bought 1 stocks in Festival for a total of -400", 
+        "Chester bought 1 stocks in American for a total of -400", 
+        "Chester bought 1 stocks in Festival for a total of -400", 
+        "Chester played tile 3H", 
+        "Eloise bought 1 stocks in Tower for a total of -600", 
+        "Eloise bought 2 stocks in Continental for a total of -1200", 
+        "Eloise played tile 1F", 
+        "Steve bought 1 stocks in Continental for a total of -500", 
+        "Steve bought 2 stocks in Worldwide for a total of -400", 
+        "Steve played tile 3G", 
+        "Chester bought 3 stocks in Continental for a total of -1200", 
+        "Continental has been placed on the board at 2F", 
+        "Chester played tile 2F", 
+        "Eloise bought 1 stocks in American for a total of -400", 
+        "Eloise bought 2 stocks in Worldwide for a total of -400", 
+        "Worldwide has been placed on the board at 11H", 
+        "Eloise played tile 11H", 
+        "Steve bought 1 stocks in American for a total of -400", 
+        "Steve bought 2 stocks in Festival for a total of -800", 
+        "Steve played tile 3F", 
+        "Chester bought 1 stocks in Tower for a total of -600", 
+        "Chester bought 2 stocks in American for a total of -800", 
+        "Chester played tile 4E", 
+        "Eloise bought 2 stocks in Tower for a total of -1000", 
+        "Eloise bought 1 stocks in American for a total of -400", 
+        "Eloise played tile 12H", 
+        "Steve bought 1 stocks in Tower for a total of -500", 
+        "Steve bought 1 stocks in American for a total of -400", 
+        "Steve bought 1 stocks in Festival for a total of -400", 
+        "Steve played tile 4D", 
+        "Chester bought 2 stocks in Tower for a total of -800", 
+        "Chester bought 1 stocks in Festival for a total of -400", 
+        "Chester played tile 2B", 
+        "Eloise bought 1 stocks in Tower for a total of -400", 
+        "Eloise bought 2 stocks in Festival for a total of -800", 
+        "Festival has been placed on the board at 11D", 
+        "Eloise played tile 11D", 
+        "Steve bought 2 stocks in Tower for a total of -800", 
+        "Steve bought 1 stocks in American for a total of -300", 
+        "Tower has been placed on the board at 5C", 
+        "Steve played tile 5C", 
+        "Chester bought 3 stocks in American for a total of -900", 
+        "American has been placed on the board at 1A", 
+        "Chester played tile 1A", 
+        "Eloise played tile 2A", 
+        "Eloise is the first player", 
+        "Steve played tile 5D", 
+        "Chester played tile 12D", 
+        "Eloise played tile 11C", 
+        "TileBagGame Started!", 
+        "Game Created"
+      ], 
+      "gamestate": {
+        "currplayer": {
+          "id": "8b7d2", 
+          "name": "Chester"
+        }, 
+        "message": "End State! Cashing out the remaining hotels on the board", 
+        "state": "EndGame", 
+        "stateinfo": {
+          "buyouts": {
+            "Festival": [
+              [
+                {
+                  "player": {
+                    "id": "8b7d3", 
+                    "name": "Steve"
+                  }, 
+                  "stocks": 13
+                }, 
+                {
+                  "player": {
+                    "id": "8b7d2", 
+                    "name": "Chester"
+                  }, 
+                  "stocks": 7
+                }, 
+                {
+                  "player": {
+                    "id": "8b7d1", 
+                    "name": "Eloise"
+                  }, 
+                  "stocks": 5
+                }
+              ], 
+              {
+                "majority": {
+                  "Steve": 10000, 
+                  "amount": 10000
+                }, 
+                "minority": {
+                  "Chester": 5000, 
+                  "amount": 5000
+                }
+              }
+            ], 
+            "Tower": [
+              [
+                {
+                  "player": {
+                    "id": "8b7d3", 
+                    "name": "Steve"
+                  }, 
+                  "stocks": 11
+                }, 
+                {
+                  "player": {
+                    "id": "8b7d2", 
+                    "name": "Chester"
+                  }, 
+                  "stocks": 9
+                }, 
+                {
+                  "player": {
+                    "id": "8b7d1", 
+                    "name": "Eloise"
+                  }, 
+                  "stocks": 5
+                }
+              ], 
+              {
+                "majority": {
+                  "Steve": 11000, 
+                  "amount": 11000
+                }, 
+                "minority": {
+                  "Chester": 5500, 
+                  "amount": 5500
+                }
+              }
+            ]
+          }, 
+          "finalscores": [
+            {
+              "Eloise": 16500
+            }, 
+            {
+              "Chester": 46200
+            }, 
+            {
+              "Steve": 62600
+            }
+          ]
+        }
+      }, 
+      "hotels": [
+        {
+          "charttype": "low", 
+          "name": "Worldwide", 
+          "occupies": null, 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "low", 
+          "name": "Saxxon", 
+          "occupies": [], 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "Festival", 
+          "occupies": [
+            "10F", 
+            "10E", 
+            "9E", 
+            "9D", 
+            "9C", 
+            "9B", 
+            "9A", 
+            "8A", 
+            "8B", 
+            "7B", 
+            "7A", 
+            "10A", 
+            "10B", 
+            "10C", 
+            "11C", 
+            "11B", 
+            "11A", 
+            "12B", 
+            "12C", 
+            "12D", 
+            "12E", 
+            "12F", 
+            "12G", 
+            "12H", 
+            "12I", 
+            "11H", 
+            "11G", 
+            "11F", 
+            "11E", 
+            "11D", 
+            "9F"
+          ], 
+          "stocks": 25, 
+          "tile": "11D"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "Imperial", 
+          "occupies": null, 
+          "stocks": 24, 
+          "tile": null
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "American", 
+          "occupies": null, 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "high", 
+          "name": "Continental", 
+          "occupies": null, 
+          "stocks": 25, 
+          "tile": null
+        }, 
+        {
+          "charttype": "high", 
+          "name": "Tower", 
+          "occupies": [
+            "1G", 
+            "1F", 
+            "2F", 
+            "3F", 
+            "3G", 
+            "3H", 
+            "4H", 
+            "5H", 
+            "6H", 
+            "6G", 
+            "6F", 
+            "6E", 
+            "6D", 
+            "6C", 
+            "5C", 
+            "5B", 
+            "5A", 
+            "4A", 
+            "4B", 
+            "3B", 
+            "3A", 
+            "2A", 
+            "2B", 
+            "2C", 
+            "1C", 
+            "3C", 
+            "1A", 
+            "5D", 
+            "5E", 
+            "5F", 
+            "4E", 
+            "4D", 
+            "7D", 
+            "7E", 
+            "7F", 
+            "7H", 
+            "7I", 
+            "8I", 
+            "9I", 
+            "10I"
+          ], 
+          "stocks": 25, 
+          "tile": "5C"
+        }
+      ]
+    }, 
+    "id": "t5", 
+    "name": "TileBag", 
+    "numplayers": 3, 
+    "players": [
+      {
+        "id": "8b7d1", 
+        "name": "Eloise", 
+        "playerdata": {
+          "money": 16500, 
+          "stocks": {}, 
+          "tiles": [
+            "8F", 
+            "7G", 
+            "3D", 
+            "4F", 
+            "2E", 
+            "1D", 
+            "4C"
+          ]
+        }
+      }, 
+      {
+        "id": "8b7d2", 
+        "name": "Chester", 
+        "playerdata": {
+          "money": 46200, 
+          "stocks": {
+            "Imperial": 1
+          }, 
+          "tiles": [
+            "1I", 
+            "8G", 
+            "5I", 
+            "11I", 
+            "2H", 
+            "8H", 
+            "4G"
+          ]
+        }
+      }, 
+      {
+        "id": "8b7d3", 
+        "name": "Steve", 
+        "playerdata": {
+          "money": 62600, 
+          "stocks": {}, 
+          "tiles": [
+            "4I", 
+            "2I", 
+            "1E", 
+            "2D", 
+            "1H", 
+            "6I", 
+            "10G"
+          ]
+        }
+      }
+    ], 
+    "started": true
+  }
+}

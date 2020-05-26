@@ -1,9 +1,14 @@
 t1.json - close to a merger of two hotels, different sizes
 t2.json - a few merger options: two the same, and two different sized
 t3.json - a three-way merge, with same sized hotels
+t4.json - 
+t5.json - a game that is in the end-state
  
 # Run these by posting to the REST (game can't exist first or it won't work)
 $ curl -i -H "Content-Type: application/json" -X POST -d @t3.json http://localhost:5000/gamelobby/v1/games
+
+# Create a new test simply by saving the result of:
+$ curl http://localhost:5000/tilebag/v1/save/<gameid>
   
 # NOTE: game id in the JSON is the name of the game created. files named the
 # same for simplicity but if you change that, it's on you!

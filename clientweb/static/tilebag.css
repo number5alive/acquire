@@ -120,6 +120,10 @@ h2 {
   margin: 8px;
 }
 
+.block {
+  display: inline-block;
+}
+
 .rectangle {
   user-select:none;
   display: inline-block;
@@ -129,7 +133,7 @@ h2 {
   font-size: small;
   background-color: #555;
   border-radius: 5px;
-  margin: 4px 4px;
+  margin: 4px 4px 0px 4px;
   text-align: center;
 }
 
@@ -186,6 +190,14 @@ div.messages {
 
 .error {
   background-color:red !important;
+}
+
+.endstatemessage {
+  width: 100%;
+  color: black;
+  background-color: yellow;
+  text-align: center;
+  text-size: normal;
 }
 
 .gamemessage {
@@ -298,14 +310,13 @@ border: 1px solid red;
   border-radius: 5px;
 }
 
-.stockcount, .playermoney {
+.stockcount {
   font-family: Arial;
 }
 
-.playermoney span {
-  width: 100%;
+.playermoney {
+  font-family: Arial;
   text-align: right;
-  border: 1px solid red;
 }
 
 /* Clear floats after the columns */
@@ -570,7 +581,6 @@ border: 1px solid red;
 }
 
 .playerspace {
-  border: 1px solid green; 
   background-color: teal;
   font-size: medium;
    
