@@ -710,6 +710,11 @@
       addEffect(EFFECT_REMOVED, el_vmergedetails);
     }
        
+    // Everyone gets to see the end-state info
+    if( data['game']['gamestate']['state'] == 'EndGame' ) {
+      buildviewEndGame(data);
+    }
+        
   }
    
   function showPlayerLinks(pdata) {
@@ -750,6 +755,9 @@
       newh.style.backgroundColor=h.color;
       newh.style.borderColor=h.color;
     }
+  }
+
+  function buildviewEndGame(data) {
   }
     
   function buildviewSelectHotel(hlist, hselmsg, bSell) {
@@ -999,6 +1007,17 @@
     }
   }
 
+  function getPlayerBonusesString(bdata){
+    // And who got the bdataority bonus
+    var bdatatext="";
+    value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(bdata['splits']); 
+    for( var i=0; i<bdata['players'].length; i++ )
+    {
+      bdatatext=bdatatext+bdata['players'][i]['name']+":"+value+"; ";
+    }
+    return bdatatext.slice(0,-2);
+  }
+   
   function buildviewMergeDetails(data) {
     var elmw=document.getElementById('mergeWinner');
     var elml=document.getElementById('mergeLoser');
@@ -1009,9 +1028,11 @@
     var elmin=document.getElementById('mergeMinBonus');
     var elminamt=document.getElementById('mergeMinBonusAmt');
 
-    let hw=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['biggest']);
+    var sdata=data['game']['gamestate']['stateinfo']
+
+    let hw=HOTELS.find(o => o.name === sdata['biggest']);
     let hwi=data['game']['hotels'].find(o => o.name === hw.name);
-    let hl=HOTELS.find(o => o.name === data['game']['gamestate']['stateinfo']['smallest']);
+    let hl=HOTELS.find(o => o.name === sdata['smallest']);
     let hli=data['game']['hotels'].find(o => o.name === hl.name);
 
     elmw.innerText=hw.name+"("+hwi.occupies.length+")";
@@ -1019,45 +1040,28 @@
     elml.innerText=hl.name+"("+hli.occupies.length+")";
     elml.style.color=hl.color;
 
+    // We're done with the biggest / smallest, go to the bonuses
+    sdata=sdata['bonuses'];
+
     // Show the amount of stocks everyone had
     elshamt.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(hli.price); 
-    var sh=data['game']['gamestate']['stateinfo']['shareholders'];
+    var sh=sdata['shareholders'];
     var shtext="";
     elsh.innerText="";
     for( var i=0; i<sh.length;i++ ) {
-      for( var [key, value] of Object.entries(sh[i]) ){
-        shtext=shtext+key+":"+value+"; ";
-      }
+      shtext=shtext+sh[i]['player']['name']+":"+sh[i]['stocks']+"; ";
     }
     elsh.innerText=elsh.innerText+shtext.slice(0,-2);
 
-    // Show who got the majority bonus
-    var maj=data['game']['gamestate']['stateinfo']['payouts']['majority'];
-    var majtext="";
-    elmaj.innerText="";
-    for( var [key, value] of Object.entries(maj) ){
-      value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(value); 
-      if(key != "amount") {
-        majtext=majtext+key+":"+value+"; ";
-      } else {
-        elmajamt.innerText=value;
-      }
-    }
-    elmaj.innerText=elmaj.innerText+majtext.slice(0,-2);
-
+    // Show the majority bonus 
+    var maj=sdata['majority'];
+    elmajamt.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(maj['amount']); 
+    elmaj.innerText=getPlayerBonusesString(maj);
+     
     // Show who got the minority bonus
-    var min=data['game']['gamestate']['stateinfo']['payouts']['minority'];
-    var mintext="";
-    elmin.innerText="";
-    for( var [key, value] of Object.entries(min) ){
-      value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(value); 
-      if(key != "amount") {
-        mintext=mintext+key+":"+value+"; ";
-      } else {
-        elminamt.innerText=value;
-      }
-    }
-    elmin.innerText=elmin.innerText+mintext.slice(0,-2);
+    var min=sdata['minority'];
+    elminamt.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(min['amount']);
+    elmin.innerText=getPlayerBonusesString(min);
   }
    
   function buildviewStockOptions(data) {

@@ -554,21 +554,27 @@ class TileBagGame(Game, StateEngine):
     print("Minority Shareholders: {}".format(minsh))
      
     majb, minb = hotel.bonuses()
-    payouts={'majority': {'amount': majb},
-             'minority': {'amount': minb},}
-    majb=majb//len(majsh)//100*100
-    minb=minb//len(minsh)//100*100
+    majsplit=majb//len(majsh)//100*100
+    minsplit=minb//len(minsh)//100*100
+     
+    # give the players their money, record the transaction
     for p in majsh:
       player=p['player']
       player.money += majb
       self._log.recordBonusPayout(player, 'majority', majb)
-      payouts['majority'][player.name]=majb
     for p in minsh:
       player=p['player']
       player.money += minb
       self._log.recordBonusPayout(player, 'minority', minb)
-      payouts['minority'][player.name]=minb
-    return shareholders, payouts
+    return { 'hotel' : hotel.name,
+             'majority': {'amount': majb,
+                          'splits': majsplit,
+                          'players': majsh},
+             'minority': {'amount': minb,
+                          'splits': minsplit,
+                          'players': minsh},
+             'shareholders': shareholders,
+            }
 
   class LiquidateStocks(State):
     def __init__(self, game, tile, biggest, smallest):
@@ -581,7 +587,7 @@ class TileBagGame(Game, StateEngine):
       self._game._log.recordMerger(self._biggest.name, self._smallest.name)
        
       # find out maj/min shareholder bonus'
-      self._shareholders, self._payouts=self._game._payoutBonuses(self._smallest)
+      self._bonuses=self._game._payoutBonuses(self._smallest)
 
       # rotate forward through to a player with shares in the smallest
       # this is safe enough, *someone* has a stock, the free one 
@@ -593,8 +599,7 @@ class TileBagGame(Game, StateEngine):
       return "{} acquiring {}\nWaiting for {} to pick stock options for {} [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
 
     def serialize(self, forsave=False):
-      return { 'payouts': self._payouts,
-               'shareholders':  [{sh['player'].name:sh['stocks']} for sh in self._shareholders],
+      return { 'bonuses': self._bonuses,
                'biggest': self._biggest.name,
                'smallest': self._smallest.name, }
        
@@ -681,13 +686,14 @@ class TileBagGame(Game, StateEngine):
   class EndGame(State):
     def __init__(self, game):
       self._game=game
-      self._buyouts={}
+      self._bonuses=[]
+      self._buyouts=[]
        
       blah=sorted(self._game.hotels, key=lambda x: x.size, reverse=False)
       for h in blah:
         if h.size > 0:
           print("Resolving {}, size {}".format(h.name, h.size))
-          self._buyouts[h.name]=self._game._payoutBonuses(h)
+          self._bonuses.append(self._game._payoutBonuses(h))
           for p in self._game._players:
             amount=p.numStocks(hname=h.name)
             print("{} has {} stocks in {}", p.name, amount, h.name)
@@ -697,8 +703,8 @@ class TileBagGame(Game, StateEngine):
               p.money += value
               self._game._log.recordStockAction(p.name, h.name, -amount, value)
               #TODO: add the value of amount sold to this list
-              # the code below borks, because of how we return buyout information in _payoutBonuses above
-              #self._buyouts[h.name][p.name]={'amount':amount, 'value':value}
+              # the code below borks, because of how we return payout information in _payoutBonuses above
+              #self._bonuses[h.name][p.name]={'amount':amount, 'value':value}
 
       blah=sorted(self._game._players, key=lambda x: x.money, reverse=True)
       self._game._log.recordGameMessage("Final Totals")
@@ -710,8 +716,8 @@ class TileBagGame(Game, StateEngine):
 
     def serialize(self, forsave=False):
       return { 
-          'finalscores': [{p.name: p.money} for p in self._game._players],
-          'buyouts': self._buyouts,
+          'finalscores': [{'name':p.name,'amount':p.money} for p in self._game._players],
+          'bonuses': self._bonuses,
           }
 
     def on_event(self, event, **kwargs):
