@@ -596,7 +596,7 @@ class TileBagGame(Game, StateEngine):
         self._game._currplayer=next(self._game._rotation)
        
     def toHuman(self):
-      return "{} acquiring {}\nWaiting for {} to pick stock options for {} [Sell|Trade|Keep]".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
+      return "Waiting for {} to pick stock options".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
 
     def serialize(self, forsave=False):
       return { 'bonuses': self._bonuses,
@@ -704,7 +704,7 @@ class TileBagGame(Game, StateEngine):
               self._game._log.recordStockAction(p.name, h.name, -amount, value)
               #TODO: add the value of amount sold to this list
               # the code below borks, because of how we return payout information in _payoutBonuses above
-              #self._bonuses[h.name][p.name]={'amount':amount, 'value':value}
+              #self._payouts[h.name][p.name]={'amount':amount, 'value':value}
 
       blah=sorted(self._game._players, key=lambda x: x.money, reverse=True)
       self._game._log.recordGameMessage("Final Totals")

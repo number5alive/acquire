@@ -20,7 +20,8 @@
 
 <div class="mstick" id="messagebar">
   <div class="messages">
-    <div class="endstatemessage notthere" id="endstatemessage">End condition(s) statisfied - current player can choose to trigger the end</div>
+    <div class="endstatemessage notthere" id="endstatemessage">End condition(s) statisfied - current player can choose to trigger the end
+            <button onclick="onEndGame()" class="p4 right clr" id="btnEndGame">Trigger Game End</button></div>
     <div class="gamestate" id="gamestate"></div>
     <div class="gamemessage" id="gamemessage"></div>
     <div class="card notthere" id="vmergedetails">
@@ -190,7 +191,6 @@
         <div class="boardcolumn">
           <div class=row>
             <h2 class="p8 left centered">BOARD</h2>
-            <button onclick="onEndGame()" class="p4 right clr" id="btnEndGame">Trigger Game End</button>
           </div>
           <div class="acquireBoard" style="height:300px;" id="acquireBoard"></div>
           <div class="row">
@@ -1134,7 +1134,11 @@
     }
      
     if( data['game']['endpossible'] ) {
-      addEffect(EFFECT_SHOW, el_btnEndGame);
+      if( !data['game']['endrequested'] ) {
+        addEffect(EFFECT_SHOW, el_btnEndGame);
+      } else {
+        removeEffect(EFFECT_SHOW, el_btnEndGame);
+      }
     }
   }
 
@@ -1172,15 +1176,13 @@
      
     if( data['game']['endpossible'] ) {
       removeEffect(EFFECT_REMOVED, el_endstatemessage);
+      if( data['game']['endrequested'] ) {
+        el_endstatemessage.innerText="End of game has been triggered. Game will end at the end of the current player's turn";
+        el_endstatemessage.style.backgroundColor="lightgreen";
+      }
     } else {
       addEffect(EFFECT_REMOVED, el_endstatemessage);
     }
-     
-    if( data['game']['endrequested'] ) {
-      el_endstatemessage.innerText="End of game has been triggered. Game will end at the end of the current player's turn";
-      el_endstatemessage.style.backgroundColor="lightgreen";
-    }
-
   }
    
   var bInitialRender=true;
