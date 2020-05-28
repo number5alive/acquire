@@ -30,17 +30,23 @@
           <h2>MERGER!</h2>
         </span>
         <span class="p8 left" style="text-align:center;font-size:x-large;">
-          <em id="mergeWinner"></em> is Buying out <em id="mergeLoser"></em>
+          <em id="mergeWinner"></em> acquires <em id="mergeLoser"></em>
         </span>
-         
       </div>
-      <div class="rrow" style="text-align:left">
-        <span class="p4 left">Shareholders: <span class="textinfo" id="mergeSharePrice"></span><br><span class="textinfo" id="mergeShareholders"></span>
-        </span>
-        <span class="p4 left">Majority Bonus: <span class="textinfo" id="mergeMajBonusAmt"></span><br><span class="textinfo" id="mergeMajBonus"></span>
-        </span>
-        <span class="p4 left">Minority Bonus: <span class="textinfo" id="mergeMinBonusAmt"></span><br><span class="textinfo" id="mergeMinBonus"></span>
-        </span>
+      <div id="bonuspayoutinfo">
+        <div class="rrow" style="text-align:left">
+          <span class="p8 left" style="text-align:left;font-size:x-large;">
+            Cashing out <em id="cashoutHotel"></em>
+          </span>
+        </div>
+        <div class="rrow" style="text-align:left">
+          <span class="p4 left">Shareholders: <span class="textinfo" id="mergeSharePrice"></span><br><span class="textinfo" id="mergeShareholders"></span>
+          </span>
+          <span class="p4 left">Majority Bonus: <span class="textinfo" id="mergeMajBonusAmt"></span><br><span class="textinfo" id="mergeMajBonus"></span>
+          </span>
+          <span class="p4 left">Minority Bonus: <span class="textinfo" id="mergeMinBonusAmt"></span><br><span class="textinfo" id="mergeMinBonus"></span>
+          </span>
+        </div>
       </div>
     </div>
     <div class="card notthere" id="vbuystocks">
@@ -133,7 +139,15 @@
       </div>
     </div>
     <div class="card notthere" id="vendgameinfo">
-      <h2>END GAME SUMMARY</h2>
+      <h2 class="p12 centered">END GAME SUMMARY</h2>
+      <div class="rrow" style="margin: 10px;">
+        <span class="p12 left centered" id="playerscores">
+        </span>
+      </div>
+      <div class="rrow" style="text-align:left" id="finalscores">
+      </div>
+      <div class="rrow" style="text-align:left" id="endgamepayouts">
+      </div>
     </div>
   </div>
 </div>
@@ -713,6 +727,7 @@
     // Everyone gets to see the end-state info
     if( data['game']['gamestate']['state'] == 'EndGame' ) {
       buildviewEndGame(data);
+      removeEffect(EFFECT_REMOVED, el_vendgameinfo);
     }
         
   }
@@ -757,7 +772,43 @@
     }
   }
 
+  function showPlayerScore(pdata) {
+    var elpl=document.getElementById('playerscores');
+     
+    var div=document.createElement('span');
+    div.className="rectangle";
+    div.innerHTML=pdata['name']+"<br>"+pdata['amount'];
+    div.style.color="white";
+    div.style.paddingTop="20px";
+    elpl.appendChild(div);
+  }
+   
   function buildviewEndGame(data) {
+
+    // Show the final game scores
+    var sdata=data['game']['gamestate']['stateinfo']['finalscores'];
+    sdata.sort(function (a, b) {
+      return parseInt(b.amount) - parseInt(a.amount);
+    });
+    for(var i=0; i<sdata.length; i++) {
+      showPlayerScore(sdata[i]);
+    }
+    
+    // Show how each hotel was cashed out
+    var sdata=data['game']['gamestate']['stateinfo']['bonuses'];
+    var elbinfo=document.getElementById('bonuspayoutinfo');
+    var elegpo=document.getElementById('endgamepayouts');
+    var tempHTML="";
+    for(var i=0; i<sdata.length; i++) {
+      let hli=data['game']['hotels'].find(o => o.name === sdata[i]['hotel']);
+      let h=HOTELS.find(o => o.name === hli.name);
+
+      // KLUDGE: super-kludge time, this view has what we need, build it and
+      // then steal the HTML that results!
+      buildsubviewBonusPayouts(sdata[i], h, hli);
+      tempHTML=tempHTML+elbinfo.outerHTML;
+    }
+    elegpo.innerHTML=tempHTML;
   }
     
   function buildviewSelectHotel(hlist, hselmsg, bSell) {
@@ -1013,14 +1064,12 @@
     value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(bdata['splits']); 
     for( var i=0; i<bdata['players'].length; i++ )
     {
-      bdatatext=bdatatext+bdata['players'][i]['name']+":"+value+"; ";
+      bdatatext=bdatatext+bdata['players'][i]['player']['name']+":"+value+"; ";
     }
     return bdatatext.slice(0,-2);
   }
-   
-  function buildviewMergeDetails(data) {
-    var elmw=document.getElementById('mergeWinner');
-    var elml=document.getElementById('mergeLoser');
+
+  function buildsubviewBonusPayouts(sdata, hotel, hli) {
     var elsh=document.getElementById('mergeShareholders');
     var elshamt=document.getElementById('mergeSharePrice');
     var elmaj=document.getElementById('mergeMajBonus');
@@ -1028,20 +1077,9 @@
     var elmin=document.getElementById('mergeMinBonus');
     var elminamt=document.getElementById('mergeMinBonusAmt');
 
-    var sdata=data['game']['gamestate']['stateinfo']
-
-    let hw=HOTELS.find(o => o.name === sdata['biggest']);
-    let hwi=data['game']['hotels'].find(o => o.name === hw.name);
-    let hl=HOTELS.find(o => o.name === sdata['smallest']);
-    let hli=data['game']['hotels'].find(o => o.name === hl.name);
-
-    elmw.innerText=hw.name+"("+hwi.occupies.length+")";
-    elmw.style.color=hw.color;
-    elml.innerText=hl.name+"("+hli.occupies.length+")";
-    elml.style.color=hl.color;
-
-    // We're done with the biggest / smallest, go to the bonuses
-    sdata=sdata['bonuses'];
+    var elch=document.getElementById('cashoutHotel');
+    elch.innerText=hli.name+"("+hli.occupies.length+")";
+    elch.style.color=hotel.color;
 
     // Show the amount of stocks everyone had
     elshamt.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(hli.price); 
@@ -1062,6 +1100,25 @@
     var min=sdata['minority'];
     elminamt.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(min['amount']);
     elmin.innerText=getPlayerBonusesString(min);
+  }
+   
+  function buildviewMergeDetails(data) {
+    var elmw=document.getElementById('mergeWinner');
+    var elml=document.getElementById('mergeLoser');
+     
+    var sdata=data['game']['gamestate']['stateinfo']
+
+    let hw=HOTELS.find(o => o.name === sdata['biggest']);
+    let hwi=data['game']['hotels'].find(o => o.name === hw.name);
+    let hl=HOTELS.find(o => o.name === sdata['smallest']);
+    let hli=data['game']['hotels'].find(o => o.name === hl.name);
+
+    elmw.innerText=hw.name+"("+hwi.occupies.length+")";
+    elmw.style.color=hw.color;
+    elml.innerText=hl.name+"("+hli.occupies.length+")";
+    elml.style.color=hl.color;
+
+    buildsubviewBonusPayouts(sdata['bonuses'], hl, hli);
   }
    
   function buildviewStockOptions(data) {
@@ -1162,7 +1219,6 @@
     showOptions(tiles);
 
     // GAME STATE Specific views (reset what's visible every time)
-    addEffect(EFFECT_REMOVED, el_vendgameinfo);
     addEffect(EFFECT_REMOVED, el_vbuystocks);
     addEffect(EFFECT_REMOVED, el_vselecthotel);
     addEffect(EFFECT_REMOVED, el_vstockoptions);
