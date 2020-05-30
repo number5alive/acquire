@@ -13,8 +13,10 @@
   <script src="{{ url_for('.static', filename='tbREST.js') }}{{ cachefix }}"> </script>
     
    <!-- And our WebSocket helper -->
+  <script src="{{ url_for('.static', filename='socket.io.js') }}"> </script>
+   <!-- And our WebSocket helper 
   <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
-   
+   -->
 </head>
 <body>
 
@@ -247,7 +249,6 @@
 <!-- ## Javascript for Rendering Game Components on the Screen -->
 <!-- ################################################################### --> 
   <script>
-
   /* The hotel constants */
   let HOTELS = [
        {name: "Worldwide", short: "WW", color: "rgba(87, 54, 107, 1)"},
@@ -299,13 +300,13 @@
 <!-- ################################################################### --> 
   <script>
   el_gameboard.addEventListener('playtile', tileDropped);
-  el_gameboard.addEventListener('placehotel', placeHotel);
+  //el_gameboard.addEventListener('placehotel', placeHotel);
   //el_stockrack.addEventListener('buystock', buyStock);
-  el_hotellist.addEventListener('sellstock', sellStock);
+  //el_hotellist.addEventListener('sellstock', sellStock);
 
   /* For TILES */
   function tileDropped(e){
-    tile=e.detail.tile;
+    var tile=e.detail.tile;
     if( {{debug}}  ) {
       tile.parentNode.removeChild(tile);
       placeTile(tile.innerText);
@@ -334,7 +335,7 @@
    
   /* For HOTELS */
   async function placeHotel(e){
-    hel=e.detail.tile;
+    var hel=e.detail.tile;
     _placeHotel(hel.id);
   }
    
@@ -344,7 +345,7 @@
                           });
   }
   async function removeHotel(e){
-    hel=e.detail.tile;
+    var hel=e.detail.tile;
     _removeHotel(hel.id);
   }
 
@@ -550,7 +551,7 @@
     }
      
     // Grey out the widget based on how many stocks are left
-    st=parseInt(dhotel['stocks']);
+    var st=parseInt(dhotel['stocks']);
     var decksize = st / 25;
     if(st > 0){
       decksize += 0.5;
@@ -581,14 +582,14 @@
   }
 
   function setTickerToString(tickerstring) {
-    elt=document.createElement('div');
+    var elt=document.createElement('div');
     elt.innerText=tickerstring;
     drawTickerWithElement(elt);
   }
 
   function drawTickerWithElement(elt) {
-    el_outer=document.getElementById('outer');
-    el_loop=el_outer.querySelector('#loop');
+    var el_outer=document.getElementById('outer');
+    var el_loop=el_outer.querySelector('#loop');
      
     elt.className='content';
     el_loop.innerHTML="";           // clear the stock ticker first
@@ -709,7 +710,7 @@
     drawBoard(el_gameboard,data['game']['board']); // from board.js
      
     // HOTELS: Place the hotel tokens on the board
-    elt=document.createElement('div');
+    var elt=document.createElement('div');
     var hotels=data['game']['hotels'];
     hotels.forEach(h => showHotel(h,elt));
      
@@ -1061,7 +1062,7 @@
   function getPlayerBonusesString(bdata){
     // And who got the bdataority bonus
     var bdatatext="";
-    value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(bdata['splits']); 
+    var value=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(bdata['splits']); 
     for( var i=0; i<bdata['players'].length; i++ )
     {
       bdatatext=bdatatext+bdata['players'][i]['player']['name']+":"+value+"; ";
@@ -1210,12 +1211,13 @@
     elpmoney.innerText=(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(pinfo['money']);
 
     // STOCKS
-    stocks=pinfo['stocks'];
+    var stocks=pinfo['stocks'];
     HOTELS.forEach(h => updateStocks(h, stocks));
 
     // TILE RACK
-    tiles=pinfo['tiles'];
-    setTiles("rackspace", tiles, [[el_gameboard, 'playtile']]);
+    var tiles=pinfo['tiles'];
+    var orderTiles=true; // TODO: grab this from a toggle/setting
+    setTiles("rackspace", tiles, [[el_gameboard, 'playtile']], orderTiles);
     showOptions(tiles);
 
     // GAME STATE Specific views (reset what's visible every time)
@@ -1275,23 +1277,6 @@
       removeEffect(EFFECT_SHOW, el_btnEndGame);
     }
      
-   /*
-     
-    if( data['game']['endpossible'] ) {
-      addEffect(EFFECT_SHOW, el_btnEndGame);
-    } else {
-      removeEffect(EFFECT_SHOW, el_btnEndGame);
-    }
-
-      // Display STATE specific elements
-      // Done last so it can override other items... damn this code is sloppy
-      var elBtnPass=document.getElementById("btnPass");
-      var state=data['game']['gamestate']['state']
-      if( state == 'EndGame') {
-        setTickerToString("Game Over ");
-      }
-    }
-    */
   }
   </script>
          
@@ -1348,10 +1333,12 @@
       sc.innerText="#";
       hi.appendChild(sc)
        
+       /*
       // drop hotel on stocks to buy stock, on board to place hotel
-      makeTileDragable(hi, [/*[el_stockrack, 'buystock'],*/
+      makeTileDragable(hi, [[el_stockrack, 'buystock'],
                             [el_gameboard, 'placehotel'],
-                            /*[el_rmhotelzone, 'rmhotel']*/], onHotelDrag);
+                            [el_rmhotelzone, 'rmhotel']], onHotelDrag);
+      */
     }
     HOTELS.forEach(h => buildHotelName(h));
      

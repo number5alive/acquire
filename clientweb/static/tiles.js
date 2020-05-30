@@ -22,23 +22,62 @@ function sizeTiles(rackelem) {
 }
 
 function sizeTile(tile, rackpos) {
-  tilesize=rackpos.clientWidth;
+  var tilesize=rackpos.clientWidth;
   tilesize-=25;
   tile.style.height = tilesize + 'px';
   tile.style.minWidth = tilesize + 'px';
 }
 
-function setTiles(rack, tiles, dropzone=null, flush=false){
+function setTiles(rackspace, tiles, dropzone=null, order=false){
   // if we're getting rid of existing tiles, loop through and remove them
-  if( flush ){
+  if( order ){
+    tiles.sort(function (a, b) {
+      var aval=parseInt(a.slice(0,-1))*100 + a.charCodeAt(a.length-1);
+      var bval=parseInt(b.slice(0,-1))*100 + b.charCodeAt(b.length-1);
+      return aval - bval;
+    });
   }
 
-  // loop through the tiles, make sure they don't exist, then add them
+  // loop through the tiles, make sure they exist
+  var alltiles=[];
+  var newtiles=[];
+  var newTile=false;
   for(var i=0; i<tiles.length; i++){
-    // make sure the tile isn't in the list before trying to add it
-    if( null == document.getElementById('tile'+tiles[i]) )
-    {
-      addTile(rack, tiles[i], dropzone);
+    // Get the tile if it exists
+    var tile=document.getElementById('tile'+tiles[i]);
+    if( null == tile ) {
+      // Or make it if it's new
+      tile = createTile(tiles[i], dropzone);
+      newtiles.push(tile);
+      newTile=true; // why both? you'll see!
+    }
+    alltiles.push(tile);
+  }
+  
+  var rackspots = document.getElementsByClassName(rackspace);
+  // loop through the rack, cleanup old, drop in new
+  for( var i = 0; i < rackspots.length; i++) {
+    if( rackspots[i].childNodes.length != 0 ) {
+      // there's something in this space
+      // See if it's a "dead" tile and remove
+      // OR just remove it if we're re-ordering the rack
+       
+      if( !alltiles.includes(rackspots[i].childNodes[0]) || (newTile && order) ) {
+        rackspots[i].removeChild(rackspots[i].childNodes[0]);
+        i-=1;
+        continue; // we need this because we'll fill the next free spot
+      }
+
+      // If we reach here, there's a tile and it should stay there
+
+    } else if( newTile ) {// Only update the rack if we have new tiles
+      // Nothing in this spot, drop a tile there!
+      var tile=order ? alltiles.shift() : newtiles.shift(); // see?!
+      if( tile != undefined ) {
+        rackspots[i].appendChild(tile);
+      } else {
+        rackspots[i].innerHTML="";
+      }
     }
   }
 }
@@ -57,13 +96,18 @@ function createTile(tilename, dropzone){
   rtext.textContent = tilename.slice(-1); // row LETTER
   tile.appendChild(rtext);
 
+  // Save us a step later, if a drop-zone is identified then we definitely
+  // want our tile to be dragable
+  if(dropzone != null){
+    makeTileDragable(tile, dropzone);
+  }
+
   return tile;
 }
 
 // Add a single tile to the tile rack
 // it's text and id will be set to the value of the tile
 function addTile(rackname, tilename, dropzone=null){
-  var tile = createTile(tilename);
    
   // find an empty spot in the rack for which to place it
   var rackpos = null;
@@ -79,15 +123,9 @@ function addTile(rackname, tilename, dropzone=null){
   {
     rackpos.appendChild(tile);
   }
-
-  // Save us a step later, if a drop-zone is identified then we definitely
-  // want our tile to be dragable
-  if(dropzone != null){
-    makeTileDragable(tile, dropzone);
-  }
 }
  
-function makeTileDragable(elmnt, dropz, onDragAction=null){
+function makeTileDragable(elmnt, dropz, onDragAction){
   var origx = 0, origy = 0;
   var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -110,7 +148,7 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
     document.onmouseup = closeDragElement;
     // call a function whenever the cursor moves:
     document.onmousemove = elementDrag;
-    if( onDragAction )
+    if( onDragAction != undefined && onDragAction != null )
     {
       onDragAction(elmnt, false);
     }
@@ -162,7 +200,7 @@ function makeTileDragable(elmnt, dropz, onDragAction=null){
     return !(rect1.right < rect2.left || 
              rect1.left > rect2.right || 
              rect1.bottom < rect2.top || 
-             rect1.top > rect2.bottom)
+             rect1.top > rect2.bottom);
   }
 
   function closeDragElement() {
