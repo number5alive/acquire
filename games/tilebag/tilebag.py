@@ -40,7 +40,7 @@ class TileBagGame(Game, StateEngine):
     self._gamestate=None
     self._endcondition=False
     self._endrequested=False
-    self.tilebag=None;
+    self.tilebag=None
     self.hotels=[Hotel(h['name'], h['chart']) for h in HOTELS]
     self._log=GameLog()
 
@@ -341,7 +341,7 @@ class TileBagGame(Game, StateEngine):
           #       All hotels on the board and this would make another)
           bWouldMakeNewHotel=len(conn) > 0 and len(hn) == 0
           if (ofSize11 >= 2) or (bAllHotelsOnBoard and bWouldMakeNewHotel):
-            return False, "ERROR - Illegal Tile Move", self
+            return False, "ERROR - Illegal Tile Move: {}".format("Would make a new hotel when all are on the board" if bAllHotelsOnBoard else "Would join two safe hotels"), self
            
           # NOTE: this tile MIGHT be between two tiles, in that case we need
           #       to ensure it doesn't cause a "merger" until one of those
@@ -596,7 +596,7 @@ class TileBagGame(Game, StateEngine):
         self._game._currplayer=next(self._game._rotation)
        
     def toHuman(self):
-      return "Waiting for {} to pick stock options".format(self._biggest.name, self._smallest.name, self._game._currplayer, self._smallest.name)
+      return "Waiting for {} to pick stock options".format(self._game._currplayer)
 
     def serialize(self, forsave=False):
       return { 'bonuses': self._bonuses,
