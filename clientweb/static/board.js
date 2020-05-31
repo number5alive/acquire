@@ -19,7 +19,7 @@ function drawBoard(acquireBoard, boardinfo=defaultBoard){
         cell.className='acquireCell';
          
         // Optional - let the user click around and set tiles
-        cell.onclick = function() {boardClick(this.id);};
+        // cell.onclick = function() {boardClick(this.id);};
          
         // Add the column/row text as individual elements so we can resize
         var ctext=document.createElement("ctext");
@@ -51,7 +51,7 @@ function showOptions(tiles) {
   }
 }
 
-var lastclicked=null;
+//var lastclicked=null;
 function getLastClicked() {
   return lastclicked;
 }

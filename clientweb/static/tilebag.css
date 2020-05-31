@@ -56,7 +56,6 @@ h2 {
 }
 
 .rrow {
-  display: table;
   width:100%;
 }
  
@@ -306,7 +305,6 @@ border: 1px solid red;
    
   text-align: center;
   padding-bottom: 1px;
-  cursor: move;
   border-radius: 5px;
 }
 
@@ -415,7 +413,8 @@ border: 1px solid red;
   border-radius: 3px;
   background-color: grey;
   background-image: url("tile.png");
-  background-size: contain;
+  background-size: 100% 98%;
+  background-repeat: no-repeat;
   cursor: move;
 }
 
@@ -673,7 +672,7 @@ border: 1px solid red;
 }
 
 /* Responsive layout - when the screen is less than 800px wide, make the two columns stack on top of each other instead of next to each other */
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 700px) {
   .infocolumn, .maincolumn {   
     width: 100%;
     padding: 0;

@@ -9,23 +9,9 @@
   color: grey;
 }
  
-#dropzone {
-  bottom: 10px;
-  z-index: -5;
-  font-size: x-large;
-  line-height: 5px;
-  height: 30%;
-  width: 100%;
-  background-color: LightCyan;
-  text-align: center;
-  border: 1px solid #d3d3d3;
-  border-radius: 15px;
-}
- 
 #acquireBoard{
     display: inline-block;
-    border: 2px outset lightGray;
-    margin: 10px;
+    width: 100%;
 }
 
 #acquireBoard div{
@@ -49,8 +35,10 @@
 
 .acquireCell {
     display: inline-block;
-    width: 32px;
-    height: 32px;
+    position: relative;
+    width: 8%;
+    max-width: 50px;
+    padding-top: 1%;
     vertical-align: middle;
     text-align: center;
     font-family: eagleAcquire;
@@ -71,10 +59,12 @@
 }
  
 .occupied {
-  background-color: grey;
   color: black;
-  background-size: contain;
+  border-radius: 3px;
+  background-color: grey;
   background-image: url("tile.png");
+  background-size: 100% 98%;
+  background-repeat: no-repeat;
 }
 
 .highlighted {

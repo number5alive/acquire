@@ -20,6 +20,25 @@
 </head>
 <body>
 
+ 
+<div class="header">
+  <h1>TileBag!</h1>
+</div>
+
+<div class="row">
+  <div class="infocolumn">
+    <h2 style="text-align:center">PLAYERS</h2>
+    <div class="playerlist" id="playerlist">
+      <!-- This will get populated with the player names -->
+    </div>
+    <h2 style="text-align:center">GAME LOG</h2>
+    <div class="card">
+      <div class="messagelog"><ul id="messagelog"></ul></div>
+    </div>
+  </div>
+  <div class="maincolumn">
+   
+    
 <div class="mstick" id="messagebar">
   <div class="messages">
     <div class="endstatemessage notthere" id="endstatemessage">End condition(s) statisfied - current player can choose to trigger the end
@@ -153,24 +172,10 @@
     </div>
   </div>
 </div>
- 
-<div class="header">
-  <h1>TileBag!</h1>
-</div>
-
-<div class="row">
-  <div class="infocolumn">
-    <h2 style="text-align:center">PLAYERS</h2>
-    <div class="playerlist" id="playerlist">
-      <!-- This will get populated with the player names -->
-    </div>
-    <h2 style="text-align:center">GAME LOG</h2>
-    <div class="card">
-      <div class="messagelog"><ul id="messagelog"></ul></div>
-    </div>
-  </div>
-  <div class="maincolumn">
-    <div class="card notthere" id="vspectator">
+     
+      
+       
+    <div class="card p12 notthere" id="vspectator">
       <div class="rrow">
         <span class="p4 left">
           <h2>SPECTATORS</h2>
@@ -195,7 +200,7 @@
       </div>
     </div>
     <div class="card">
-      <div class="row">
+      <div class="rrow">
         <div class="hotelcolumn notthere">
           <div class=rrow>
             <h2 class="p8 left">HOTELS</h2>
@@ -204,21 +209,23 @@
           <div class="hotellist" id="hotellist">
           </div>
         </div>
-        <div class="boardcolumn">
-          <div class=row>
-            <h2 class="p8 left centered">BOARD</h2>
+        <div class="rrow" id="boardcolumn">
+          <div class="rrow">
+            <h2 class="p12 left centered">BOARD</h2>
           </div>
-          <div class="acquireBoard" style="height:300px;" id="acquireBoard"></div>
-          <div class="row">
-            <div id="outer">
-              <!-- This div is important! 
-              It lets us specify margin-left as percentage (in css loop) -->
-              <div>
-                  <div id="loop"><div id="content">Welcome to TileBag!&nbsp;</div></div>
+          <div class="rrow">
+            <div class="p12 left centered"><div class="acquireBoard" id="acquireBoard"></div></div>
+          </div>
+            <div class="rrow">
+              <div id="outer">
+                <!-- This div is important! 
+                It lets us specify margin-left as percentage (in css loop) -->
+                <div>
+                    <div id="loop"><div id="content">Welcome to TileBag!&nbsp;</div></div>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
