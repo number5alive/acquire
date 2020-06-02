@@ -217,6 +217,10 @@ div.messages {
   color: white;
 }
 
+.disabled {
+  opacity: 45%;
+}
+
 .notthere {
   display: none !important;
 }
