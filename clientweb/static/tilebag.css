@@ -335,6 +335,30 @@ border: 1px solid red;
   color: white;
 }
 
+.salesreceipt {
+}
+
+.salesreceipt table {
+  margin: 0;
+  padding: 0;
+}
+ 
+.salesreceipt tr th {
+  cursor: default;
+  position: relative;
+  padding: 1px;
+  list-style-type: none;
+  font-family: Arial;
+  font-size: small;
+  text-align: left;
+  
+  /* make the list items unselectable */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 .messagelog {
 }
 
@@ -344,7 +368,7 @@ border: 1px solid red;
 }
  
 .messagelog ul li {
-  cursor: pointer;
+  cursor: default;
   position: relative;
   padding: 1px;
   list-style-type: none;

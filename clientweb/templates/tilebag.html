@@ -80,8 +80,12 @@
         </span>
       </div>
       <div class="rrow">
-        <span class="p12 left centered" id="bslist">
-        <!-- Hotels will show up here -->
+        <span class="p8 left centered" id="bslist">
+          <!-- Hotels will show up here -->
+        </span>
+        <span class="p4 left salesreceipt"> <!-- sales receipt -->
+          <table id="salesreceipt">
+          </table>
         </span>
       </div>
       <div class="rrow">
@@ -855,14 +859,15 @@
 
     // hide the "buy" button
     document.getElementById('btnBuyStocks').disabled=false;
+     
+    updateSalesReceipt();
   }
 
   function bsBuyStocks() {
     var elhl=document.getElementById("bslist");
     
     // loop through all the hotels, see if it has a number, try to buy it
-    for( var i=0;i<HOTELS.length;i++ )
-    {
+    for( var i=0;i<HOTELS.length;i++ ) {
       // See what the count is, if it's bigger than one, try to buy it
       var count=getMultiSelectCount('BS', HOTELS[i].name);
       if( count > 0 ) {
@@ -892,14 +897,27 @@
       var maxmscount=getMultiSelectMaxCount('BS', h.name);
 
       if( currmscount < maxmscount ) {
-        // bump the count by one, update the UI buttons
-        setMultiSelectCount('BS', h.name, currmscount+1);
-         
-        elhl.dataset.currbuy = currbuy +1;
+        // Super close, now make sure the player has enough money
+        var mselem=document.getElementById('BS' +"_"+h.name); 
+        var price=parseInt(mselem.dataset.price);
+        var balance=parseInt(elhl.dataset.balance);
+        
+        if( balance - price > 0 ){
+          // bump the count by one, update the UI buttons
+          setMultiSelectCount('BS', h.name, currmscount+1);
+           
+          elhl.dataset.currbuy = currbuy +1;
 
-        // show the "buy" and the "clear" button
-        document.getElementById('btnBuyStocks').disabled=false;
-        document.getElementById('btnClearBSCnt').disabled=false;
+          // show the "buy" and the "clear" button
+          document.getElementById('btnBuyStocks').disabled=false;
+          document.getElementById('btnClearBSCnt').disabled=false;
+
+          updateSalesReceipt();
+        } else {
+          sendGameMessage("Not enough money");
+        }
+      } else {
+        sendGameMessage("No more stocks left");
       }
     }
   }
@@ -919,6 +937,54 @@
       newh.style.borderColor=h.color;
     }
   }
+
+  function formatAsMoney(value) {
+    return (new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0,})).format(value); 
+  }
+
+  function addReceiptRow(item, amount, color) {
+    var valstr=formatAsMoney(amount);
+    var style="";
+    if(amount < 0) {
+      valstr="(" + valstr + ")";
+    }
+    if(color != undefined)
+    {
+      style="style='color:" + color + "'";
+    }
+    return "<tr "+style+"><th>"+item+"</th><th>"+valstr+"</th></tr>";
+  }
+
+  function updateSalesReceipt() {
+    // Clear it
+    var elsr=document.getElementById('salesreceipt');
+    var elhl=document.getElementById("bslist");
+    var balance=parseInt(elhl.dataset.pmoney);
+     
+    var listHTML=addReceiptRow("Your Money", balance);
+     
+    // loop through hotel widgets, show what's being purchased
+    var bSelected=false;
+    for( var i=0;i<HOTELS.length;i++ ) {
+      // See what the count is, if it's bigger than one, show it
+      var count=getMultiSelectCount('BS', HOTELS[i].name);
+      if( count > 0 ) {
+        var mselem=document.getElementById('BS' +"_"+HOTELS[i].name); 
+        var price=parseInt(mselem.dataset.price);
+        listHTML+=addReceiptRow(HOTELS[i].name + " " +count+"@"+formatAsMoney(price),-(count*price), HOTELS[i].color);
+        balance-=(count*price);
+        bSelected=true;
+      }
+    }
+    //listHTML+="<tr style='color:green'><th>Festival 2@$200</th><th>$YYYY</th></tr>";
+     
+    if( bSelected ) {
+      listHTML+=addReceiptRow("Balance After", balance);
+    }
+      
+    elsr.innerHTML=listHTML;
+    elhl.dataset.balance=balance;
+  }
     
   function buildviewBuyStocks(data) {
     // Set the buttons to their initial state
@@ -937,9 +1003,12 @@
         var elbsh=createStockWidget(elhl, hl, 'BS', 'onBuyStockClick("'+hl.name+'")');
         setMultiSelectMaxCount('BS', hl.name, ghotels[i].stocks);
         if( ghotels[i].stocks == 0 ) {
-          elbsh.style.opacity="22%";
+          addEffect(EFFECT_DISABLED, elbsh);
+        } else {
+          removeEffect(EFFECT_DISABLED, elbsh);
         }
         addPriceToStockWidget('BS', hl, ghotels[i]);
+        elbsh.dataset.price=ghotels[i].price;
       }
     }
      
@@ -947,9 +1016,12 @@
     var maxbuy=data['game']['gamestate']['stateinfo']['canbuy'];
     elhl.dataset.maxbuy=maxbuy;
     elhl.dataset.currbuy=0;
+    elhl.dataset.pmoney=data['game']['you']['playerdata']['money'];
      
     var elmsg=document.getElementById("bsMessage");
     elmsg.innerText="Click to buy up to " + maxbuy + " stocks total";
+
+    updateSalesReceipt();
   }
 
   function soPassTurn() {
@@ -1063,6 +1135,8 @@
       // make sure the clear and the trade button show
       document.getElementById('btnSOTrade').disabled=false;
       document.getElementById('btnClearSOSCnt').disabled=false;
+    } else {
+      sendGameMessage("Not enough Stocks left");
     }
   }
 
@@ -1164,10 +1238,14 @@
     eltl.dataset.max=sellMax;
 
     // Disable the trade side if we don't have two to trade
-    if( sellMax < 2 ) {
+    if( sellMax < 2 || hwi.stocks == 0) {
       addEffect(EFFECT_DISABLED, eltw);
       addEffect(EFFECT_DISABLED, eltl);
+    } else {
+      removeEffect(EFFECT_DISABLED, eltw);
+      removeEffect(EFFECT_DISABLED, eltl);
     }
+    
   }
    
   function renderPlayerViewWhenActive(data) {
