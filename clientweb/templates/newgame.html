@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="{{ url_for('.static', filename='newgame.css') }}{{ cachefix }}">
   <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
    
-  <script src="{{ url_for('.static', filename='lobbyrest.js') }}{{ cachefix }}"></script>
+  <script src="{{ url_for('.static', filename='lobbyREST.js') }}{{ cachefix }}"></script>
     
 </head>
 <body>
@@ -37,7 +37,7 @@
 <script>
  
 // query state of game (exists, players, running)
-var game_data=callREST_getGameInfo();
+var game_data=lobbyREST_getGameInfo("{{ url_for('lobbyrest_blueprint.rest_lobby_get_game_info', gameid=gameid) }}");
  
 // Let the user hit "enter" when entering names
 var input = document.getElementById("myInput");
@@ -90,7 +90,7 @@ async function showGameInfo(data) {
 async function startGame(data) {
   var bRet=true;
   // Get the game data, if it doesn't exist, create the game
-  await data.catch(err => bRet=callREST_createGame());
+  await data.catch(err => bRet=lobbyREST_createGame("{{ url_for('lobbyrest_blueprint.rest_lobby_make_game', gameid=gameid) }}", "{{gameid}}"));
   await bRet;
 
   // add players to the game and try to start it
@@ -100,8 +100,10 @@ async function startGame(data) {
     await bRet;
     if( bRet ) {
       console.log("players all created (?), starting the game");
-      callREST_startGame();
-      location.reload();
+      lobbyREST_startGame("{{ url_for('lobbyrest_blueprint.rest_lobby_patch_game_state', gameid=gameid) }}")
+        .then( value => {console.log("seemed to have worked");
+                         location.reload(); })
+        .catch( err => {console.log("que? " + err.message);} );
     }
     else {
       console.log("must've failed to add a player... that's awkward");
@@ -114,6 +116,7 @@ async function startGame(data) {
  
 async function addAllPlayers() {
   var ul = document.getElementById("myUL");
+  var bRet = true;// presume success
   var promises=[];
   
   var lis = ul.getElementsByTagName("li");
@@ -126,12 +129,15 @@ async function addAllPlayers() {
     var pname = pname.replace("\n", "");
     console.log("trying to add " + pname);
      
-    var bRet=callREST_addPlayer(pname);
-    promises.push(bRet);
+    var res=lobbyREST_addPlayer("{{ url_for('lobbyrest_blueprint.rest_lobby_join_game', gameid=gameid) }}", pname)
+            .catch( err => { bRet=false;});
+    promises.push(res);
   }
 
   console.log("asked to create all players, waiting for those to finish");
   await Promise.all(promises);
+  // if we wait for this, and bRet is still true, then none failed
+  /*
   console.log("done - return sum of results");
   for(var i=0; i<promises.length; i++)
   {
@@ -140,79 +146,9 @@ async function addAllPlayers() {
     }
   }
   return true;
+  */
+  return bRet;
 }
-
-async function callREST_getGameInfo() {
-  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_get_game_info', gameid=gameid) }}");
-   
-  await response.status;
-  if( response.status != 200 ) {
-    return Promise.reject(response.status);
-  }
-   
-  return response.json();
-}
-  
-async function callREST_createGame() {
-  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_make_game', gameid=gameid) }}", {
-              method: 'POST', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                              'gametype' : 'TileBag',
-                              'gameid' : "{{gameid}}", })
-                },
-              );
-                 
-    await response.status;
-    if( response.status == 200 || response.status == 201) {
-      return true;
-    } else {
-      console.log("Failed to create a new game");
-    }
-    return false;
-}
- 
-async function callREST_addPlayer(player) {
-  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_join_game', gameid=gameid) }}", {
-              method: 'POST', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'name': player})
-                },
-              );
-                 
-    await response.status;
-    if( response.status == 200 || response.status == 201) {
-      return true;
-    } else {
-      console.log("Failed to add player");
-    }
-    return false;
-}
- 
-async function callREST_startGame() {
-  const response = await fetch("{{ url_for('lobbyrest_blueprint.rest_lobby_patch_game_state', gameid=gameid) }}", {
-              method: 'PATCH', 
-                headers: {
-                  Accept: 'application/json',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 'action': 'start'})
-                },
-              );
-                 
-    await response.status;
-    if( response.status == 200 ) {
-    } else if( response.status == 400 ) {
-    } else {
-    }
-}
-
 
 </script>
 

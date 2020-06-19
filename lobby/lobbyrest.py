@@ -32,6 +32,9 @@ def rest_lobby_get_games():
 # POST /games Create a new game
 @lobbyrest_blueprint.route(BASEURI + '/games', methods=['POST'])
 def rest_lobby_make_game():
+  errno=400
+  errmsg="No game type specified"
+   
   if request.json:
     if 'game' in request.json:
       print("Loading a Saved game from JSON")
@@ -47,23 +50,25 @@ def rest_lobby_make_game():
       if 'gameid' in request.json:
         req_gid=request.json['gameid']
         if DataIf.getGameById(req_gid) is not None:
-          print("that game already exists")
-          abort(409)
+          errmsg="that game already exists"
+          errno=409
        
       req_gtype=request.json['gametype']
       if getGameInfo(req_gtype) is None:
-        print("asking for a game that doesn't exist")
-        abort(404)
+        errmsg="asking for a game that doesn't exist"
+        errno=404
          
       newGame=DataIf.createGame(req_gtype, req_gid)
       if newGame:
         return Response(request.base_url + '/' + str(newGame.id), status=201)
       else:
-        abort(404) # couldn't create the game
-
-  print("didn't specify the game type to create")
-  abort(400)
-      
+        errno=404
+        errmsg="Unable to create the game - Server Error"
+    else:
+      print("didn't specify the game type to create")
+   
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
    
 # GET /games/id Get details about a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['GET'])
@@ -85,9 +90,13 @@ def rest_lobby_delete_game(gameid):
 # PATCH /games/id Start or Stop a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>', methods=['PATCH'])
 def rest_lobby_patch_game_state(gameid):
+  errno=404
+  errmsg="No Such Game"
+   
   # Find the game they want to alter
   req_game=DataIf.getGameById(gameid)
   if req_game is not None:
+    errno=400
     if request.json and 'action' in request.json:
       action=request.json['action']
 
@@ -97,8 +106,7 @@ def rest_lobby_patch_game_state(gameid):
           DataIf.updateGame(gameid)
           return jsonify({'success':True})
         else:
-          print("Game not started, cannot stop it")
-          abort(400)
+          errmsg="Game not started, cannot stop it"
 
       elif action == "start" or action == "restart":
         # if it's a reset, do that, then do the normal start stuff
@@ -116,24 +124,21 @@ def rest_lobby_patch_game_state(gameid):
             # return the URL for the running game (maybe tilebag/<id>?)
             return Response(request.host_url[:-1] + req_game.starturl() + '/' + str(gameid), status=201)
           else:
-            print("Not enough players to play yet")
-            abort(400)
+            errmsg="Not enough players to play yet"
              
         # Or if they were on glue
         else:
-          print("Game already started")
-          abort(400)
+          errmsg="Game already started"
 
       else:
-        print("Invalid action ({}) specified".format(action))
-        abort(400)
+        errmsg="Invalid action ({}) specified".format(action)
     else:
-      print("no json, or no 'action' tag in that json")
-      abort(400)
+      errmsg="no json, or no 'action' tag in that json"
   else:
-    print("some dummy just tried to twiddle with a non existent game")
+    errmsg="some dummy just tried to twiddle with a non existent game"
   
-  abort(404) # Couldn't find the game
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
    
 # GET /games/<id>/players List all the players playing a specific game
 @lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>/players', methods=['GET'])
@@ -160,32 +165,38 @@ def rest_lobby_get_player_info(gameid, playerid):
 # TODO: get the USER info from the logged in person, not the post data
 @lobbyrest_blueprint.route(BASEURI + '/games/<string:gameid>/players', methods=['POST'])
 def rest_lobby_join_game(gameid):
+  errno=404
+  errmsg="No Such Game"
+   
   # Get the user that wants to the join the game
   print(request.json)
-  if not request.json or not 'name' in request.json:
-    print("something wrong with the json")
-    abort(400)
-  newPlayerName=request.json['name']
-  print("player name from json is {}".format(newPlayerName))
+  if request.json and 'name' in request.json:
+    newPlayerName=request.json['name']
+    print("player name from json is {}".format(newPlayerName))
 
-  # Find the game they want to join
-  req_game=DataIf.getGameById(gameid)
-  if req_game is not None:
-    # make sure there's room for one more at the table
-    num_players, players=req_game.players
-    if num_players >= req_game.maxPlayers():
-      print("whoa-la, already at the max for players")
-      abort(409)
-     
-    print("cool cool, try to add this player to the game!")
-    newPlayerId=hashlib.sha256(gameid.encode('utf-8')).hexdigest()[:4] + str(num_players+1)
-    #newPlayerId=(gameid<<8)+(num_players+1)
-    print("newPlayerId == " + str(newPlayerId))
-    if req_game.addPlayer(req_game.newPlayer(newPlayerId,name=newPlayerName)):
-      DataIf.updateGame(gameid)
-      return Response(request.base_url + '/' + str(newPlayerId), status=201)
-    else:
-      abort(500) #that's odd
+    # Find the game they want to join
+    req_game=DataIf.getGameById(gameid)
+    if req_game is not None:
+      # make sure there's room for one more at the table
+      num_players, players=req_game.players
+      if num_players >= req_game.maxPlayers():
+        errmsg="whoa-la, already at the max for players"
+        errno=409
+       
+      print("cool cool, try to add this player to the game!")
+      newPlayerId=hashlib.sha256(gameid.encode('utf-8')).hexdigest()[:4] + str(num_players+1)
+      #newPlayerId=(gameid<<8)+(num_players+1)
+      print("newPlayerId == " + str(newPlayerId))
+      if req_game.addPlayer(req_game.newPlayer(newPlayerId,name=newPlayerName)):
+        DataIf.updateGame(gameid)
+        return Response(request.base_url + '/' + str(newPlayerId), status=201)
+      else:
+        errmsg="Internal error"
+        errno=500 #that's odd
   else:
-    abort(404) #no such game
+    errmsg="something wrong with the json"
+    errno=400
+     
+  print("ERROR=({})-{}".format(errno, errmsg))
+  return jsonify({'message': errmsg}), errno
 
