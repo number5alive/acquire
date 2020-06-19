@@ -902,7 +902,7 @@
         var price=parseInt(mselem.dataset.price);
         var balance=parseInt(elhl.dataset.balance);
         
-        if( balance - price > 0 ){
+        if( balance - price >= 0 ){
           // bump the count by one, update the UI buttons
           setMultiSelectCount('BS', h.name, currmscount+1);
            
