@@ -3,3 +3,5 @@ __pycache__
 .BoardTest.py.swo
 data.json
 game.json
+.vagrant
+ubuntu-xenial-16.04-cloudimg-console.log

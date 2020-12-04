@@ -10,8 +10,18 @@ clientweb - a client that visits the lobby and can play/render the game
 ### About coding choices
 Mostly this project was to play around with some 'raw' technologies, so I don't use a lot of plugins and frameworks that likely would have made this trivial. It's ultimately just python, javascript, and css. I used flask for the webserver, and a last-minute addition of the flask-socketio plugin was to enable real-time-ish notification of other clients when someone makes a change to the game state - right now it just instructs the client to fetch the game state again via the REST interface
 
+### If you want to leverage Vagrant and contain all this yumminess in its own virtual machine
+Install Vagrant and VirtualBox
+Get the right base VM from hashicorp
+$ vagrant box add ubuntu/xenial64
+And spin that puppy up, wait, then ssh into it (It'll make sure the vm has the right tools for ya)
+$ vagrant up
+$ vagrant ssh
+
 ### Running / Testing the code
 Create a virtual-env and install the dependencies
+$ python3 -mvenv ~/blah
+$ source ~/blah/bin/activate
 (virtual-env) $ pip3 install -r requirements.txt
 NOTE: run these apps from the root folder via:
 (virtual-env) $ python3 -m server
