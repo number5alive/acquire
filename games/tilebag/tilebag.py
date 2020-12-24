@@ -261,6 +261,10 @@ class TileBagGame(Game, StateEngine):
   #   - with the last one having a few sub-states, but that's okay
 
   def endTurnAction(self):
+    # Get rid of any permanently unplayable tiles
+    if len(self._currplayer._pinvalid) > 0:
+      print("getting rid of permanenently unplayable tiles: {}".format(self._currplayer._pinvalid))
+           
     # Give player a new tile, rotate to the next player and state
     if self.tilebag.isEmpty():
       print("Tilebag exhausted, trigger end-game state")
@@ -312,63 +316,78 @@ class TileBagGame(Game, StateEngine):
       return False, "ILLEGAL EVENT - StartGame when not in StartGame State", self
 
   class PlaceTile(State):
+    def __init__(self, game):
+      self._game=game
+      self._game._currplayer._pinvalid=[] # permanently invalid tiles
+      self._game._currplayer._tinvalid=[] # temporarily invalid tiles (e.g. all hotels on board)
+       
+      # Check if current player has unplayable tiles
+      bAllHotelsOnBoard=sum(h.size > 0 for h in self._game.hotels) == len(self._game.hotels)
+      print("bAllHotelsOnBoard = {}".format(bAllHotelsOnBoard))
+      # for every tile
+      for tile in self._game._currplayer.tiles:
+        conn, hn = self._game._getBorderingSpaces(tile)
+   
+        # check if bordering more than one hotel of size 11
+        if sum(h.size >= 11 for h in hn) >= 2:
+          self._game._currplayer._pinvalid.append(tile)
+
+        elif bAllHotelsOnBoard:
+          # if it's in the conn list, but not in an hn, then it WOULD create a new hotel, which isn't allowed right now
+          if len(hn) == 0 and len(conn) > 0:
+            self._game._currplayer._tinvalid.append(tile)
+
+      print("pinvalid={}, tinvalid={}".format(self._game._currplayer._pinvalid, self._game._currplayer._tinvalid))
+
+
     def toHuman(self):
       return "Waiting on {} to play a tile".format(self._game._currplayer)
+
+    def _canPlayTile(self, tile):
+      # NOTE: this tile MIGHT be between two tiles, in that case we need
+      #       to ensure it doesn't cause a "merger" until one of those
+      #       hotels gets removed, therefore:
+       
+      # put tile on the board, and presume it'll be between two tiles
+      # now verify that fact for this tile, cleanup if we were wrong
+      self._game.board.placeTile(tile)
+      self._game._conflictTiles.append(tile)
+      self._game.checkTileNextToHotel(tile)
+      self._game._log.recordTileAction(self._game._currplayer.name, str(tile))
+      self._game._currplayer.removeTile(tile)
+      print("Played Tile: {}".format(tile))
+       
+      if len(self._game._conflictTiles) > 0:
+        return True, "", self._game._resolveMerger(self._game, tile)
+       
+      # more than one tile borders, and none are hotels, New Hotel!
+      conn, hn = self._game._getBorderingSpaces(tile)
+      if len(conn) > 0 and len(hn) == 0:
+        return True, "", TileBagGame.PlaceHotel(self._game, tile)
+       
+      # If there's no stocks to buy, skip to next person
+      bStocksAvailable=sum(h.nstocks for h in self._game.hotels if h.size > 0) > 0
+      if not bStocksAvailable:
+        return self._game.endTurnAction()
+         
+      # Default after playing a tile is to buy stocks
+      return True, "", TileBagGame.BuyStocks(self._game)
+
 
     def on_event(self, event, **kwargs):
       errmsg="ILLEGAL EVENT - {} when in state PlaceTile".format(event)
       if event == 'PlaceTile':
         tile=kwargs.get('tile',None)
         if tile in self._game._currplayer.tiles:
-          # check for no hotels on the board
-          # or no stocks left in hotels on the board
-          bHotelsOnBoard=False
-          bAllHotelsOnBoard=True
-          bStocksAvailable=False
-          ofSize11=0
-          conn, hn = self._game._getBorderingSpaces(tile)
-          for h in self._game.hotels:
-            if h.size > 0:
-              bHotelsOnBoard=True
-              if h.nstocks > 0:
-                bStocksAvailable=True
-              if h in hn and h.size >= 11:
-                ofSize11+=1
-            else:
-              bAllHotelsOnBoard=False
-              
-          # Check for illegal move (borders two hotels of size 11, or
-          #       All hotels on the board and this would make another)
-          bWouldMakeNewHotel=len(conn) > 0 and len(hn) == 0
-          if (ofSize11 >= 2) or (bAllHotelsOnBoard and bWouldMakeNewHotel):
-            return False, "ERROR - Illegal Tile Move: {}".format("Would make a new hotel when all are on the board" if bAllHotelsOnBoard else "Would join two safe hotels"), self
-           
-          # NOTE: this tile MIGHT be between two tiles, in that case we need
-          #       to ensure it doesn't cause a "merger" until one of those
-          #       hotels gets removed, therefore:
-           
-          # put tile on the board, and presume it'll be between two tiles
-          # now verify that fact for this tile, cleanup if we were wrong
-          self._game.board.placeTile(tile)
-          self._game._conflictTiles.append(tile)
-          self._game.checkTileNextToHotel(tile)
-          self._game._log.recordTileAction(self._game._currplayer.name, str(tile))
-          self._game._currplayer.removeTile(tile)
-          print("Played Tile: {}".format(tile))
-           
-          if len(self._game._conflictTiles) > 0:
-            return True, "", self._game._resolveMerger(self._game, tile)
-           
-          # more than one tile borders, and none are hotels, New Hotel!
-          if bWouldMakeNewHotel:
-            return True, "", TileBagGame.PlaceHotel(self._game, tile)
-           
-          # If there's no stocks to buy, skip to next person
-          if not bStocksAvailable:
-            return self._game.endTurnAction()
+          if tile not in self._game._currplayer._pinvalid:
+            if tile not in self._game._currplayer._tinvalid:
+              return self._canPlayTile(tile)
              
-          # Default after playing a tile is to buy stocks
-          return True, "", TileBagGame.BuyStocks(self._game)
+            else:
+              errmsg="ERROR - Illegal Tile Move: Would make a new hotel when all are on the board"
+          else:
+              errmsg="ERROR - Illegal Tile Move: Would join two safe hotels"
+            
         else:
           errmsg="{} is not in {}".format(tile, self._game._currplayer.tiles)
 

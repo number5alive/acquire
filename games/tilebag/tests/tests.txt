@@ -2,7 +2,8 @@ t1.json - close to a merger of two hotels, different sizes
 t2.json - a few merger options: two the same, and two different sized
 t3.json - a three-way merge, with same sized hotels
 t4.json - 
-t5.json - a game that is in the end-state
+t5.json - XXX didn't work XXX a game that is in the end-state
+t6.json - a game with all hotels and some of size 11
  
 # Run these by posting to the REST (game can't exist first or it won't work)
 $ curl -i -H "Content-Type: application/json" -X POST -d @t3.json http://localhost:5000/gamelobby/v1/games

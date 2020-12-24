@@ -1,0 +1,322 @@
+{
+  "game": {
+    "gamedata": {
+      "bag": [
+        "10D", 
+        "5H", 
+        "11E", 
+        "8G", 
+        "10A", 
+        "6F", 
+        "8A", 
+        "3D", 
+        "1H", 
+        "7I", 
+        "5F", 
+        "11H", 
+        "9D", 
+        "10E", 
+        "3B", 
+        "7D", 
+        "2D", 
+        "11D", 
+        "5A", 
+        "1D", 
+        "9A", 
+        "8F", 
+        "12H", 
+        "2B", 
+        "6B", 
+        "7H", 
+        "8I", 
+        "5I", 
+        "8H", 
+        "8E", 
+        "11F", 
+        "8D", 
+        "11G", 
+        "6H", 
+        "4D", 
+        "9C", 
+        "12C"
+      ], 
+      "board": {
+        "ncols": 12, 
+        "nrows": 9, 
+        "occupied": [
+          "1A", 
+          "4A", 
+          "12A", 
+          "1B", 
+          "4B", 
+          "5B", 
+          "8B", 
+          "9B", 
+          "11B", 
+          "1C", 
+          "2C", 
+          "4C", 
+          "5C", 
+          "6C", 
+          "7C", 
+          "11C", 
+          "6D", 
+          "12D", 
+          "2E", 
+          "5E", 
+          "6E", 
+          "7E", 
+          "12E", 
+          "1F", 
+          "2F", 
+          "4F", 
+          "9F", 
+          "1G", 
+          "2G", 
+          "3G", 
+          "4G", 
+          "5G", 
+          "6G", 
+          "7G", 
+          "9G", 
+          "10G", 
+          "2H", 
+          "9H", 
+          "1I", 
+          "4I", 
+          "9I", 
+          "10I", 
+          "12I"
+        ]
+      }, 
+      "gamelog": [
+        "Tower has been placed on the board at 8B", 
+        "FS&SnB played tile 8B", 
+        "Festival has been placed on the board at 12E", 
+        "Higgs played tile 12E", 
+        "Tower has been removed from the board", 
+        "Higgs is keeping 2 stocks in Tower", 
+        "Higgs received MINORITY shareholder bonus of 3500", 
+        "Higgs received MAJORITY shareholder bonus of 7000", 
+        "Resolving Takeover of Tower - shareholders: ['Higgs=2 ', 'Colleen=0 ', 'Geoff=0 ', 'FS&SnB=0 ']", 
+        "*** Continental is buying out Tower ***", 
+        "Geoff played tile 3G", 
+        "Colleen played tile 2E", 
+        "FS&SnB played tile 4I", 
+        "Festival has been removed from the board", 
+        "Colleen is keeping 1 stocks in Festival", 
+        "FS&SnB is keeping 4 stocks in Festival", 
+        "Higgs is keeping 2 stocks in Festival", 
+        "Higgs received MINORITY shareholder bonus of 2500", 
+        "FS&SnB received MAJORITY shareholder bonus of 5000", 
+        "Resolving Takeover of Festival - shareholders: ['FS&SnB=4 ', 'Higgs=2 ', 'Colleen=1 ', 'Geoff=0 ']", 
+        "*** Imperial is buying out Festival ***", 
+        "Higgs played tile 5C", 
+        "Geoff played tile 9B", 
+        "Game Created"
+      ], 
+      "gamestate": {
+        "currplayer": {
+          "id": "513", 
+          "name": "Colleen"
+        }, 
+        "message": "Waiting on Colleen to play a tile", 
+        "state": "PlaceTile", 
+        "stateinfo": {}
+      }, 
+      "hotels": [
+        {
+          "charttype": "low", 
+          "name": "Worldwide", 
+          "occupies": [
+            "11C", 
+            "11B"
+          ], 
+          "stocks": 23, 
+          "tile": "11C"
+        }, 
+        {
+          "charttype": "low", 
+          "name": "Saxxon", 
+          "occupies": [
+            "1A", 
+            "1B", 
+            "1C", 
+            "2C"
+          ], 
+          "stocks": 15, 
+          "tile": "2C"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "Festival", 
+          "occupies": [
+            "12E", 
+            "12D"
+          ], 
+          "stocks": 17, 
+          "tile": "12E"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "Imperial", 
+          "occupies": [
+            "5C", 
+            "5B", 
+            "4B", 
+            "4A", 
+            "4C", 
+            "6C", 
+            "6D", 
+            "6E", 
+            "5E", 
+            "7E", 
+            "7C"
+          ], 
+          "stocks": 16, 
+          "tile": "6E"
+        }, 
+        {
+          "charttype": "mid", 
+          "name": "American", 
+          "occupies": [
+            "9G", 
+            "9F", 
+            "9H", 
+            "9I", 
+            "10I", 
+            "10G"
+          ], 
+          "stocks": 20, 
+          "tile": "10I"
+        }, 
+        {
+          "charttype": "high", 
+          "name": "Continental", 
+          "occupies": [
+            "3G", 
+            "2G", 
+            "2F", 
+            "2E", 
+            "1F", 
+            "1G", 
+            "2H", 
+            "4G", 
+            "4F", 
+            "5G", 
+            "6G", 
+            "7G"
+          ], 
+          "stocks": 21, 
+          "tile": "2G"
+        }, 
+        {
+          "charttype": "high", 
+          "name": "Tower", 
+          "occupies": [
+            "8B", 
+            "9B"
+          ], 
+          "stocks": 22, 
+          "tile": "8B"
+        }
+      ]
+    }, 
+    "id": "t6", 
+    "name": "TileBag", 
+    "numplayers": 4, 
+    "players": [
+      {
+        "id": "513", 
+        "name": "Colleen", 
+        "playerdata": {
+          "money": 3200, 
+          "stocks": {
+            "Continental": 3, 
+            "Festival": 1, 
+            "Imperial": 1, 
+            "Saxxon": 2
+          }, 
+          "tiles": [
+            "12F", 
+            "11A", 
+            "3E", 
+            "3I", 
+            "3H", 
+            "7A", 
+            "8C"
+          ]
+        }
+      }, 
+      {
+        "id": "514", 
+        "name": "Geoff", 
+        "playerdata": {
+          "money": 2700, 
+          "stocks": {
+            "Continental": 1, 
+            "Imperial": 2, 
+            "Saxxon": 4
+          }, 
+          "tiles": [
+            "3A", 
+            "1E", 
+            "11I", 
+            "7F", 
+            "9E", 
+            "4H", 
+            "10F"
+          ]
+        }
+      }, 
+      {
+        "id": "515", 
+        "name": "Higgs", 
+        "playerdata": {
+          "money": 15200, 
+          "stocks": {
+            "American": 2, 
+            "Festival": 3, 
+            "Imperial": 4, 
+            "Saxxon": 2, 
+            "Tower": 2
+          }, 
+          "tiles": [
+            "6A", 
+            "7B", 
+            "2I", 
+            "10H", 
+            "3F", 
+            "3C", 
+            "4E"
+          ]
+        }
+      }, 
+      {
+        "id": "516", 
+        "name": "FS&SnB", 
+        "playerdata": {
+          "money": 6300, 
+          "stocks": {
+            "American": 3, 
+            "Festival": 4, 
+            "Imperial": 2, 
+            "Saxxon": 2, 
+            "Tower": 1, 
+            "Worldwide": 2
+          }, 
+          "tiles": [
+            "6I", 
+            "12B", 
+            "10C", 
+            "2A", 
+            "5D", 
+            "12G", 
+            "10B"
+          ]
+        }
+      }
+    ], 
+    "started": true
+  }
+}
