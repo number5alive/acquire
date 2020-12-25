@@ -262,14 +262,16 @@ class TileBagGame(Game, StateEngine):
 
   def endTurnAction(self):
     # Get rid of any permanently unplayable tiles
-    if len(self._currplayer._pinvalid) > 0:
-      print("getting rid of permanenently unplayable tiles: {}".format(self._currplayer._pinvalid))
+    for invt in self._currplayer._pinvalid:
+      self._log.recordGameMessage("Tile {} Discarded - Permanently unplayable".format(invt))
+      self._currplayer.removeTile(invt)
            
     # Give player a new tile, rotate to the next player and state
-    if self.tilebag.isEmpty():
-      print("Tilebag exhausted, trigger end-game state")
-    else:
-      self._currplayer.receiveTile(self.tilebag.takeTile())
+    while len(self._currplayer.tiles) < 7:
+      if self.tilebag.isEmpty():
+        print("Tilebag exhausted, trigger end-game state")
+      else:
+        self._currplayer.receiveTile(self.tilebag.takeTile())
        
     # turn is over, go to EndGame state instead of the next player
     if self._endrequested:
