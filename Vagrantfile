@@ -67,4 +67,7 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y python3.8 python3.8-venv python3-pip ipython3 git
   SHELL
+   
+  config.vm.provision "shell", path: "./gcloud.sh"
+   
 end
