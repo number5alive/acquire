@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import url_for, send_from_directory
+from flask import url_for, send_from_directory, render_template
 import os
 from lobby.lobbyrest import lobbyrest_blueprint
 from games.tilebag.tilebagrest import tilebagrest_blueprint, TILEBAGREST_URL
@@ -26,6 +26,11 @@ def favicon():
   print(ficodir)
   return send_from_directory(ficodir, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
  
+@app.route('/', methods=['GET'])
+def show_landing():
+  """ Landing Page """
+  return render_template('index.html')
+
 @socketio.on('connect')
 def on_connect():
     print("websocket connection")

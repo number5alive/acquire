@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='newgame.css') }}{{ cachefix }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
+
+<style>
+  #page-container {
+    position: relative;
+    min-height: 100vh;
+  }
+  #content-wrap {
+    padding-bottom: 2.5rem;
+  }
+  #footer {
+    font-family: Arial, sans-serif;
+    font-size: small;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2.5rem;
+  }
+</style>
+</head>
+<body>
+ 
+<div id="page-container">
+<div id="content-wrap">
+<div class="header">
+  <h1>Welcome to TileBag!</h1>
+</div>
+
+<div class="row">
+	<p style="text-align:center">To start a new game, simply add any words to the end of the URL above! <br>E.g. <i>tilebag.ca/somewordshere</i></p>
+</div>
+
+<div class="row">
+Or just click here to <span onclick="startGame()" id="startBtn" class="startBtn">Start a new game!</span>
+</div>
+</div> <!-- content-wrap -->
+<footer id="footer">
+	<a href='{{ url_for('lobby_blueprint.apiinfo') }}'>Rest API Info</a>
+</footer>
+</div> <!-- page-container -->
+
+</body>
+<script>
+async function startGame() {
+  console.log("Hi Steve");
+  let gameid=Math.random().toString(36).substring(2,15);
+  let newurl="{{ url_for('lobby_blueprint.lobby_new_game', gameid='') }}"+gameid.toString();
+  console.log(newurl);
+
+  window.location=newurl;
+}
+</script>
+</html>
+
+

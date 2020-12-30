@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='newgame.css') }}{{ cachefix }}">
+  <link rel="stylesheet" href="{{ url_for('.static', filename='tilebag.css') }}{{ cachefix }}">
+
+<style>
+  #page-container {
+    position: relative;
+    min-height: 100vh;
+  }
+  #content-wrap {
+    padding-bottom: 2.5rem;
+  }
+  #footer {
+    font-family: Arial, sans-serif;
+    font-size: small;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2.5rem;
+  }
+</style>
+</head>
+<body>
+ 
+<div id="page-container">
+<div id="content-wrap">
+<div class="header">
+  <h1>Rest API Info</h1>
+</div>
+
+<div class="row" style="font-family: Arial, sans-serif;">
+	LobbyREST
+	<br> &nbsp [GET] {{ url_for('lobbyrest_blueprint.rest_lobby_get_gametypes') }}
+	&nbsp &nbsp Get the list of types of games running on this platform
+	<br> &nbsp [GET|POST] {{ url_for('lobbyrest_blueprint.rest_lobby_get_games') }}
+	&nbsp &nbsp Get the list of active games, Add to the list of active games
+	<br> &nbsp [GET|DELETE|PATCH] {{ url_for('lobbyrest_blueprint.rest_lobby_get_game_info',gameid='gameid') }}
+	&nbsp &nbsp Get or interact with a specific game
+	<br> &nbsp [GET|POST] {{ url_for('lobbyrest_blueprint.rest_lobby_get_players',gameid='gameid') }}
+	&nbsp &nbsp Get list of players in a specific game, or add a player to this game
+	<br> &nbsp [GET] {{ url_for('lobbyrest_blueprint.rest_lobby_get_player_info',gameid='gameid', playerid='playerid') }}
+	&nbsp &nbsp Get player specific info in a specific game
+	<br><br><br>
+	TileBagREST
+	<br> &nbsp [GET] {{ url_for('tilebagrest_blueprint.rest_tilebag_get_game_info', gameid='gameid') }}
+	&nbsp &nbsp Get public game info
+	<br> &nbsp [PATCH] {{ url_for('tilebagrest_blueprint.rest_tilebag_trigger_end', gameid='gameid') }}
+	&nbsp &nbsp Trigger the end of the game
+	<br> &nbsp [GET] {{ url_for('tilebagrest_blueprint.rest_tilebag_save_game', gameid='gameid') }}
+	&nbsp &nbsp Get game info in a format that can be reloaded in the future
+	<br> &nbsp [PATCH] {{ url_for('tilebagrest_blueprint.rest_tilebag_placetile', gameid='gameid') }}
+	&nbsp &nbsp Place a tile in a running game
+	<br> &nbsp [PATCH] {{ url_for('tilebagrest_blueprint.rest_tilebag_placehotel', gameid='gameid') }}
+	&nbsp &nbsp Place a hotel in a running game
+	<br> &nbsp [PATCH] {{ url_for('tilebagrest_blueprint.rest_tilebag_stocks', gameid='gameid') }}
+	&nbsp &nbsp Buy or Sell stocks
+	<br> &nbsp [PATCH] {{ url_for('tilebagrest_blueprint.rest_tilebag_money', gameid='gameid') }}
+	&nbsp &nbsp Spend or Receive money (shouldn't have to use this)
+<div>
+</body>
+</html>
+
+
+
