@@ -46,6 +46,7 @@
             <button onclick="onEndGame()" class="p4 right clr" id="btnEndGame">Trigger Game End</button></div>
     <div class="gamestate" id="gamestate"></div>
     <div class="gamemessage" id="gamemessage"></div>
+    <span class="websocketstate" id="wsstate" ></span>
     <div class="card notthere" id="vmergedetails">
       <div class="rrow">
         <span class="p3 left">
@@ -1450,6 +1451,21 @@
     socket.emit('join', {'room':'{{ gameid }}'});     
     socket.on('connect', function() {
         console.log("*** WS:Connected: " + url);
+        document.getElementById('wsstate').style.backgroundColor="lightgreen";
+        document.getElementById('wsstate').dataset.connected=true;
+    });
+    function socketConnectionDropped() {
+        document.getElementById('wsstate').style.backgroundColor="red";
+        document.getElementById('wsstate').dataset.connected=false;
+    }
+    
+    socket.on('disconnect', function() {
+        console.log("*** WS:Disconnected?!: " + url);
+	socketConnectionDropped();
+    });
+    socket.on('connect_error', function() {
+        console.log("*** WS:Connection Error?!: " + url);
+	socketConnectionDropped();
     });
 
     socket.on('update', function(data) {
@@ -1457,7 +1473,7 @@
       rendergame();
     });
   }
-   
+
   function enableCollapsables() {
     var coll = document.getElementsByClassName("collapsible");
     var i;
