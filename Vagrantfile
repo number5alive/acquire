@@ -70,4 +70,7 @@ Vagrant.configure("2") do |config|
    
   config.vm.provision "shell", path: "./gcloud.sh"
    
+  config.vm.provision "file", source: "~/.gitconfig", destination: ".gitconfig"
+  config.vm.provision "file", source: "~/.vimrc", destination: ".vimrc"
+
 end
