@@ -368,10 +368,6 @@
                           });
   }
 
-  // Called when a hotel tile starts or stops being dragged
-  function onHotelDrag(hotel, done=false) {
-  }
-
   function getMultiSelectId(itemtype, hname) {
     return "ms_" + itemtype + "_" + hname;
   }
@@ -1425,13 +1421,6 @@
       sc.id = "sc_" + hotel.name;
       sc.innerText="#";
       hi.appendChild(sc)
-       
-       /*
-      // drop hotel on stocks to buy stock, on board to place hotel
-      makeTileDragable(hi, [[el_stockrack, 'buystock'],
-                            [el_gameboard, 'placehotel'],
-                            [el_rmhotelzone, 'rmhotel']], onHotelDrag);
-      */
     }
     HOTELS.forEach(h => buildHotelName(h));
      

@@ -1,34 +1,13 @@
+/* WARNING: very little of this code is salvageable! toss it out and start again! */
+/* Got lazy and using addEffect code from tilebag.html, so this isn't even self-contained anymore! */
+
 const NUMTILES=7;
- 
-function makeTileRack(rackelem, dropzone=null){
-  for(var i=0;i<NUMTILES;i++)
-  {
-    var ph=document.createElement('span');
-    ph.className='tilerack';
-    rackelem.appendChild(ph);
-  }
 
-  window.addEventListener("resize", function(){sizeTiles(rackelem);});
-}
-
-function sizeTiles(rackelem) {
-  // Iterate through the objects on the rack, make all tiles movable
-  for (var i = 0; i < rackelem.childNodes.length; i++) {
-    if (rackelem.childNodes[i].childNodes.length != 0 &&
-        rackelem.childNodes[i].childNodes[0].className == "tile") {
-      sizeTile(rackelem.childNodes[i].childNodes[0],rackelem.childNodes[i]);
-    }
-  }
-}
-
-function sizeTile(tile, rackpos) {
-  var tilesize=rackpos.clientWidth;
-  tilesize-=25;
-  tile.style.height = tilesize + 'px';
-  tile.style.minWidth = tilesize + 'px';
-}
-
-function setTiles(rackspace, tiles, dropzone=null, order=false){
+// This function is called from the main game engine, to render the tiles in the tilerack
+function setTiles(rackname, tiles, dropzone=null, order=false){
+  // Get a handle to the rack that holds the tiles - we'll need this to twiddle with how they look
+  var rackspots = document.getElementsByClassName(rackname);
+   
   // if we're getting rid of existing tiles, loop through and remove them
   if( order ){
     tiles.sort(function (a, b) {
@@ -47,14 +26,13 @@ function setTiles(rackspace, tiles, dropzone=null, order=false){
     var tile=document.getElementById('tile'+tiles[i]);
     if( null == tile ) {
       // Or make it if it's new
-      tile = createTile(tiles[i], dropzone);
+      tile = createTile(tiles[i], dropzone, rackspots);
       newtiles.push(tile);
       newTile=true; // why both? you'll see!
     }
     alltiles.push(tile);
   }
   
-  var rackspots = document.getElementsByClassName(rackspace);
   // loop through the rack, cleanup old, drop in new
   for( var i = 0; i < rackspots.length; i++) {
     if( rackspots[i].childNodes.length != 0 ) {
@@ -82,7 +60,7 @@ function setTiles(rackspace, tiles, dropzone=null, order=false){
   }
 }
 
-function createTile(tilename, dropzone){
+function createTile(tilename, dropzone, rackspots){
   // Create a tile div so we can append to the list
   var tile = document.createElement('div');
   tile.className = 'tile';
@@ -99,42 +77,24 @@ function createTile(tilename, dropzone){
   // Save us a step later, if a drop-zone is identified then we definitely
   // want our tile to be dragable
   if(dropzone != null){
-    makeTileDragable(tile, dropzone);
+    makeTileDragable(tile, dropzone, rackspots);
   }
 
   return tile;
 }
 
-// Add a single tile to the tile rack
-// it's text and id will be set to the value of the tile
-function addTile(rackname, tilename, dropzone=null){
-   
-  // find an empty spot in the rack for which to place it
-  var rackpos = null;
-  var rackspots = document.getElementsByClassName(rackname);
-  for (var i = 0; i < rackspots.length; i++) {
-    if (rackspots[i].childNodes.length == 0) {
-      rackpos = rackspots[i];
-      break;
-    }
-  }
-   
-  if(rackpos != null)
-  {
-    rackpos.appendChild(tile);
-  }
-}
- 
-function makeTileDragable(elmnt, dropz, onDragAction){
+// Handles tile movement and actions (now includes click-to-play and drag-and-drop) 
+function makeTileDragable(elmnt, dropz, rackspots){
   var origx = 0, origy = 0;
   var origbg = "";
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   var crossingDropZone = false;
   var origZindex=elmnt.style.zIndex;    
 
-  elmnt.onmousedown = dragMouseDown;
+  elmnt.dataset.clickCount=0;
+  elmnt.onmousedown = onMouseDown;
     
-  function dragMouseDown(e) {
+  function onMouseDown(e) {
     e = e || window.event;
     e.preventDefault();
     // get the mouse cursor position at startup:
@@ -145,16 +105,32 @@ function makeTileDragable(elmnt, dropz, onDragAction){
     origbg = elmnt.style.backgroundColor;
     elmnt.style.zIndex=10;  // make sure dragged item is always on top
     elmnt.dataset.hasmoved=false; // might just be a click
-    document.onmouseup = closeDragElement;
+    document.onmouseup = onDragDone;
     // call a function whenever the cursor moves:
-    document.onmousemove = elementDrag;
-    if( onDragAction != undefined && onDragAction != null )
-    {
-      onDragAction(elmnt, false);
+    document.onmousemove = onDragElement;
+     
+    // Keep track of which tile was last selected
+    updateTileSelection();
+  }
+   
+  function updateTileSelection() {
+    // loop through the rackspots, clear what was selected and select this one
+    for( var i = 0; i < rackspots.length; i++) {
+      // make sure there's a tile in the current slot
+      if( rackspots[i].childNodes.length != 0 ) {
+        var rackTile=rackspots[i].childNodes[0];
+        // if it's not the current tile, clear any other selected tile, make this one selected
+        if( rackTile == elmnt ) {
+          addEffect(EFFECT_HIGHLIGHT, rackTile);
+        } else {
+          removeEffect(EFFECT_HIGHLIGHT, rackTile);
+          rackTile.dataset.clickCount=0;
+        }
+      }
     }
   }
 
-  function elementDrag(e) {
+  function onDragElement(e) {
     e = e || window.event;
     e.preventDefault();
     // calculate the new cursor position:
@@ -203,29 +179,46 @@ function makeTileDragable(elmnt, dropz, onDragAction){
              rect1.top > rect2.bottom);
   }
 
-  function closeDragElement() {
+  function onDragDone() {
     /* stop moving when mouse button is released:*/
     document.onmouseup = null;
     document.onmousemove = null;
-    if( onDragAction )
-    {
-      onDragAction(elmnt, true);
-    }
 
-    for( var i=0; i<dropz.length; i++)
+    if( elmnt.dataset.hasmoved == 'true')
     {
-      if( overlapsDropZone(elmnt, dropz[i][0]) )
+      // See if the object being moved overlaps with a dropzone, and if so fire an event
+      for( var i=0; i<dropz.length; i++)
       {
-        dropz[i][0].dispatchEvent(new CustomEvent(dropz[i][1], {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
-        break;
+        if( overlapsDropZone(elmnt, dropz[i][0]) )
+        {
+          dropz[i][0].dispatchEvent(new CustomEvent(dropz[i][1], {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
+          break;
+        }
       }
-    }
 
-    // snap-back to the original position
-    elmnt.style.top = (origy) + "px";
-    elmnt.style.left = (origx) + "px";
-    elmnt.style.backgroundColor = origbg;
-    elmnt.className=elmnt.className.replace(" overlaps", "");
-    elmnt.style.zIndex=origZindex;   
+      // snap-back to the original position
+      elmnt.style.top = (origy) + "px";
+      elmnt.style.left = (origx) + "px";
+      elmnt.style.backgroundColor = origbg;
+      elmnt.className=elmnt.className.replace(" overlaps", "");
+      elmnt.style.zIndex=origZindex;   
+    } else {
+      // it was just a click, we can use this!
+      var clickCount=parseInt(elmnt.dataset.clickCount) + 1;
+      console.log("It was just a click! " + clickCount);
+       
+      // trigger a game action if they've clicked a set number of times
+      if( clickCount >= 3 )
+      {
+        // KLUDGE! We're only calling this with ONE dropzone (the gameboard), so this is "safe"
+        //         older code had multiple dropzones, but we're not doing that anymore
+        //         if we change anything with drop zones, this will fail miserably!
+        //         have fun troubleshooting this little gem :/ sorry future steve
+        dropz[0][0].dispatchEvent(new CustomEvent(dropz[0][1], {bubbles: true, detail: { text: () => textarea.value, tile: elmnt }}));
+      }
+       
+      // update the click count
+      elmnt.dataset.clickCount=clickCount;
+    }
   }
 } 
