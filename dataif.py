@@ -1,5 +1,5 @@
 from pydoc import locate
-import os.path
+import os
 from json import JSONEncoder
 import json
 from base import Game
@@ -12,9 +12,16 @@ from config import getGameInfo, socketio
 games = []
 _SAVEDSTATES='data.json'
 
+def isDevelopment():
+  print(os.getenv('GAE_INSTANCE'))
+  if os.getenv('GAE_INSTANCE'):
+    return False
+  return True
+
 def saveGameStates():
-  with open(_SAVEDSTATES, 'w') as f:
-    json.dump(games, f, indent=2)
+  if isDevelopment():
+    with open(_SAVEDSTATES, 'w') as f:
+      json.dump(games, f, indent=2)
 
 def readGameStates():
   games=[Game(id) for id in ["this", "is", "a", "game", "id"]]

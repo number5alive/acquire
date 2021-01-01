@@ -1,5 +1,4 @@
-runtime: python
-env: flex
+runtime: python38
 
 handlers:
   # This configures Google App Engine to serve the files in the app's static
@@ -12,7 +11,7 @@ handlers:
   # the entire handlers section) when there are no static files defined.
 - url: /.*
   script: auto
-  secure: always
+  # secure: always
    
 # Use a special gunicorn worker class to support websockets.
 entrypoint: gunicorn -c gunicorn.conf.py server:app

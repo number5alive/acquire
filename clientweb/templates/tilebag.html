@@ -1431,7 +1431,7 @@
     var url=location.protocol + '//{{ serverroot }}';
     console.log("WS: " + url);
     var socket = io.connect(url, {
-                   'transports': ['websocket'],
+                   /*'transports': ['websocket'],*/
                    'reconnection': true,
                  'reconnectionDelay': 1000,
                  'reconnectionDelayMax': 5000,
