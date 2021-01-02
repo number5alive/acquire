@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import url_for, send_from_directory, render_template
+from flask import request
 import os
 from lobby.lobbyrest import lobbyrest_blueprint
 from games.tilebag.tilebagrest import tilebagrest_blueprint, TILEBAGREST_URL
@@ -7,7 +8,7 @@ from clientweb.test import testview_blueprint
 from clientweb.lobby import lobby_blueprint
 from clientweb.tilebag import tilebag_blueprint, TILEBAG_URL
 import dataif
-from flask_socketio import SocketIO, join_room, emit
+from flask_socketio import SocketIO, join_room, rooms, emit
 
 from config import app, socketio
  
@@ -39,7 +40,8 @@ def on_connect():
 def on_join(data):
     room = data['room']
     join_room(room)
-    print("user joined room {}".format(room))
+    print("user {} is now in rooms: {}".format(request.sid, rooms(request.sid)))
+    
 
 # This is just a test endpoint for sending messages via the websocket
 from flask import jsonify
