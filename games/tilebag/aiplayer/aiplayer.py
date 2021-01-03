@@ -6,6 +6,7 @@ import requests #for GET/POST/PATCH http requests into the REST endpoints
 import games.tilebag.aiplayer.constants as constants #for constants
 from time import sleep #to optinonally simulate the human speed of play
 import random #picking tiles at random for now
+import threading #so we can still do other stuff while this player runs!
 
 class TileBagAIPlayer(TileBagPlayer):
 
@@ -37,11 +38,17 @@ class TileBagAIPlayer(TileBagPlayer):
         self.socketio.on('update')(self._update)
         self.socketio.on('disconnect')(self._disconnect)
 
-        #"connect in and wait" protocol
-        self.socketio.connect(gameserver)
-        print("we've joined alright")
+    def runAILoop(self):
+        ''' connect to the game, and wait for updates to the gamestate - best done in a thread! '''
+        self.socketio.connect(self.gameserver, namespaces=['/'])
         self.socketio.wait()
-
+        print("AI loop finished")
+             
+    def killAILoop(self):
+      ''' called to stop the main ai loop (the socket wait), replaces the self.killAILoop calls '''
+      print("Dropping connection to the websocket")
+      self.socketio.disconnect() # this should abort the wait loop cleanly
+      print("Connection Dropped")
 
     #this officially registers the player with the server and fetches the inital gamestate
     def join(self):
@@ -61,7 +68,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200:
             print("ERROR - error fetching game state\n%s" % r)
             print("ERROR - fetchGameState system exit next")
-            sys.exit()
+            self.killAILoop()
 
         #updating gamestate
         self.gamestate = json.loads(r.text)
@@ -124,7 +131,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200: 
             print("ERROR - we seem to have no valid tiles in our hand!!")
             print("ERROR - placeTile system exit next")
-            sys.exit()
+            self.killAILoop()
 
     #this is where we place the hotel for which we have remaining stock and/or the most expensive stock
     def placeHotel(self):
@@ -139,7 +146,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200: 
             print("ERROR - illegal move trying to place a hotel\n%s" % r)
             print("ERROR - placeHotel system exit next")
-            sys.exit()
+            self.killAILoop()
 
     #this is where the AI will also hopefully shine
     def buyStock(self):
@@ -219,7 +226,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200:
             print("ERROR - illegal move trying to remove a hotel\n%s" % r)
             print("ERROR - selectMergeLoser system exit next")
-            sys.exit()
+            self.killAILoop()
         
     def selectMergeWinner(self):
         mergeOptionsList = self.gamestate['game']['gamestate']['stateinfo']['bigoption']
@@ -248,7 +255,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200: 
             print("ERROR - illegal move trying to place a hotel to merge\n%s" % r)
             print("ERROR - selectMergeWinner system exit next")
-            sys.exit()
+            self.killAILoop()
 
 
     #will use simple logic here
@@ -278,7 +285,7 @@ class TileBagAIPlayer(TileBagPlayer):
             if r.status_code != 200: 
                 print("ERROR - illegal move trying to liquidate (trade) stock\n%s" % r)
                 print("ERROR - liquidateStocks (trade) system exit next")
-                sys.exit()
+                self.killAILoop()
 
         #we're down to one or none
         #sell in late game, retain in early game
@@ -290,7 +297,7 @@ class TileBagAIPlayer(TileBagPlayer):
             if r.status_code != 200:
                 print("ERROR - illegal move trying to liquidate (sell) stock\n%s" % r)
                 print("ERROR - liquidateStocks(sell) system exit next")
-                sys.exit()
+                self.killAILoop()
             
         #if holdings remain after this, end turn (turn ends automagically otherwise)
         elif holdings[smallestChain] > 0:
@@ -301,7 +308,7 @@ class TileBagAIPlayer(TileBagPlayer):
             if r.status_code != 200:
                 print("ERROR - illegal move trying to liquidate (hold) stock\n%s" % r)
                 print("ERROR - liquidateStocks (hold) system exit next")
-                sys.exit()
+                self.killAILoop()
 
 
     #calculate holdings?; if you're ahead, end, else keep on
@@ -313,7 +320,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200:
             print("ERROR - unable to end game\%s" % r)
             print("ERROR - considerEnding system exit next")
-            sys.exit()
+            self.killAILoop()
         else:
             if constants.LOGLEVEL>=1: print("endgame requested")
     
@@ -331,7 +338,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if constants.LOGLEVEL>=0: print("final results:\n%s" % sorted(self.gamestate['game']['gamestate']['stateinfo']['finalscores'], key=lambda x: x['amount'], reverse=True)) #sort by value (decreasing)
         self.socketio.disconnect()
         if constants.LOGLEVEL>=1: print("gameOver exit next")
-        sys.exit()
+        self.killAILoop()
 
     #event handler for socketio
     def _connect(self):
@@ -351,7 +358,7 @@ class TileBagAIPlayer(TileBagPlayer):
     def _disconnect(self):
         print("ERROR - we have been disconnected by a socket; let's abort cleanly")
         print("ERROR - socketio handler exit next")
-        sys.exit()
+        self.killAILoop()
 
 #converts the player name argument into a player id
 #because working with names is more fun than working with ids :)
@@ -380,7 +387,7 @@ if __name__ == "__main__":
         playername = sys.argv[2] #aiplayer will assume the identity of the first player with a matching name 
     else:
         print("incorrect number of arguments; invoke with:\n%s room playername [style] [http://gameserver:port]" % sys.argv[0])
-        sys.exit()
+        self.killAILoop()
 
 
     #convert name into a playerID
@@ -389,3 +396,20 @@ if __name__ == "__main__":
     #instantiates an AI player
     print("=================================================================") #line break in the log when spawning multiple games
     player=TileBagAIPlayer(playerid, (playername + "+AI"), money=6000,gameserver=gameserver, gameid=gameid, style=style)
+     
+    # Run the AI in it's own thread, mimicks what we do when launching from the server
+    # TODO: Move this to an API call of it's own
+    ailoop=threading.Thread(target=player.runAILoop)
+    ailoop.start() # causes the AI loop to run
+
+    # Since we're running as our own process already, just join that thread
+    ailoop.join()
+   
+    # if we wanted to simulate how the server will call this, delete the join and do something like the following
+    #do all sorts of other stuff, until we want to kill the AI
+    #import time
+    #time.sleep(10)
+    #player.killAILoop()
+    print("that thread must be dead!")
+
+
