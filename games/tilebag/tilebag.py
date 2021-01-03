@@ -263,23 +263,25 @@ class TileBagGame(Game, StateEngine):
   def endTurnAction(self):
     # Get rid of any permanently unplayable tiles
     for invt in self._currplayer._pinvalid:
-      self._log.recordGameMessage("Tile {} Discarded - Permanently unplayable".format(invt))
+      self._log.recordGameMessage("Tile {} Discarded from player {} - Permanently unplayable".format(invt,self._currplayer.name))
       self._currplayer.removeTile(invt)
+
+    if self.tilebag.isEmpty():
+        print("tilebag is empty, player will not replenish; current player holdings are {}".format(self._currplayer.tiles))
            
-    # Give player a new tile, rotate to the next player and state
-    while len(self._currplayer.tiles) < 7:
-      if self.tilebag.isEmpty():
-        print("Tilebag exhausted, trigger end-game state")
-      else:
-        self._currplayer.receiveTile(self.tilebag.takeTile())
-       
-    # turn is over, go to EndGame state instead of the next player
-    if self._endrequested:
-      return True, "", TileBagGame.EndGame(self)
-       
-    # otherwise, give the next player their turn
-    self._currplayer=next(self._rotation)
-    return True, "", TileBagGame.PlaceTile(self)
+    # Give player new tiles, rotate to the next player and state
+    while len(self._currplayer.tiles) < 7 and not self.tilebag.isEmpty():
+        newtile=self.tilebag.takeTile()
+        print("-> player received tile {}".format(newtile))
+        self._currplayer.receiveTile(newtile)
+
+    if len(self._currplayer.tiles) == 0 or self._endrequested:
+        print("ending the game either because the player is stuck (will this be allowed?) or the player requested to end the game")
+        return True, "", TileBagGame.EndGame(self)
+    else:
+        # otherwise, give the next player their turn
+        self._currplayer=next(self._rotation)
+        return True, "", TileBagGame.PlaceTile(self)
 
   class StartGame(State):
     def toHuman(self):
@@ -717,7 +719,7 @@ class TileBagGame(Game, StateEngine):
           self._bonuses.append(self._game._payoutBonuses(h))
           for p in self._game._players:
             amount=p.numStocks(hname=h.name)
-            print("{} has {} stocks in {}", p.name, amount, h.name)
+            print("{} has {} stocks in {}".format(p.name, amount, h.name))
             if amount > 0:
               self._game._returnStocks(p, h, amount)
               value=h.price()*amount
