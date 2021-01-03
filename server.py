@@ -4,6 +4,7 @@ from flask import request
 import os
 from lobby.lobbyrest import lobbyrest_blueprint
 from games.tilebag.tilebagrest import tilebagrest_blueprint, TILEBAGREST_URL
+from games.tilebag.aiplayer.aiplayerrest import tilebagairest_blueprint, TILEBAGAIREST_URL
 from clientweb.test import testview_blueprint
 from clientweb.lobby import lobby_blueprint
 from clientweb.tilebag import tilebag_blueprint, TILEBAG_URL
@@ -15,6 +16,7 @@ from config import app, socketio
 # all the backend stuff that actually does stuff   
 app.register_blueprint(lobbyrest_blueprint)
 app.register_blueprint(tilebagrest_blueprint, url_prefix=TILEBAGREST_URL)
+app.register_blueprint(tilebagairest_blueprint, url_prefix=TILEBAGAIREST_URL)
 
 # Client-side view of things
 app.register_blueprint(lobby_blueprint, url_prefix='/') # the lobby
