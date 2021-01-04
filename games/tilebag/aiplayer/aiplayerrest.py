@@ -3,6 +3,13 @@ from flask import request
 from games.tilebag.aiplayer.aiplayer import TileBagAIPlayer
 from threading import Thread, Event
 
+#
+# The AI REST API is effectively "stand-alone" from the game
+# I.e. The game itself knows NOTHING about the fact that AIs could exist
+# This is somewhat by design - it would've been quicker perhaps to code the two together, but we
+# didn't. This means that we need to track (and destroy) all the AI threads we create on the server
+# or risk filling up the server with them
+#
 
 TILEBAGAIREST_URL='/ai'
  
@@ -21,14 +28,8 @@ class AIThreadEvent(Event):
     super().__init__()
     self.connected=False
 
-
-def _doAIThread(connectEvent, gameid, playerid):
+def _doAIThread(connectEvent, player):
   ''' A thread that boots up an AI player '''
-  gameserver = "http://localhost:5000"
-  
-  print("Creating the AI player")
-  player=TileBagAIPlayer(playerid, "{}AI".format(playerid), money=6000,gameserver=gameserver, gameid=gameid, style="aggressive")
-
   # Run the AI loop - it'll let us know if the connection succeeds
   print("Starting the AI player")
   ailoop=player.runAILoop() # returns when connected OR when if that fails
@@ -42,24 +43,57 @@ def _doAIThread(connectEvent, gameid, playerid):
   # this thread will just run more or less forever now
   if ailoop:
     ailoop.join()
+
+_AITHREADS=[]
+ 
+def _makeAIName(gameid, playerid): 
+  return "T{}.{}.AI".format(gameid[-4:],playerid)
    
 @tilebagairest_blueprint.route('/<string:gameid>/<string:playerid>', methods=['POST'])
 def rest_tilebagai_addai(gameid, playerid):
   ''' Make a player into a robot '''
-       
-  # we do this in a thread so it can run indepenent from the server
-  # the event is used so we know when we can check if we connected successfully
-  connectEvent=AIThreadEvent()
-  aithread=Thread(target=_doAIThread, args=(connectEvent, gameid, playerid))
- # aithread=socketio.start_background_task(target=_doAIThread, args=(connectEvent, gameid, playerid))
-  aithread.start()
-  connectEvent.wait() # signals when we know the connection state
-   
-  errmsg="couldn't start the AI, likely a connection error"
-  errno=500
-   
-  if connectEvent.connected:
-    errmsg="bot is running!"
-    errno=200
+  errno=200 #presume success
+  errmsg="bot is running!"
+  aiName=_makeAIName(gameid, playerid)
+
+  # Make sure the player isn't already a robot
+  if aiName not in [t.name for t in _AITHREADS]:
+    print("Creating the AI player")
+    print(_AITHREADS)
+    player=TileBagAIPlayer(playerid, aiName, gameserver=request.host_url, gameid=gameid, style="aggressive")
+    # we do this in a thread so it can run indepenent from the server
+    # the event is used so we know when we can check if we connected successfully
+    connectEvent=AIThreadEvent()
+    aithread=Thread(target=_doAIThread, name=aiName, args=(connectEvent, player))
+   # aithread=socketio.start_background_task(target=_doAIThread, args=(connectEvent, gameid, playerid))
+    aithread.start()
+    connectEvent.wait() # signals when we know the connection state
+     
+    # if we connect, this thread will live on, so keep track of it!
+    if connectEvent.connected:
+      _AITHREADS.append(aithread)
+    else:
+      errmsg="couldn't start the AI, likely a connection error"
+      errno=500
+  else:
+    errno=409
+    errmsg="There's already a bot for that!"
+
+  print("ADDAI result {}: {}".format(errno, errmsg))
   return jsonify({'message': errmsg}), errno
 
+# TODO: API to make a player _stop_ being a robot
+@tilebagairest_blueprint.route('/<string:gameid>/<string:playerid>', methods=['DELETE'])
+def rest_tilebagai_removeai(gameid, playerid):
+  ''' Stop the AI from running for the specified player '''
+  errno=501 #not implemented
+  errmsg="Sorry, haven't implemented this yet"
+  aiName=_makeAIName(gameid, playerid)
+       
+  if aiName in [t.name for t in _AITHREADS]:
+    pass #TODO... erm, going to have to find a way to kill the thread from the outside!
+  else:
+    errno=404
+    errmsg="No AI running by that name!"
+   
+  return jsonify({'message': errmsg}), errno
