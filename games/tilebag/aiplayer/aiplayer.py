@@ -9,12 +9,11 @@ import random #picking tiles at random for now
 import threading #so we can still do other stuff while this player runs!
 
 class TileBagAIPlayer(TileBagPlayer):
-
-    
     #aiplayer constructor
     def __init__(self, id, name=None, money=6000, gameserver="http://localhost:5000", gameid="test", style="aggressive"):
         
         super().__init__(id, name=name)
+        self._connected = False
         self.gameserver = gameserver
         self.gameid = gameid
         self.style = style
@@ -38,17 +37,29 @@ class TileBagAIPlayer(TileBagPlayer):
         self.socketio.on('update')(self._update)
         self.socketio.on('disconnect')(self._disconnect)
 
+    def isConnected(self):
+      return self._connected
+
     def runAILoop(self):
         ''' connect to the game, and wait for updates to the gamestate - best done in a thread! '''
-        self.socketio.connect(self.gameserver, namespaces=['/'])
-        self.socketio.wait()
-        print("AI loop finished")
+        ailoop=None
+        try:
+          self.socketio.connect(self.gameserver, namespaces=['/'])
+        except socketio.exceptions.ConnectionError as err:
+          print("Failed to connect to the websocket")
+        else:
+          print("Connected!")
+          ailoop=threading.Thread(target=self.socketio.wait)
+          ailoop.start() # causes the AI loop to run
+          self._connected=True
+        return ailoop
              
     def killAILoop(self):
       ''' called to stop the main ai loop (the socket wait), replaces the self.killAILoop calls '''
       print("Dropping connection to the websocket")
       self.socketio.disconnect() # this should abort the wait loop cleanly
       print("Connection Dropped")
+      self._connected=False
 
     #this officially registers the player with the server and fetches the inital gamestate
     def join(self):
@@ -387,8 +398,7 @@ if __name__ == "__main__":
         playername = sys.argv[2] #aiplayer will assume the identity of the first player with a matching name 
     else:
         print("incorrect number of arguments; invoke with:\n%s room playername [style] [http://gameserver:port]" % sys.argv[0])
-        self.killAILoop()
-
+        sys.exit()
 
     #convert name into a playerID
     playerid = resolvename(gameserver,gameid,playername)
@@ -398,12 +408,11 @@ if __name__ == "__main__":
     player=TileBagAIPlayer(playerid, (playername + "+AI"), money=6000,gameserver=gameserver, gameid=gameid, style=style)
      
     # Run the AI in it's own thread, mimicks what we do when launching from the server
-    # TODO: Move this to an API call of it's own
-    ailoop=threading.Thread(target=player.runAILoop)
-    ailoop.start() # causes the AI loop to run
+    ailoop=player.runAILoop()
 
     # Since we're running as our own process already, just join that thread
-    ailoop.join()
+    if ailoop:
+      ailoop.join()
    
     # if we wanted to simulate how the server will call this, delete the join and do something like the following
     #do all sorts of other stuff, until we want to kill the AI

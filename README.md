@@ -18,21 +18,27 @@ And spin that puppy up, wait, then ssh into it (It'll make sure the vm has the r
 $ vagrant up
 $ vagrant ssh
 
-### Running / Testing the code
+### Creating the right setup to dev/run
 Create a virtual-env and install the dependencies
 $ python3 -mvenv ~/blah
 $ source ~/blah/bin/activate
 (virtual-env) $ pip3 install -r requirements.txt
-NOTE: run these apps from the root folder via:
-(virtual-env) $ python3 -m server
- - then launch a browser and point to: localhost:5000/test/tile
 
-# to test the game classes (unit tests)
+### to test the game classes (unit tests)
+NOTE: run these apps from the root folder via:
 (virtual-env) $ python3 -m games.tilebag.player
 (virtual-env) $ python3 -m games.tilebag.tiles
 (virtual-env) $ python3 -m games.tilebag.board
 (virtual-env) $ python3 -m games.tilebag.hotels
 (virtual-env) $ python3 -m games.tilebag.tilebag
+
+# to run the server
+(virtual-env) $ python3 -m server
+ - then launch a browser and point to: localhost:5000/test/tile
+ - WARNING: aiplayerrest won't work, because of threading issue (eventlet), use gunicorn below
+### OR, to mimick what it'll be in prod on GAE
+ (virtual-env) $ gunicorn -b :5000 server:app
+ - WARNING: when dev'ing gunicorn won't restart when you change the code, you have to do that yourself
 
 # to play the game
 Run the server (see above). Then navigate to <localhost:5000/somestring>, it'll let you create and start a game.
@@ -40,3 +46,5 @@ Run the server (see above). Then navigate to <localhost:5000/somestring>, it'll 
 # to load a save game (or a test one)
 $ curl -i -H "Content-Type: application/json" -X POST -d @t3.json http://localhost:5000/gamelobby/v1/games
 
+# to make a player into an AI
+$ curl -i -H "Content-Type: application/json" -X POST http://localhost:5000/ai/<gameid>/<playerid>
