@@ -44,7 +44,7 @@ def _doAIThread(connectEvent, player):
   if ailoop:
     ailoop.join()
 
-_AITHREADS=[]
+_AITHREADS={}
  
 def _makeAIName(gameid, playerid): 
   return "T{}.{}.AI".format(gameid[-4:],playerid)
@@ -57,7 +57,7 @@ def rest_tilebagai_addai(gameid, playerid):
   aiName=_makeAIName(gameid, playerid)
 
   # Make sure the player isn't already a robot
-  if aiName not in [t.name for t in _AITHREADS]:
+  if aiName not in _AITHREADS:
     print("Creating the AI player")
     print(_AITHREADS)
     player=TileBagAIPlayer(playerid, aiName, gameserver=request.host_url, gameid=gameid, style="aggressive")
@@ -71,7 +71,7 @@ def rest_tilebagai_addai(gameid, playerid):
      
     # if we connect, this thread will live on, so keep track of it!
     if connectEvent.connected:
-      _AITHREADS.append(aithread)
+      _AITHREADS[aiName]={'thread':aithread, 'player':player}
     else:
       errmsg="couldn't start the AI, likely a connection error"
       errno=500
@@ -90,8 +90,13 @@ def rest_tilebagai_removeai(gameid, playerid):
   errmsg="Sorry, haven't implemented this yet"
   aiName=_makeAIName(gameid, playerid)
        
-  if aiName in [t.name for t in _AITHREADS]:
-    pass #TODO... erm, going to have to find a way to kill the thread from the outside!
+  if aiName in _AITHREADS:
+    # if the thread is running, get the player to kill the thread
+    if _AITHREADS[aiName]['thread'].is_alive():
+      _AITHREADS[aiName]['player'].killAILoop()
+    _AITHREADS.pop(aiName)
+    errno=200
+    errmsg="She's done!"
   else:
     errno=404
     errmsg="No AI running by that name!"
