@@ -261,27 +261,32 @@ class TileBagGame(Game, StateEngine):
   #   - with the last one having a few sub-states, but that's okay
 
   def endTurnAction(self):
-    # Get rid of any permanently unplayable tiles
+    ''' Handles the end of the current players turn: discard unplayable tiles, draw new ones'''
+         
+    # Get rid of any permanently unplayable tiles from this player's hand
     for invt in self._currplayer._pinvalid:
       self._log.recordGameMessage("Tile {} Discarded from player {} - Permanently unplayable".format(invt,self._currplayer.name))
       self._currplayer.removeTile(invt)
-
-    if self.tilebag.isEmpty():
-        print("tilebag is empty, player will not replenish; current player holdings are {}".format(self._currplayer.tiles))
-           
-    # Give player new tiles, rotate to the next player and state
+   
+    # Give player new tiles (up to seven or until there are none left)
     while len(self._currplayer.tiles) < 7 and not self.tilebag.isEmpty():
         newtile=self.tilebag.takeTile()
         print("-> player {} received tile {}".format(self._currplayer,newtile))
         self._currplayer.receiveTile(newtile)
-
-    if len(self._currplayer.tiles) == 0 or self._endrequested:
-        print("ending the game either because player {} is stuck or requested to end the game".format(self._currplayer))
-        return True, "", TileBagGame.EndGame(self)
-    else:
-        # otherwise, give the next player their turn
-        self._currplayer=next(self._rotation)
-        return True, "", TileBagGame.PlaceTile(self)
+   
+    # NOTE: At this point this player might not have any tiles, or any playable tiles, that's okay
+    #       we'll deal with that when it comes back around to them  via this next little try-except
+    try:
+      if self._endrequested:
+        # player wants to end the game, we use the Exception logic because we need it anyways
+        print("Player {} requested an end to the game".format(self._currplayer))
+        raise Exception("End of Game has been requested, do that instead")
+         
+      # the following will work, or will raise exception if next player can't play (see!)
+      return True, "", TileBagGame.PlaceTile(self)
+    except:
+      # We'll stop the game here and call it a day
+      return True, "", TileBagGame.EndGame(self)
 
   class StartGame(State):
     def toHuman(self):
@@ -322,8 +327,8 @@ class TileBagGame(Game, StateEngine):
   class PlaceTile(State):
     def __init__(self, game):
       self._game=game
-      self._game._currplayer._pinvalid=[] # permanently invalid tiles
-      self._game._currplayer._tinvalid=[] # temporarily invalid tiles (e.g. all hotels on board)
+      pinv=[] # permanently invalid tiles
+      tinv=[] # temporarily invalid tiles (e.g. all hotels on board)
        
       # Check if current player has unplayable tiles
       bAllHotelsOnBoard=sum(h.size > 0 for h in self._game.hotels) == len(self._game.hotels)
@@ -334,15 +339,23 @@ class TileBagGame(Game, StateEngine):
    
         # check if bordering more than one hotel of size 11
         if sum(h.size >= 11 for h in hn) >= 2:
-          self._game._currplayer._pinvalid.append(tile)
+          pinv.append(tile)
 
         elif bAllHotelsOnBoard:
           # if it's in the conn list, but not in an hn, then it WOULD create a new hotel, which isn't allowed right now
           if len(hn) == 0 and len(conn) > 0:
-            self._game._currplayer._tinvalid.append(tile)
+            tinv.append(tile)
 
-      print("pinvalid={}, tinvalid={}".format(self._game._currplayer._pinvalid, self._game._currplayer._tinvalid))
-
+      # now that we know, make sure to save these for future use (in on_event)
+      print("pinvalid={}, tinvalid={}".format(pinv, tinv))
+      self._game._currplayer._pinvalid=pinv
+      self._game._currplayer._tinvalid=tinv
+       
+      # If this player has no playable tiles, call an end to the game right now!
+      if not [x for x in self._game._currplayer._tiles if x not in pinv and x not in tinv]:
+        # All of this players tiles are invalid in some way... BAIL
+        # The exception here will cause the caller to swith instead to the EndGame state... promise!
+        raise Exception("{} has no valid tiles to play - need to abort the game!".format(self._game._currplayer))
 
     def toHuman(self):
       return "Waiting on {} to play a tile".format(self._game._currplayer)
