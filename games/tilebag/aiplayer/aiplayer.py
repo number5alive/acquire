@@ -17,16 +17,19 @@ class TileBagAIPlayer(TileBagPlayer):
         self.gameserver = gameserver
         self.gameid = gameid
         self.style = style
+        
         self.RESTendpoints={"gamestate":"{}/tilebag/v1/{}".format(self.gameserver,self.gameid),
                 "placetile":"{}/tilebag/v1/{}/board?playerid={}".format(self.gameserver,self.gameid,self.id),
                 "buystocks":"{}/tilebag/v1/{}/stocks?playerid={}".format(self.gameserver,self.gameid,self.id),
                 "endturn":"{}/tilebag/v1/{}/stocks?playerid={}".format(self.gameserver,self.gameid,self.id),
                 "placehotel":"{}/tilebag/v1/{}/hotels?playerid={}".format(self.gameserver,self.gameid,self.id),
-                "endgame":"{}/tilebag/v1/{}?playerid={}".format(self.gameserver,self.gameid,self.id)}
+                "endgame":"{}/tilebag/v1/{}?playerid={}".format(self.gameserver,self.gameid,self.id),
+                "savegame":"{}/tilebag/v1/save/{}".format(self.gameserver,self.gameid)}
         if constants.LOGLEVEL>=1: print("%saiplayer constructed" % (style+" " if style else ""))
 
         #the ai player needs to receive websocket messages from the server to react to turn signals
-        self.socketio = socketio.Client(reconnection=True, reconnection_attempts=5, reconnection_delay=1, reconnection_delay_max=5, randomization_factor=0.5, logger=True, engineio_logger=True)
+        #self.socketio = socketio.Client(reconnection=True, reconnection_attempts=5, reconnection_delay=1, reconnection_delay_max=5, randomization_factor=0.5, logger=True, engineio_logger=True)
+        self.socketio = socketio.Client(reconnection=True, reconnection_attempts=5, reconnection_delay=1, reconnection_delay_max=5, randomization_factor=0.5)
 
         #the websocket update messages happen very often and cause the turn handler routine to race with itself
         #we use the in_turn flag to "stop reacting" to update events while we're playing our moves
@@ -85,27 +88,42 @@ class TileBagAIPlayer(TileBagPlayer):
         self.gamestate = json.loads(r.text)
         self.currentPlayer = self.gamestate['game']['gamestate']['currplayer']['id']
         if constants.LOGLEVEL>=2: print("...gamestate = %s (%s) ..." % (self.gamestate['game']['gamestate']['state'],self.gamestate['game']['gamestate']['currplayer']['name']))
-        if constants.LOGLEVEL>=3: print("%s \n" % self.gamestate)
+        if constants.LOGLEVEL>=3: print(json.dumps(self.gamestate))
+        if constants.LOGLEVEL>=4: 
+            serverstate_req = requests.get(self.RESTendpoints.get("savegame"))
+            if serverstate_req.status_code != 200:
+                print("ERROR - error fetching server state\n%s" % serverstate_req)
+                self.killAILoop()
+            else:
+                print(json.dumps(serverstate_req.text))
+
+        #updating gamestate
+        self.gamestate = json.loads(r.text)
         
         if self.gamestate['game']['gamestate']['state'] == "EndGame":
             self.gameOver()
 
         if not self.in_turn and self.currentPlayer == self.id:
             self.turnHandler()
+        
+        #next logic only designed to reduce log verbosity to once per turn, not once per gamestate message
+        #this is done by tracking and looking for changes between the previous player and current player
         elif self.currentPlayer != self.id and self.currentPlayer != self.lastPlayer:
-        #a little less verbose in the console if we only show player turn once per turn
             if constants.LOGLEVEL>=1: print("oh look, it is %s's turn" % self.gamestate['game']['gamestate']['currplayer']['name'])
             self.lastPlayer = self.currentPlayer
 
-    #this routine is invoked to handle the AI player's actions upon hits turn
+    #this routine is invoked to handle the AI player's actions upon its turn
     def turnHandler(self):
         sleep(constants.DELAYTIME)
 
         #insert logic to figure out what part of the turn
         self.in_turn = True
         if self.gamestate['game']['endrequested'] == True:
+            #the player will still need to finish their turn (PlaceTile, BuyStocks...)
+            #this routine only outputs endgame stats
             self.endGame()
-        elif self.gamestate['game']['endpossible'] == True:
+        
+        if self.gamestate['game']['endpossible'] == True:
             self.considerEnding()
         elif self.gamestate['game']['gamestate']['state'] == "PlaceTile":
             self.placeTile()
@@ -130,19 +148,22 @@ class TileBagAIPlayer(TileBagPlayer):
         #the server will reject illegal moves, so try at random until it works
         randomTileList = self.gamestate['game']['you']['playerdata']['tiles']
         random.shuffle(randomTileList)
-        for tile in randomTileList:
-            if constants.LOGLEVEL>=1: print("we think we'll play this tile %s" % tile)
-            patchdata = {"action":"placetile","tile":"{}".format(tile)}
-            if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placetile")))
-            r = requests.patch(self.RESTendpoints.get("placetile"),json=patchdata)
-            if r.status_code == 200: 
-                break
-            else:
-                print("ERROR - placing tile %s was rejected" % tile)
+        #this next loop causes lock outs if the state changes just after (due to concurrency) entering the placeTile() method 
+        #for tile in randomTileList:
+        tile = randomTileList[0]
+        if constants.LOGLEVEL>=1: print("we think we'll play this tile %s" % tile)
+        patchdata = {"action":"placetile","tile":"{}".format(tile)}
+        if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placetile")))
+        r = requests.patch(self.RESTendpoints.get("placetile"),json=patchdata)
         if r.status_code != 200: 
-            print("ERROR - we seem to have no valid tiles in our hand!!")
-            print("ERROR - placeTile system exit next")
-            self.killAILoop()
+            print("ERROR - placing tile %s was rejected" % tile)
+            self.fetchGameState() #won't this cause recursion?
+            #server state will stay put, so the placeTile action will be called again"we think we'll play this tile 
+        #we will have issues of there are no playable tiles perhpas?
+        #if r.status_code != 200: 
+        #    print("ERROR - we seem to have no valid tiles in our hand!!")
+        #    print("ERROR - placeTile system exit next")
+        #    self.killAILoop()
 
     #this is where we place the hotel for which we have remaining stock and/or the most expensive stock
     def placeHotel(self):
@@ -333,11 +354,10 @@ class TileBagAIPlayer(TileBagPlayer):
             print("ERROR - considerEnding system exit next")
             self.killAILoop()
         else:
-            if constants.LOGLEVEL>=1: print("endgame requested")
+            if constants.LOGLEVEL>=1: print("endgame requested successfully")
     
     def endGame(self):
         if constants.LOGLEVEL>=1: print("tile coverage is %i/108" % len(self.gamestate['game']['board']['occupied']))
-        self.buyStock() #you're allowed to finish your turn
 
     def gameOver(self):
         #declare winner
@@ -347,7 +367,7 @@ class TileBagAIPlayer(TileBagPlayer):
         #scoreDict={key: value for scoreEntry in self.gamestate['game']['gamestate']['stateinfo']['finalscores'] for key, value in scoreEntry.items()}
         #display the final results
         if constants.LOGLEVEL>=0: print("final results:\n%s" % sorted(self.gamestate['game']['gamestate']['stateinfo']['finalscores'], key=lambda x: x['amount'], reverse=True)) #sort by value (decreasing)
-        self.socketio.disconnect()
+        #self.socketio.disconnect() #this seems unnecessary and causes socket close errors
         if constants.LOGLEVEL>=1: print("gameOver exit next")
         self.killAILoop()
 
@@ -402,10 +422,11 @@ if __name__ == "__main__":
 
     #convert name into a playerID
     playerid = resolvename(gameserver,gameid,playername)
-    print("recoverd player ID: %s" % playerid)
+    print("recovered player ID: %s" % playerid)
+     
     #instantiates an AI player
     print("=================================================================") #line break in the log when spawning multiple games
-    player=TileBagAIPlayer(playerid, (playername + "+AI"), money=6000,gameserver=gameserver, gameid=gameid, style=style)
+    player=TileBagAIPlayer(playerid, (playername + "+AI"), gameserver=gameserver, gameid=gameid, style=style)
      
     # Run the AI in it's own thread, mimicks what we do when launching from the server
     ailoop=player.runAILoop()
@@ -420,5 +441,3 @@ if __name__ == "__main__":
     #time.sleep(10)
     #player.killAILoop()
     print("that thread must be dead!")
-
-

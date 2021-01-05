@@ -272,11 +272,11 @@ class TileBagGame(Game, StateEngine):
     # Give player new tiles, rotate to the next player and state
     while len(self._currplayer.tiles) < 7 and not self.tilebag.isEmpty():
         newtile=self.tilebag.takeTile()
-        print("-> player received tile {}".format(newtile))
+        print("-> player {} received tile {}".format(self._currplayer,newtile))
         self._currplayer.receiveTile(newtile)
 
     if len(self._currplayer.tiles) == 0 or self._endrequested:
-        print("ending the game either because the player is stuck (will this be allowed?) or the player requested to end the game")
+        print("ending the game either because player {} is stuck or requested to end the game".format(self._currplayer))
         return True, "", TileBagGame.EndGame(self)
     else:
         # otherwise, give the next player their turn
@@ -379,7 +379,7 @@ class TileBagGame(Game, StateEngine):
 
 
     def on_event(self, event, **kwargs):
-      errmsg="ILLEGAL EVENT - {} when in state PlaceTile".format(event)
+      errmsg="ILLEGAL EVENT - {} when in state PlaceTile by player {}".format(event, self._game._currplayer)
       if event == 'PlaceTile':
         tile=kwargs.get('tile',None)
         if tile in self._game._currplayer.tiles:
@@ -388,9 +388,9 @@ class TileBagGame(Game, StateEngine):
               return self._canPlayTile(tile)
              
             else:
-              errmsg="ERROR - Illegal Tile Move: Would make a new hotel when all are on the board"
+              errmsg="ERROR - Illegal Tile Move: Would make a new hotel when all are on the board by player {}".format(self._game._currplayer)
           else:
-              errmsg="ERROR - Illegal Tile Move: Would join two safe hotels"
+              errmsg="ERROR - Illegal Tile Move: Would join two safe hotels by player {}".format(self._game._currplayer)
             
         else:
           errmsg="{} is not in {}".format(tile, self._game._currplayer.tiles)
@@ -438,7 +438,7 @@ class TileBagGame(Game, StateEngine):
     def __init__(self, game):
       self._game=game
       self._bought=0
-      print(self.toHuman())
+      print("buy stocks to human:"+self.toHuman())
 
     def toHuman(self):
       return "Waiting on {} to Buy Stocks".format(self._game._currplayer)
@@ -521,7 +521,7 @@ class TileBagGame(Game, StateEngine):
       self._game=game
       self._tile=tile
       self._bigoption=bigoption
-      print(self.toHuman())
+      print("SeledMergeWinner to human:"+self.toHuman())
 
     def toHuman(self):
       return "Waiting for {} to select the hotel that will acquire the others - between:{}".format(self._game._currplayer, [h.name for h in self._bigoption])
@@ -545,7 +545,7 @@ class TileBagGame(Game, StateEngine):
       self._tile=tile
       self._biggest=biggest
       self._smalloption=smalloption
-      print(self.toHuman())
+      print("SelectMergeLoser to human:"+self.toHuman())
 
     def toHuman(self):
       return "Waiting for {} to select the hotel that will BE acquired by {} - between:{}".format(self._game._currplayer, self._biggest.name, [h.name for h in self._smalloption])
@@ -606,7 +606,7 @@ class TileBagGame(Game, StateEngine):
       self._biggest=biggest
       self._smallest=smallest
       self._startplayer=self._game._currplayer
-      print(self.toHuman())
+      print("LiquidateStocks to human:"+self.toHuman())
       self._game._log.recordMerger(self._biggest.name, self._smallest.name)
        
       # find out maj/min shareholder bonus'
