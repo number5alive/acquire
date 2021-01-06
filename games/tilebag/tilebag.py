@@ -263,6 +263,11 @@ class TileBagGame(Game, StateEngine):
   def endTurnAction(self):
     ''' Handles the end of the current players turn: discard unplayable tiles, draw new ones'''
          
+    # If the current player wants to end the game, then just jump there!
+    if self._endrequested:
+      print("Player {} requested an end to the game".format(self._currplayer))
+      return True, "", TileBagGame.EndGame(self)
+         
     # Get rid of any permanently unplayable tiles from this player's hand
     for invt in self._currplayer._pinvalid:
       self._log.recordGameMessage("Tile {} Discarded from player {} - Permanently unplayable".format(invt,self._currplayer.name))
@@ -275,18 +280,19 @@ class TileBagGame(Game, StateEngine):
         self._currplayer.receiveTile(newtile)
    
     # NOTE: At this point this player might not have any tiles, or any playable tiles, that's okay
-    #       we'll deal with that when it comes back around to them  via this next little try-except
+    #       they'll get handled when they come around again! (see below)
+
+    # This player is done move on to the next one
+    self._currplayer=next(self._rotation)
+
+    # here's where the "no playable" gets handled, PlaceTile will toss an exception if they can't
+    # according to the rules, we just skip playing a tile and do the BuyStocks action instead
     try:
-      if self._endrequested:
-        # player wants to end the game, we use the Exception logic because we need it anyways
-        print("Player {} requested an end to the game".format(self._currplayer))
-        raise Exception("End of Game has been requested, do that instead")
-         
       # the following will work, or will raise exception if next player can't play (see!)
       return True, "", TileBagGame.PlaceTile(self)
     except:
       # We'll stop the game here and call it a day
-      return True, "", TileBagGame.EndGame(self)
+      return True, "", TileBagGame.BuyStocks(self)
 
   class StartGame(State):
     def toHuman(self):
@@ -353,9 +359,9 @@ class TileBagGame(Game, StateEngine):
        
       # If this player has no playable tiles, call an end to the game right now!
       if not [x for x in self._game._currplayer._tiles if x not in pinv and x not in tinv]:
-        # All of this players tiles are invalid in some way... BAIL
-        # The exception here will cause the caller to swith instead to the EndGame state... promise!
-        raise Exception("{} has no valid tiles to play - need to abort the game!".format(self._game._currplayer))
+        # All of this players tiles are invalid in some way... that's lame
+        # The exception here will cause the caller to swith instead to the BuyStocks state
+        raise Exception("{} has no valid tiles to play - too bad for them!".format(self._game._currplayer))
 
     def toHuman(self):
       return "Waiting on {} to play a tile".format(self._game._currplayer)
