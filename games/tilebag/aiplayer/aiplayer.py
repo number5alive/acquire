@@ -9,15 +9,16 @@ import random #picking tiles at random for now
 import threading #so we can still do other stuff while this player runs!
 
 class TileBagAIPlayer(TileBagPlayer):
+    
     #aiplayer constructor
     def __init__(self, id, name=None, money=6000, gameserver="http://localhost:5000", gameid="test", style="aggressive"):
         
         super().__init__(id, name=name)
-        self._connected = False
         self.gameserver = gameserver
         self.gameid = gameid
         self.style = style
-        
+        self.unplayableTiles=[] #list to store tiles in our hand we've tried to play previously, wihout success
+        self.currentPlayerState="" #used to concatenate current player and game state, and detect changes, to reduce log verbosity        
         self.RESTendpoints={"gamestate":"{}/tilebag/v1/{}".format(self.gameserver,self.gameid),
                 "placetile":"{}/tilebag/v1/{}/board?playerid={}".format(self.gameserver,self.gameid,self.id),
                 "buystocks":"{}/tilebag/v1/{}/stocks?playerid={}".format(self.gameserver,self.gameid,self.id),
@@ -34,7 +35,6 @@ class TileBagAIPlayer(TileBagPlayer):
         #the websocket update messages happen very often and cause the turn handler routine to race with itself
         #we use the in_turn flag to "stop reacting" to update events while we're playing our moves
         self.in_turn = False
-        self.lastPlayer = self.currentPlayer = None #only to reduce log verbosity
         #register socket event handlers, can't use decorator syntax within an class definition
         self.socketio.on('connect')(self._connect)
         self.socketio.on('update')(self._update)
@@ -70,62 +70,78 @@ class TileBagAIPlayer(TileBagPlayer):
         print("trying to join")
         self.socketio.emit('join', {'room':'{}'.format(self.gameid)})
         if constants.LOGLEVEL>=1: print("player joined %s" % self.gameserver) 
+        self.in_turn = True
         self.fetchGameState()
+        self.playLoop()
+        self.in_turn = False
 
-    #this subroutine sends a request to the server's REST API to fetch the complete game state
-    #(player's viewpoint) and parses the json to determine if it is the player's turn
+
+
+    #this subroutine simply sends a request to the server's REST API to fetch the complete game state
+    #(player's viewpoint) 
+    #it is called by the socketio event handling code _update as well as some elements of the playLoop
     def fetchGameState(self):
-        
-        #print("fetching game state for user %s in room %s" % (self.id,self.gameid) )
+        if constants.LOGLEVEL>=2: print("fetching a new game state") #no gamestate information at this stage, until code below runs at least once
         getparams = {"playerid": "{}".format(self.id)}
         r = requests.get(self.RESTendpoints.get("gamestate"),params=getparams)
         if r.status_code != 200:
             print("ERROR - error fetching game state\n%s" % r)
-            print("ERROR - fetchGameState system exit next")
-            self.killAILoop()
 
         #updating gamestate
+        self.previousPlayerState = self.currentPlayerState #storing previous value to determine change
+        #loading and activating the full game state (should trap for errors here)
         self.gamestate = json.loads(r.text)
+        #setting some utility fields
         self.currentPlayer = self.gamestate['game']['gamestate']['currplayer']['id']
-        if constants.LOGLEVEL>=2: print("...gamestate = %s (%s) ..." % (self.gamestate['game']['gamestate']['state'],self.gamestate['game']['gamestate']['currplayer']['name']))
-        if constants.LOGLEVEL>=3: print(json.dumps(self.gamestate))
-        if constants.LOGLEVEL>=4: 
-            serverstate_req = requests.get(self.RESTendpoints.get("savegame"))
-            if serverstate_req.status_code != 200:
-                print("ERROR - error fetching server state\n%s" % serverstate_req)
-                self.killAILoop()
+        #concatenated snapshot of player and game state, used to determine changes
+        self.currentPlayerState = "Player: {};  State: {}".format(self.gamestate['game']['gamestate']['currplayer']['name'], self.gamestate['game']['gamestate']['state'])
+        if constants.LOGLEVEL>=2: print("currentPlayerState's string=> {}".format(self.currentPlayerState))
+         
+        #comparing previous to current player & state string, in order to limit logging once per turn/playstate
+        if self.currentPlayerState != self.previousPlayerState:
+            #simple logging
+            if self.currentPlayer == self.id: 
+                print("it's our turn, my precious, we must play someting {}".format(self.gamestate['game']['gamestate']['state']))
             else:
-                print(json.dumps(serverstate_req.text))
+                print("oh look, it's {}'s turn to play someting {}".format(self.gamestate['game']['gamestate']['currplayer']['name'],self.gamestate['game']['gamestate']['state']))
+            if constants.LOGLEVEL>=3: print(json.dumps(self.gamestate))
+            if constants.LOGLEVEL>=4: 
+                #obtain the server's viewpoint of the game state
+                serverstate_req = requests.get(self.RESTendpoints.get("savegame"))
+                if serverstate_req.status_code != 200:
+                    print("ERROR - error fetching server state\n%s" % serverstate_req)
+                else:
+                    print("server state =>\n{}".format(serverstate_req.text))
 
-        #updating gamestate
-        self.gamestate = json.loads(r.text)
-        
+        #this needs to happen regardless of who's turn it is; so it is not in the play loop
         if self.gamestate['game']['gamestate']['state'] == "EndGame":
             self.gameOver()
 
-        if not self.in_turn and self.currentPlayer == self.id:
+
+    #this subrouting tackles game play in a while loop
+    def playLoop(self):
+        #the while loop with a fetch state in it is useful to try different tiles if some are unplayable
+        #it also addresses concurrency issues in which the aiplayer happens to be in a different state
+        #than the server, which causes all attempted moves to fail
+        # if not connected, then we know he game bailed somewhere
+        while self.currentPlayer == self.id and self._connected:
             self.turnHandler()
-        
-        #next logic only designed to reduce log verbosity to once per turn, not once per gamestate message
-        #this is done by tracking and looking for changes between the previous player and current player
-        elif self.currentPlayer != self.id and self.currentPlayer != self.lastPlayer:
-            if constants.LOGLEVEL>=1: print("oh look, it is %s's turn" % self.gamestate['game']['gamestate']['currplayer']['name'])
-            self.lastPlayer = self.currentPlayer
+            sleep(constants.DELAYTIME)
+            self.fetchGameState() 
 
     #this routine is invoked to handle the AI player's actions upon its turn
     def turnHandler(self):
-        sleep(constants.DELAYTIME)
 
-        #insert logic to figure out what part of the turn
-        self.in_turn = True
         if self.gamestate['game']['endrequested'] == True:
             #the player will still need to finish their turn (PlaceTile, BuyStocks...)
             #this routine only outputs endgame stats
+            #but the rest of the logic will still be applied
             self.endGame()
-        
-        if self.gamestate['game']['endpossible'] == True:
+        #we only onself.gamestate['game']['gamestate']['state'] ==ce this once per game?
+        elif self.gamestate['game']['endpossible'] == True:
             self.considerEnding()
-        elif self.gamestate['game']['gamestate']['state'] == "PlaceTile":
+        
+        if self.gamestate['game']['gamestate']['state'] == "PlaceTile":
             self.placeTile()
         elif self.gamestate['game']['gamestate']['state'] == "PlaceHotel": 
             self.placeHotel() 
@@ -139,31 +155,47 @@ class TileBagAIPlayer(TileBagPlayer):
             self.selectMergeWinner()
         elif self.gamestate['game']['gamestate']['state'] == "LiquidateStocks":
             self.liquidateStocks()
-        self.in_turn = False
 
 
     #this is where the AI will hopefully shine
     def placeTile(self):
-        if constants.LOGLEVEL>=1: print("\nits our turn %s;\n my precious, we must play something, ..." % self.gamestate['game']['gamestate']['currplayer']['name'])
         #the server will reject illegal moves, so try at random until it works
-        randomTileList = self.gamestate['game']['you']['playerdata']['tiles']
+        if constants.LOGLEVEL>=3: print("tile hand: {}".format(self.gamestate['game']['you']['playerdata']['tiles']))
+        if constants.LOGLEVEL>=3: print("unplayable tiles: {}".format(self.unplayableTiles))
+        randomTileList = [tile for tile in self.gamestate['game']['you']['playerdata']['tiles'] if tile not in self.unplayableTiles]
         random.shuffle(randomTileList)
         #this next loop causes lock outs if the state changes just after (due to concurrency) entering the placeTile() method 
-        #for tile in randomTileList:
-        tile = randomTileList[0]
-        if constants.LOGLEVEL>=1: print("we think we'll play this tile %s" % tile)
-        patchdata = {"action":"placetile","tile":"{}".format(tile)}
-        if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placetile")))
-        r = requests.patch(self.RESTendpoints.get("placetile"),json=patchdata)
-        if r.status_code != 200: 
-            print("ERROR - placing tile %s was rejected" % tile)
-            self.fetchGameState() #won't this cause recursion?
-            #server state will stay put, so the placeTile action will be called again"we think we'll play this tile 
+        #in which all placeTile actions are rejected // the calling playLoop will take care of refreshing the state
+        if constants.LOGLEVEL>=3: print("random playable tile list: {}".format(randomTileList))
+        
+        if len(randomTileList)>0:
+            tile = randomTileList[0]
+            if constants.LOGLEVEL>=1: print("we think we'll play this tile %s" % tile)
+            patchdata = {"action":"placetile","tile":"{}".format(tile)}
+            if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placetile")))
+            r = requests.patch(self.RESTendpoints.get("placetile"),json=patchdata)
+            if r.status_code != 200: 
+                print("ERROR - placing tile %s was rejected" % tile)
+                #need to verify game state before looping in case a concurrency issue caused this deadlock
+
+                ##fetching current gamestate
+                self.fetchGameState()
+                if self.currentPlayer == self.id and self.gamestate['game']['gamestate']['state'] == 'PlaceTile':
+                    #this was indeed an unplayable tile, not a wrong state
+                    if constants.LOGLEVEL>=0: print("move rejected - invalid tile!\n-> adding tile {} to unplayableTile list".format(tile))
+                    self.unplayableTiles.append(tile)
+                    if constants.LOGLEVEL>=0: print("unplayableTiles list {}".format(self.unplayableTiles))
+                else:
+                    if constants.LOGLEVEL>=0: print("move rejected, but we may have been in the wrong state?")
+        else:
+            print("there are no tile in our hand!?")
+
+
         #we will have issues of there are no playable tiles perhpas?
         #if r.status_code != 200: 
         #    print("ERROR - we seem to have no valid tiles in our hand!!")
         #    print("ERROR - placeTile system exit next")
-        #    self.killAILoop()
+        #    sys.exit()
 
     #this is where we place the hotel for which we have remaining stock and/or the most expensive stock
     def placeHotel(self):
@@ -218,6 +250,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if constants.LOGLEVEL>=1: print("we must consider which chain will survive between %s" % mergeOptionsList)
         holdings = self.gamestate['game']['you']['playerdata']['stocks']
         hotels = self.gamestate['game']['hotels']
+
         #extract the relevant fields and add holdings from the hotels dictionary list for hotels we own stock in 
         myHotels = [dict({key: hotel[key] for key in ('name', 'stocks','majority','minority')},
             **{'ownstocks':holdings.get(hotel['name'])}) for hotel in hotels if hotel['name'] in [*holdings] and hotel['name'] in mergeOptionsList]
@@ -234,7 +267,7 @@ class TileBagAIPlayer(TileBagPlayer):
                 #pick the one with the biggest bonus
 
                 hotelName = sorted(iter(hotel for hotel in myHotels if hotel['ownstocks']>(constants.NUMSTOCKS-hotel['stocks'])/2),
-                    key= lambda i:i['majority'])[0]
+                    key= lambda i:i['majority'])[0]['name']
                 if constants.LOGLEVEL>=1: print("we have majority for %s; let's collapse it" % hotelName)
             #do we have minority in any chain?
             elif [hotel for hotel in myHotels if hotel['ownstocks']>(constants.NUMSTOCKS-hotel['stocks'])/len(self.gamestate['game']['players'])]:
@@ -257,15 +290,12 @@ class TileBagAIPlayer(TileBagPlayer):
         r = requests.patch(self.RESTendpoints.get("placehotel"),json=patchdata)
         if r.status_code != 200:
             print("ERROR - illegal move trying to remove a hotel\n%s" % r)
-            print("ERROR - selectMergeLoser system exit next")
-            self.killAILoop()
         
     def selectMergeWinner(self):
         mergeOptionsList = self.gamestate['game']['gamestate']['stateinfo']['bigoption']
         if constants.LOGLEVEL>=1: print("we must consider which chain will survive between %s" % mergeOptionsList)
         holdings = self.gamestate['game']['you']['playerdata']['stocks']
         hotels = self.gamestate['game']['hotels']
-    
 
         #extract the relevant fields and add own stocks and total worth from the hotels dictionary list for hotels in mergeOptionsList 
         myHotels = [dict({key: hotel[key] for key in ('name', 'stocks','price')},
@@ -286,8 +316,6 @@ class TileBagAIPlayer(TileBagPlayer):
         r = requests.patch(self.RESTendpoints.get("placehotel"),json=patchdata)
         if r.status_code != 200: 
             print("ERROR - illegal move trying to place a hotel to merge\n%s" % r)
-            print("ERROR - selectMergeWinner system exit next")
-            self.killAILoop()
 
 
     #will use simple logic here
@@ -317,7 +345,6 @@ class TileBagAIPlayer(TileBagPlayer):
             if r.status_code != 200: 
                 print("ERROR - illegal move trying to liquidate (trade) stock\n%s" % r)
                 print("ERROR - liquidateStocks (trade) system exit next")
-                self.killAILoop()
 
         #we're down to one or none
         #sell in late game, retain in early game
@@ -329,7 +356,6 @@ class TileBagAIPlayer(TileBagPlayer):
             if r.status_code != 200:
                 print("ERROR - illegal move trying to liquidate (sell) stock\n%s" % r)
                 print("ERROR - liquidateStocks(sell) system exit next")
-                self.killAILoop()
             
         #if holdings remain after this, end turn (turn ends automagically otherwise)
         elif holdings[smallestChain] > 0:
@@ -340,8 +366,6 @@ class TileBagAIPlayer(TileBagPlayer):
             if r.status_code != 200:
                 print("ERROR - illegal move trying to liquidate (hold) stock\n%s" % r)
                 print("ERROR - liquidateStocks (hold) system exit next")
-                self.killAILoop()
-
 
     #calculate holdings?; if you're ahead, end, else keep on
     def considerEnding(self):
@@ -352,23 +376,22 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200:
             print("ERROR - unable to end game\%s" % r)
             print("ERROR - considerEnding system exit next")
-            self.killAILoop()
         else:
             if constants.LOGLEVEL>=1: print("endgame requested successfully")
     
     def endGame(self):
-        if constants.LOGLEVEL>=1: print("tile coverage is %i/108" % len(self.gamestate['game']['board']['occupied']))
+        if constants.LOGLEVEL>=1: print("endrequested state reached; tile coverage is %i/108" % len(self.gamestate['game']['board']['occupied']))
 
     def gameOver(self):
         #declare winner
-        if constants.LOGLEVEL>=1: print("------------final scores -----------")
+        if constants.LOGLEVEL>=1: print("------------ final scores -----------")
         if constants.LOGLEVEL>=1: print(self.gamestate['game']['gamestate']['stateinfo']['finalscores'])
         #in previous version of the gamestate json, it was necessary to collapse the list of single-key dictionnaries into a flat dictionnary before sorting
         #scoreDict={key: value for scoreEntry in self.gamestate['game']['gamestate']['stateinfo']['finalscores'] for key, value in scoreEntry.items()}
         #display the final results
         if constants.LOGLEVEL>=0: print("final results:\n%s" % sorted(self.gamestate['game']['gamestate']['stateinfo']['finalscores'], key=lambda x: x['amount'], reverse=True)) #sort by value (decreasing)
-        #self.socketio.disconnect() #this seems unnecessary and causes socket close errors
-        if constants.LOGLEVEL>=1: print("gameOver exit next")
+        self.socketio.disconnect() #this seems unnecessary and causes socket close errors
+        if constants.LOGLEVEL>=2: print("gameOver exit next")
         self.killAILoop()
 
     #event handler for socketio
@@ -376,14 +399,22 @@ class TileBagAIPlayer(TileBagPlayer):
         if constants.LOGLEVEL>=1: print("connection established")
         self.join()
 
-
     #event handler for socketio
     def _update(self,data):
-        #for now, all the WS messages suggest to fetch a new game state, so we shall oblige
-        if constants.LOGLEVEL>=2: print("....websocket message received to update gamestate.... in_turn="+str(self.in_turn))
-        if constants.LOGLEVEL>=3: print(data)
-        self.fetchGameState()
-        
+        if constants.LOGLEVEL>=2: print("....websocket message received to update gamestate.... in_turn={}".format(self.in_turn))
+        if not self.in_turn:
+            #for now, all the WS messages suggest to fetch a new game state, so we shall oblige
+            self.in_turn = True #deregisters event handling while fetching state
+            self.fetchGameState()
+            if self.currentPlayer == self.id:
+                self.playLoop()
+            else:
+                #clear unplayableTiles list on the basis that once other players make their moves, the previously unplayable
+                #tiles could be playable again, and permanently unplayable tiles have been removed from the player's hand
+                self.unplayableTiles=[]
+            self.in_turn = False
+        else:
+            if constants.LOGLEVEL>=3: print("....ignoring because we're in_turn")
 
     #event handler for socketio
     def _disconnect(self):
