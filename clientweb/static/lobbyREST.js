@@ -64,6 +64,20 @@ async function lobbyREST_startGame(url) {
                
   return _responseOrError(response);
 }
+
+async function lobbyREST_restartGame(url) {
+  const response = await fetch(url, {
+              method: 'PATCH', 
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 'action': 'restart'})
+                },
+              );
+               
+  return _responseOrError(response);
+}
   
 async function _responseOrError(response) {
   await response.status;

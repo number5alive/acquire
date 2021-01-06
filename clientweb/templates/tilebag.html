@@ -11,6 +11,7 @@
   <script src="{{ url_for('.static', filename='board.js') }}{{ cachefix }}"></script>
   <script src="{{ url_for('.static', filename='tiles.js') }}{{ cachefix }}"> </script>
   <script src="{{ url_for('.static', filename='tbREST.js') }}{{ cachefix }}"> </script>
+  <script src="{{ url_for('.static', filename='lobbyREST.js') }}{{ cachefix }}"> </script>
     
    <!-- And our WebSocket helper -->
 	   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
@@ -170,6 +171,9 @@
         <span class="p12 left centered" id="playerscores">
         </span>
       </div>
+      <div class="rrow">
+        <button onclick="onResetGame()" id="btnResetGame">Start Over?</button>
+      </div>
       <div class="rrow" style="text-align:left" id="finalscores">
       </div>
       <div class="rrow" style="text-align:left" id="endgamepayouts">
@@ -328,6 +332,12 @@
     }
   }
 
+  function onResetGame() {
+    console.log("Reset Game Selected");
+    lobbyREST_restartGame("{{ url_for('lobbyrest_blueprint.rest_lobby_patch_game_state', gameid=gameid)}}");
+    location.reload();
+  }
+   
   function onEndGame() {
     console.log("onEndGame pressed");
     sendEndGameRequest();
