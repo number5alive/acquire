@@ -70,10 +70,10 @@ class TileBagAIPlayer(TileBagPlayer):
         print("trying to join")
         self.socketio.emit('join', {'room':'{}'.format(self.gameid)})
         if constants.LOGLEVEL>=1: print("player joined %s" % self.gameserver) 
-        self.in_turn = True
+        #self.in_turn = True
         self.fetchGameState()
         self.playLoop()
-        self.in_turn = False
+        #self.in_turn = False
 
 
 
@@ -86,36 +86,38 @@ class TileBagAIPlayer(TileBagPlayer):
         r = requests.get(self.RESTendpoints.get("gamestate"),params=getparams)
         if r.status_code != 200:
             print("ERROR - error fetching game state\n%s" % r)
-
-        #updating gamestate
-        self.previousPlayerState = self.currentPlayerState #storing previous value to determine change
-        #loading and activating the full game state (should trap for errors here)
-        self.gamestate = json.loads(r.text)
-        #setting some utility fields
-        self.currentPlayer = self.gamestate['game']['gamestate']['currplayer']['id']
-        #concatenated snapshot of player and game state, used to determine changes
-        self.currentPlayerState = "Player: {};  State: {}".format(self.gamestate['game']['gamestate']['currplayer']['name'], self.gamestate['game']['gamestate']['state'])
-        if constants.LOGLEVEL>=2: print("currentPlayerState's string=> {}".format(self.currentPlayerState))
-         
-        #comparing previous to current player & state string, in order to limit logging once per turn/playstate
-        if self.currentPlayerState != self.previousPlayerState:
-            #simple logging
-            if self.currentPlayer == self.id: 
-                print("it's our turn, my precious, we must play someting {}".format(self.gamestate['game']['gamestate']['state']))
-            else:
-                print("oh look, it's {}'s turn to play someting {}".format(self.gamestate['game']['gamestate']['currplayer']['name'],self.gamestate['game']['gamestate']['state']))
-            if constants.LOGLEVEL>=3: print(json.dumps(self.gamestate))
-            if constants.LOGLEVEL>=4: 
-                #obtain the server's viewpoint of the game state
-                serverstate_req = requests.get(self.RESTendpoints.get("savegame"))
-                if serverstate_req.status_code != 200:
-                    print("ERROR - error fetching server state\n%s" % serverstate_req)
+        else:
+            #updating gamestate
+            self.previousPlayerState = self.currentPlayerState #storing previous value to determine change
+            #loading and activating the full game state (should trap for errors here)
+            self.gamestate = json.loads(r.text)
+            #setting some utility fields
+            self.currentPlayer = self.gamestate['game']['gamestate']['currplayer']['id']
+            #concatenated snapshot of player and game state, used to determine changes
+            self.currentPlayerState = "Player: {};  State: {}".format(self.gamestate['game']['gamestate']['currplayer']['name'], self.gamestate['game']['gamestate']['state'])
+            if constants.LOGLEVEL>=2: print("currentPlayerState's string=> {}".format(self.currentPlayerState))
+             
+            #comparing previous to current player & state string, in order to limit logging once per turn/playstate
+            if self.currentPlayerState != self.previousPlayerState:
+                #simple logging
+                if self.currentPlayer == self.id: 
+                    print("it's our turn, my precious, we must play someting {}".format(self.gamestate['game']['gamestate']['state']))
                 else:
-                    print("server state =>\n{}".format(serverstate_req.text))
+                    print("oh look, it's {}'s turn to play someting {}".format(self.gamestate['game']['gamestate']['currplayer']['name'],self.gamestate['game']['gamestate']['state']))
+                    self.in_turn= False #just making sure; it feels like we're wrongly in_turn during other player's turns at times
+                    self.unplayableTiles = [] #just making sure; it shouldn't need it here, but....
+                if constants.LOGLEVEL>=3: print(json.dumps(self.gamestate))
+                if constants.LOGLEVEL>=4: 
+                    #obtain the server's viewpoint of the game state
+                    serverstate_req = requests.get(self.RESTendpoints.get("savegame"))
+                    if serverstate_req.status_code != 200:
+                        print("ERROR - error fetching server state\n%s" % serverstate_req)
+                    else:
+                        print("server state =>\n{}".format(serverstate_req.text))
 
-        #this needs to happen regardless of who's turn it is; so it is not in the play loop
-        if self.gamestate['game']['gamestate']['state'] == "EndGame":
-            self.gameOver()
+            #this needs to happen regardless of who's turn it is; so it is not in the play loop
+            if self.gamestate['game']['gamestate']['state'] == "EndGame":
+                self.gameOver()
 
 
     #this subrouting tackles game play in a while loop
@@ -210,7 +212,7 @@ class TileBagAIPlayer(TileBagPlayer):
         if r.status_code != 200: 
             print("ERROR - illegal move trying to place a hotel\n%s" % r)
             print("ERROR - placeHotel system exit next")
-            self.killAILoop()
+            #self.killAILoop()
 
     #this is where the AI will also hopefully shine
     def buyStock(self):
@@ -402,19 +404,21 @@ class TileBagAIPlayer(TileBagPlayer):
     #event handler for socketio
     def _update(self,data):
         if constants.LOGLEVEL>=2: print("....websocket message received to update gamestate.... in_turn={}".format(self.in_turn))
-        if not self.in_turn:
+        #we going to try to fetch state anyways, but not act on it
+        #this could corrupt the data structure midway through a turn?
+        self.fetchGameState() #code to clear unplayableTiles moved there
+        if self.currentPlayer==self.id and not self.in_turn:
             #for now, all the WS messages suggest to fetch a new game state, so we shall oblige
-            self.in_turn = True #deregisters event handling while fetching state
-            self.fetchGameState()
             if self.currentPlayer == self.id:
+                self.in_turn = True #deregisters event handling while fetching state
                 self.playLoop()
-            else:
+            #else:
                 #clear unplayableTiles list on the basis that once other players make their moves, the previously unplayable
                 #tiles could be playable again, and permanently unplayable tiles have been removed from the player's hand
-                self.unplayableTiles=[]
-            self.in_turn = False
+                #self.unplayableTiles=[]
+                self.in_turn = False
         else:
-            if constants.LOGLEVEL>=3: print("....ignoring because we're in_turn")
+            if constants.LOGLEVEL>=3: print("....ignoring AS IN NOT PLAY HANDLING IT because we're in_turn")
 
     #event handler for socketio
     def _disconnect(self):
