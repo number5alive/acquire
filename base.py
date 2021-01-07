@@ -56,6 +56,7 @@ class Game:
   _starturl="/"
   _playerClass=Player
   _currplayer=None
+  _done=False
    
   def __init__(self, id, name="None"):
     # initialize the game: board, tiles, players, stocks

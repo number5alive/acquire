@@ -68,8 +68,11 @@ def notifyPlayers(room, game):
   #       The ugly part is anyone who knows a players id, can listen... but meh
   np, players = game.players
   for p in players:
-    if p == game.currplayer:
-      socketio.emit('yourturn', {'turn':'yours'}, room="{}.{}".format(room, p.id))
+    if p == game.currplayer or game._done == True:
+      # NOTE: copying logic from the REST interface as they should match (fix this)
+      ret={'game' : game.getPublicInformation()}
+      ret['game']['you'] = p.serialize(True)
+      socketio.emit('yourturn', ret, room="{}.{}".format(room, p.id))
     # TODO: Only do this if the playerinfo has changed
     socketio.emit('privateinfo', p.savePlayerData(), room="{}.{}".format(room, p.id))
 

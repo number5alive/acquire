@@ -753,6 +753,8 @@ class TileBagGame(Game, StateEngine):
       for p in blah:
         self._game._log.recordGameMessage("{}: ${:0,.2f}".format(p.name, p.money))
 
+      self._game._done=True #set flag in base clase - will let us tell everyone!
+
     def toHuman(self):
       return "End State! Cashing out the remaining hotels on the board"
 
