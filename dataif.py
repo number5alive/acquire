@@ -68,6 +68,8 @@ def notifyPlayers(room, game):
   #       The ugly part is anyone who knows a players id, can listen... but meh
   np, players = game.players
   for p in players:
+    if p == game.currplayer:
+      socketio.emit('yourturn', {'turn':'yours'}, room="{}.{}".format(room, p.id))
     # TODO: Only do this if the playerinfo has changed
     socketio.emit('privateinfo', p.savePlayerData(), room="{}.{}".format(room, p.id))
 

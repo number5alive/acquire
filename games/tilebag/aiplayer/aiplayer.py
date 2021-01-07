@@ -38,6 +38,7 @@ class TileBagAIPlayer():
         self.socketio.on('update')(self._update)
         self.socketio.on('publicinfo')(self._publicinfo)
         self.socketio.on('privateinfo')(self._privateinfo)
+        self.socketio.on('yourturn')(self._yourturn)
         self.socketio.on('disconnect')(self._disconnect)
 
     def isConnected(self):
@@ -402,6 +403,9 @@ class TileBagAIPlayer():
 
     def _publicinfo(self, data):
         print('got public info: {}'.format(data))
+
+    def _yourturn(self, data):
+        print("It's my turn!")
 
     def _privateinfo(self, data):
         print('got private info: {}'.format(data))

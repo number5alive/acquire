@@ -55,6 +55,7 @@ class Game:
   _name="None"
   _starturl="/"
   _playerClass=Player
+  _currplayer=None
    
   def __init__(self, id, name="None"):
     # initialize the game: board, tiles, players, stocks
@@ -75,6 +76,10 @@ class Game:
   @property
   def id(self):
     return self._id
+
+  @property
+  def currplayer(self):
+    return self._currplayer
      
   @classmethod
   def name(cls):
