@@ -2,7 +2,7 @@ from pydoc import locate
 import os
 from json import JSONEncoder
 import json
-from base import Game
+from base import Game, Player
 from config import getGameInfo, socketio
 
 # This version of the data interface just uses global variable
@@ -58,8 +58,18 @@ def garbageDeleteMe():
 
 def notifyPlayers(room, game):
   print("Notifying Players in room {}".format(room))
+   
+  # old way, just a poke to inform players to issue a new GET
   socketio.emit('update', {'message': 'update avail'}, room=room)
-  socketio.emit('updatewithdata', game.getPublicInformation(), room=room)
+  # new way, send along the public information while we're a it   
+  socketio.emit('publicinfo', game.getPublicInformation(), room=room)
+  # send each player their own specific data (they'll join a room for this)
+  #       would need their websocket sid bound to their playerid somehow...
+  #       The ugly part is anyone who knows a players id, can listen... but meh
+  np, players = game.players
+  for p in players:
+    # TODO: Only do this if the playerinfo has changed
+    socketio.emit('privateinfo', p.savePlayerData(), room="{}.{}".format(room, p.id))
 
 # In this version of the dataif, the caller doesn't realize, but they've updated
 # a real object - in a database version, this will have to update the database
