@@ -133,7 +133,10 @@ class Game:
     return 'Game ' + str(self._id) + ' (' + self._name + ')'
 
   def saveGameData(self):
-    return []
+    return {}
+
+  def getPublicInformation(self):
+    return {}
 
   def serialize(self,forsave=False):
     serdata = {

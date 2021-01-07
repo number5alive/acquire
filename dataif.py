@@ -56,15 +56,16 @@ def garbageDeleteMe():
     games=[Game(id) for id in ["this", "is", "a", "game", "id"]]
     saveGameStates()
 
-def notifyPlayers(room):
+def notifyPlayers(room, game):
   print("Notifying Players in room {}".format(room))
   socketio.emit('update', {'message': 'update avail'}, room=room)
+  socketio.emit('updatewithdata', game.getPublicInformation(), room=room)
 
 # In this version of the dataif, the caller doesn't realize, but they've updated
 # a real object - in a database version, this will have to update the database
 def updateGame(gameid):
   saveGameStates()
-  notifyPlayers(str(gameid))
+  notifyPlayers(str(gameid), getGameById(gameid))
  
 # ----- Query Games -----
 # return details about a game
