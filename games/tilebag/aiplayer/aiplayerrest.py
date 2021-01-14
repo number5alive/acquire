@@ -53,6 +53,17 @@ def rest_tilebagai_games(gameid):
   robots={}
        
   if gameid in _AITHREADS:
+    # quick check to see if old robots are still alive (they might have died since we last checked)
+    deadbots=[]
+    for playerid, robot in _AITHREADS[gameid].items():
+      if not robot['thread'].is_alive():
+        deadbots.append(playerid)  # two step since we'll be affecting the thing we're looping over
+
+    #if any were dead, remove them from the list
+    for p in deadbots:
+      _AITHREADS[gameid].pop(p)
+
+    # now we can confidently tell the caller how many robots are running
     robots=_AITHREADS[gameid]
        
   print("GETAI result for {}: {}".format(gameid, robots))
