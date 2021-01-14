@@ -56,10 +56,18 @@ class TileBagAIPlayer():
       ailoop=threading.Thread(target=self.socketio.wait)
       ailoop.start() # causes the AI loop to run
       self._connected=True
+
+      # tell anyone that's listening, that there's a new robot in town!
+      self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'new', 'playerid': self.id})
     return ailoop
        
   def killAILoop(self):
     ''' called to stop the main ai loop (the socket wait), replaces the self.killAILoop calls '''
+         
+    # Before we drop the connection (TODO: test that we still HAVE that connection)
+    # tell anyone that's listening, that there's a new robot in town!
+    self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'done', 'playerid': self.id})
+         
     print("Dropping connection to the websocket")
     self.socketio.disconnect() # this should abort the wait loop cleanly
     print("Connection Dropped")

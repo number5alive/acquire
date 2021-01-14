@@ -43,7 +43,15 @@ def on_join(data):
     room = data['room']
     join_room(room)
     print("user {} is now in rooms: {}".format(request.sid, rooms(request.sid)))
-    
+
+@socketio.on('clientmessage')
+def on_clientmessage(data):
+    """ websocket: relay node for clients to send notifications to others """
+    room = data['room']
+    message = data['message']
+
+    # Just forward all the received message to the specified room
+    socketio.emit(message, data, room=room)
 
 # This is just a test endpoint for sending messages via the websocket
 from flask import jsonify

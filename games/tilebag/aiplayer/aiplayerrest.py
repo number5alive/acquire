@@ -80,7 +80,6 @@ def rest_tilebagai_addai(gameid, playerid):
   # TODO: the AI might be in this list but not actually running, check that
   if gameid not in _AITHREADS or playerid not in _AITHREADS[gameid]:
     print("Creating the AI player")
-    print(type(request.host_url))
     aiName=_makeAIThreadName(gameid, playerid)
    
     player=TileBagAIPlayer(playerid, gameserver=request.host_url, gameid=gameid, style="aggressive")

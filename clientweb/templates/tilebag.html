@@ -1471,6 +1471,11 @@
       console.log("WS:Update");
       rendergame();
     });
+    socket.on('robots', function(data) {
+        console.log("Here there be ROBOTS!" );
+        console.log("Robot Action: " + data['robotaction']);
+        console.log("Robot for PlayerID: " + data['playerid']);
+    });
   }
 
   function enableCollapsables() {
