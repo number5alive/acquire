@@ -17,11 +17,6 @@ TILEBAGAIREST_URL='/ai'
 from flask import Blueprint
 tilebagairest_blueprint = Blueprint('tilebagiarest_blueprint', __name__)
 
-@tilebagairest_blueprint.route('/', methods=['GET'])
-def rest_tilebagai_hello():
-  ''' GET the number of AI players currently playing games '''
-  return jsonify({'message' : 'Hello, AI World!'})
-
 class AIThreadEvent(Event):
   ''' Helper class so I can tell the calling engine that we connected okay '''
   def __init__(self):
@@ -44,23 +39,39 @@ def _doAIThread(connectEvent, player):
   if ailoop:
     ailoop.join()
 
+# We'll store robots as [gameid][playerid]
 _AITHREADS={}
  
-def _makeAIName(gameid, playerid): 
+def _makeAIThreadName(gameid, playerid): 
   return "T{}.{}.AI".format(gameid[-4:],playerid)
    
+@tilebagairest_blueprint.route('/<string:gameid>', methods=['GET'])
+def rest_tilebagai_games(gameid):
+  ''' GET the number of AI players currently playing this game '''
+  errno=200 #presume success
+  robots={}
+       
+  if gameid in _AITHREADS:
+    robots=_AITHREADS[gameid]
+       
+  print("GETAI result for {}: {}".format(gameid, robots))
+  # NOTE: the key in _AITHREADS is the playerid, which is what the caller will need anyway
+  return jsonify({'robots': [k for k in robots.keys()]}), errno
+
 @tilebagairest_blueprint.route('/<string:gameid>/<string:playerid>', methods=['POST'])
 def rest_tilebagai_addai(gameid, playerid):
   ''' Make a player into a robot '''
   errno=200 #presume success
   errmsg="bot is running!"
-  aiName=_makeAIName(gameid, playerid)
 
   # Make sure the player isn't already a robot
-  if aiName not in _AITHREADS:
+  # TODO: the AI might be in this list but not actually running, check that
+  if gameid not in _AITHREADS or playerid not in _AITHREADS[gameid]:
     print("Creating the AI player")
-    print(_AITHREADS)
-    player=TileBagAIPlayer(playerid, aiName, gameserver=request.host_url, gameid=gameid, style="aggressive")
+    print(type(request.host_url))
+    aiName=_makeAIThreadName(gameid, playerid)
+   
+    player=TileBagAIPlayer(playerid, gameserver=request.host_url, gameid=gameid, style="aggressive")
     # we do this in a thread so it can run indepenent from the server
     # the event is used so we know when we can check if we connected successfully
     connectEvent=AIThreadEvent()
@@ -71,7 +82,10 @@ def rest_tilebagai_addai(gameid, playerid):
      
     # if we connect, this thread will live on, so keep track of it!
     if connectEvent.connected:
-      _AITHREADS[aiName]={'thread':aithread, 'player':player}
+      robotinfo={'thread':aithread, 'player':player} # this really could be simpler eh? carry-over!
+      if gameid not in _AITHREADS:
+        _AITHREADS[gameid]={}
+      _AITHREADS[gameid][playerid]=robotinfo
     else:
       errmsg="couldn't start the AI, likely a connection error"
       errno=500
@@ -82,19 +96,18 @@ def rest_tilebagai_addai(gameid, playerid):
   print("ADDAI result {}: {}".format(errno, errmsg))
   return jsonify({'message': errmsg}), errno
 
-# TODO: API to make a player _stop_ being a robot
 @tilebagairest_blueprint.route('/<string:gameid>/<string:playerid>', methods=['DELETE'])
 def rest_tilebagai_removeai(gameid, playerid):
   ''' Stop the AI from running for the specified player '''
   errno=501 #not implemented
   errmsg="Sorry, haven't implemented this yet"
-  aiName=_makeAIName(gameid, playerid)
+  aiName=_makeAIThreadName(gameid, playerid)
        
-  if aiName in _AITHREADS:
-    # if the thread is running, get the player to kill the thread
-    if _AITHREADS[aiName]['thread'].is_alive():
-      _AITHREADS[aiName]['player'].killAILoop()
-    _AITHREADS.pop(aiName)
+  if gameid in _AITHREADS and playerid in _AITHREADS[gameid]:
+    # if the thread is running, killing the TileBagAIPlayer will kill the thread
+    if _AITHREADS[gameid][playerid]['thread'].is_alive():
+      _AITHREADS[gameid][playerid]['player'].killAILoop()
+    _AITHREADS[gameid].pop(playerid)
     errno=200
     errmsg="She's done!"
   else:
