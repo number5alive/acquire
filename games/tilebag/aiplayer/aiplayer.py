@@ -1,3 +1,4 @@
+from games.tilebag.player import TileBagPlayer
 import sys #handling command line parameters
 import json #well, everything is json nowadays, isn't it?
 import socketio #to be notified of game state changes
@@ -7,11 +8,12 @@ from time import sleep #to optinonally simulate the human speed of play
 import random #picking tiles at random for now
 import threading #so we can still do other stuff while this player runs!
 
-class TileBagAIPlayer():
+class TileBagAIPlayer(TileBagPlayer):
     
     #aiplayer constructor
-    def __init__(self, playerid, gameserver="http://localhost:5000", gameid="test", style="aggressive"):
-        self.id = playerid
+    def __init__(self, id, name=None, money=6000, gameserver="http://localhost:5000", gameid="test", style="aggressive"):
+        
+        super().__init__(id, name=name)
         self.gameserver = gameserver
         self.gameid = gameid
         self.style = style
@@ -36,9 +38,6 @@ class TileBagAIPlayer():
         #register socket event handlers, can't use decorator syntax within an class definition
         self.socketio.on('connect')(self._connect)
         self.socketio.on('update')(self._update)
-        self.socketio.on('publicinfo')(self._publicinfo)
-        self.socketio.on('privateinfo')(self._privateinfo)
-        self.socketio.on('yourturn')(self._yourturn)
         self.socketio.on('disconnect')(self._disconnect)
 
     def isConnected(self):
@@ -69,13 +68,14 @@ class TileBagAIPlayer():
     def join(self):
         #join message necessary to receive updates via websockets
         print("trying to join")
-        self.socketio.emit('join', {'room':'{}'.format(self.gameid)}) # for public info
-        self.socketio.emit('join', {'room':'{}.{}'.format(self.gameid,self.id)}) # for private info
+        self.socketio.emit('join', {'room':'{}'.format(self.gameid)})
         if constants.LOGLEVEL>=1: print("player joined %s" % self.gameserver) 
         #self.in_turn = True
         self.fetchGameState()
         self.playLoop()
         #self.in_turn = False
+
+
 
     #this subroutine simply sends a request to the server's REST API to fetch the complete game state
     #(player's viewpoint) 
@@ -401,15 +401,6 @@ class TileBagAIPlayer():
         if constants.LOGLEVEL>=1: print("connection established")
         self.join()
 
-    def _publicinfo(self, data):
-        print('got public info: {}'.format(data))
-
-    def _yourturn(self, data):
-        print("It's my turn!")
-
-    def _privateinfo(self, data):
-        print('got private info: {}'.format(data))
-
     #event handler for socketio
     def _update(self,data):
         if constants.LOGLEVEL>=2: print("....websocket message received to update gamestate.... in_turn={}".format(self.in_turn))
@@ -470,7 +461,7 @@ if __name__ == "__main__":
      
     #instantiates an AI player
     print("=================================================================") #line break in the log when spawning multiple games
-    player=TileBagAIPlayer(playerid, gameserver=gameserver, gameid=gameid, style=style)
+    player=TileBagAIPlayer(playerid, (playername + "+AI"), gameserver=gameserver, gameid=gameid, style=style)
      
     # Run the AI in it's own thread, mimicks what we do when launching from the server
     ailoop=player.runAILoop()

@@ -1,6 +1,7 @@
 from flask import jsonify
 from flask import request
-from games.tilebag.aiplayer.aiplayer import TileBagAIPlayer
+#from games.tilebag.aiplayer.aiplayer import TileBagAIPlayer
+from ai.tilebag.aiplayer import TileBagAIPlayer
 from threading import Thread, Event
 
 #
