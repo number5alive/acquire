@@ -620,7 +620,7 @@
   
   const HTML_PLAYER_NAME='<div class="row"><div class="p8 left">YYYYYY<img class=" notthere" id="isrobot_XXXXXX" src="{{ url_for('.static', filename='robot.png')}}" width="15px" style="float:right"></div><span class="p4 right activeind" id="pactive_XXXXXX"></span></div>';
    
-  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="rrow"><span class="p6 left">STOCK MARKET</span><span class="p6 right playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
+  const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="rrow"><span class="p6 left">STOCK MARKET</span><span class="p6 right playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div></div><div class="row RRRnotthere centered" id="forbuttons"><button onclick="onStartRobot()">Start AI</button><button onclick="onStopRobot()">Stop AI</button></div></div>';
    
   function showPlayers(pdata, you) {
     var pid=pdata['id'];         // Shorthand for this function
@@ -703,6 +703,17 @@
           .then( result => updateRobotDisplay(result) )
           .catch( err => { sendGameMessage(err.message);
                         });
+  }
+
+  function onStartRobot() {
+    // use the ai REST interface to add this player
+    tbREST_aiadd("{{ url_for('tilebagairest_blueprint.rest_tilebagai_addai', gameid=gameid, playerid=playerid) }}")
+          .catch( err => { sendGameMessage(err.message); });
+  }
+
+  function onStopRobot() {
+    tbREST_airemove("{{ url_for('tilebagairest_blueprint.rest_tilebagai_removeai', gameid=gameid, playerid=playerid) }}")
+          .catch( err => { sendGameMessage(err.message); });
   }
 
   function updateRobotDisplay(data){

@@ -19,6 +19,32 @@ async function tbREST_ailist(url) {
   }
 }
  
+async function tbREST_aiadd(url) {
+  const response = await fetch(url, {
+              method: 'POST', 
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              },
+            );
+               
+  return _responseOrError(response);
+}
+ 
+async function tbREST_airemove(url, tile) {
+  const response = await fetch(url, {
+              method: 'DELETE', 
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              },
+            );
+               
+  return _responseOrError(response);
+}
+ 
  
 async function tbREST_placetile(url, tile) {
   const response = await fetch(url, {
