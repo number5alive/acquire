@@ -16,7 +16,7 @@ TILEBAGAIREST_URL='/ai'
  
 # Expose these routes to the main server application 
 from flask import Blueprint
-tilebagairest_blueprint = Blueprint('tilebagiarest_blueprint', __name__)
+tilebagairest_blueprint = Blueprint('tilebagairest_blueprint', __name__)
 
 class AIThreadEvent(Event):
   ''' Helper class so I can tell the calling engine that we connected okay '''
@@ -47,7 +47,7 @@ def _makeAIThreadName(gameid, playerid):
   return "T{}.{}.AI".format(gameid[-4:],playerid)
    
 @tilebagairest_blueprint.route('/<string:gameid>', methods=['GET'])
-def rest_tilebagai_games(gameid):
+def rest_tilebagai_listais(gameid):
   ''' GET the number of AI players currently playing this game '''
   errno=200 #presume success
   robots={}

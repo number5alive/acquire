@@ -3,6 +3,23 @@ Wrappers for all the fetch calls in the tilebag rest API
 Generally returns the status code, or on fail, throws an Error with the
 message from the game
 */
+ 
+ 
+async function tbREST_ailist(url) {
+  const response = await fetch(url);
+
+  await response.status;
+  if( response.status == 200 ) {
+    return response.json()
+  } else {
+    var errmsg="Server Error";
+    await response.json()
+      .then( (json) => { errmsg=json.message; });
+    throw new Error(errmsg);
+  }
+}
+ 
+ 
 async function tbREST_placetile(url, tile) {
   const response = await fetch(url, {
               method: 'PATCH', 

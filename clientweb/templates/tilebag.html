@@ -617,7 +617,8 @@
     el_loop.innerHTML=el_loop.innerHTML+el_loop.innerHTML;
   }
 
-  const HTML_PLAYER_NAME='<div class="row"><div class="p8 left">YYYYYY</div><span class="p4 right activeind" id="pactive_XXXXXX"></span></div>';
+  
+  const HTML_PLAYER_NAME='<div class="row"><div class="p8 left">YYYYYY<img class=" notthere" id="isrobot_XXXXXX" src="{{ url_for('.static', filename='robot.png')}}" width="15px" style="float:right"></div><span class="p4 right activeind" id="pactive_XXXXXX"></span></div>';
    
   const HTML_ACTIVE_PLAYER='<div class="card">'+HTML_PLAYER_NAME+'<div class="playerspace"><div class="rrow"><span class="p6 left">STOCK MARKET</span><span class="p6 right playermoney" id="playermoney">$$$$$</span> </div> <div class="stockrack" id="stockrack"> <!-- The following will dynamically be populated with <div class="stockspace">M</div> --></div><div class="row notthere" id="forbuttons">For Buttons</div></div></div>';
    
@@ -695,6 +696,25 @@
     for(var i=0; i<players.length; i++)
     {
       showPlayers(players[(start+i)%players.length], i==0 ? pdata : null);
+    }
+
+    // ask the AI interface for a list of current robots (so we can show the player)
+    tbREST_ailist("{{ url_for('tilebagairest_blueprint.rest_tilebagai_listais', gameid=gameid) }}")
+          .then( result => updateRobotDisplay(result) )
+          .catch( err => { sendGameMessage(err.message);
+                        });
+  }
+
+  function updateRobotDisplay(data){
+    var data=data['robots'];
+     
+    // make sure the little robot icon shows for each player in this list
+    for(var i=0; i<data.length; i++)
+    {
+      var el_robot=document.getElementById("isrobot_"+data[i].toString());
+      if( el_robot != undefined ) {
+        removeEffect(EFFECT_REMOVED, el_robot);
+      }
     }
   }
    
@@ -1439,7 +1459,6 @@
 
   function setupWebSocket() {
     var url=location.protocol + '//{{ serverroot }}';
-    console.log("WS: " + url);
     var socket = io.connect(url, {
                    /*'transports': ['websocket'],*/
                    'reconnection': true,
@@ -1468,13 +1487,21 @@
     });
 
     socket.on('update', function(data) {
-      console.log("WS:Update");
       rendergame();
     });
     socket.on('robots', function(data) {
         console.log("Here there be ROBOTS!" );
         console.log("Robot Action: " + data['robotaction']);
         console.log("Robot for PlayerID: " + data['playerid']);
+
+        var el_robot=document.getElementById("isrobot_"+data['playerid']);
+        if( el_robot != undefined ) {
+          if( data['robotaction'] == 'new') {
+            removeEffect(EFFECT_REMOVED, el_robot);
+          } else {
+            addEffect(EFFECT_REMOVED, el_robot);
+          }
+        }
     });
   }
 
