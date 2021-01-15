@@ -379,9 +379,9 @@ class TileBagAIPlayer():
     #scoreDict={key: value for scoreEntry in self.gamestate['game']['gamestate']['stateinfo']['finalscores'] for key, value in scoreEntry.items()}
     #display the final results
     if constants.LOGLEVEL>=0: print("final results:\n%s" % sorted(self.gamestate['game']['gamestate']['stateinfo']['finalscores'], key=lambda x: x['amount'], reverse=True)) #sort by value (decreasing)
-    self.socketio.disconnect() #this seems unnecessary and causes socket close errors
+    #self.socketio.disconnect() #this seems unnecessary and causes socket close errors
     if constants.LOGLEVEL>=2: print("gameOver exit next")
-    self.killAILoop()
+    #self.killAILoop() #nah, we'll stick around, maybe they'll reset the game?!
 
   #event handler for socketio
   def _connect(self):
