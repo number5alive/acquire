@@ -70,59 +70,70 @@ def rest_tilebagai_listais(gameid):
   # NOTE: the key in _AITHREADS is the playerid, which is what the caller will need anyway
   return jsonify({'robots': [k for k in robots.keys()]}), errno
 
+# Extra entry point used because we couldn't load the template for spectator view otherwise
+# NOTE: It is NOT a valid entry point - so we'll bail if playerid is ever None!
+@tilebagairest_blueprint.route('/<string:gameid>', defaults={'playerid': None}, methods=['POST'])
 @tilebagairest_blueprint.route('/<string:gameid>/<string:playerid>', methods=['POST'])
 def rest_tilebagai_addai(gameid, playerid):
   ''' Make a player into a robot '''
   errno=200 #presume success
   errmsg="bot is running!"
 
-  # Make sure the player isn't already a robot
-  # TODO: the AI might be in this list but not actually running, check that
-  if gameid not in _AITHREADS or playerid not in _AITHREADS[gameid]:
-    print("Creating the AI player")
-    aiName=_makeAIThreadName(gameid, playerid)
-   
-    player=TileBagAIPlayer(playerid, gameserver=request.host_url, gameid=gameid, style="aggressive")
-    # we do this in a thread so it can run indepenent from the server
-    # the event is used so we know when we can check if we connected successfully
-    connectEvent=AIThreadEvent()
-    aithread=Thread(target=_doAIThread, name=aiName, args=(connectEvent, player))
-   # aithread=socketio.start_background_task(target=_doAIThread, args=(connectEvent, gameid, playerid))
-    aithread.start()
-    connectEvent.wait() # signals when we know the connection state
+  if playerid is not None:
+    # Make sure the player isn't already a robot
+    # TODO: the AI might be in this list but not actually running, check that
+    if gameid not in _AITHREADS or playerid not in _AITHREADS[gameid]:
+      print("Creating the AI player")
+      aiName=_makeAIThreadName(gameid, playerid)
      
-    # if we connect, this thread will live on, so keep track of it!
-    if connectEvent.connected:
-      robotinfo={'thread':aithread, 'player':player} # this really could be simpler eh? carry-over!
-      if gameid not in _AITHREADS:
-        _AITHREADS[gameid]={}
-      _AITHREADS[gameid][playerid]=robotinfo
+      player=TileBagAIPlayer(playerid, gameserver=request.host_url, gameid=gameid, style="aggressive")
+      # we do this in a thread so it can run indepenent from the server
+      # the event is used so we know when we can check if we connected successfully
+      connectEvent=AIThreadEvent()
+      aithread=Thread(target=_doAIThread, name=aiName, args=(connectEvent, player))
+     # aithread=socketio.start_background_task(target=_doAIThread, args=(connectEvent, gameid, playerid))
+      aithread.start()
+      connectEvent.wait() # signals when we know the connection state
+       
+      # if we connect, this thread will live on, so keep track of it!
+      if connectEvent.connected:
+        robotinfo={'thread':aithread, 'player':player} # this really could be simpler eh? carry-over!
+        if gameid not in _AITHREADS:
+          _AITHREADS[gameid]={}
+        _AITHREADS[gameid][playerid]=robotinfo
+      else:
+        errmsg="couldn't start the AI, likely a connection error"
+        errno=500
     else:
-      errmsg="couldn't start the AI, likely a connection error"
-      errno=500
+      errno=409
+      errmsg="There's already a bot for that!"
   else:
-    errno=409
-    errmsg="There's already a bot for that!"
+    errno=400
+    errmsg="Invalid call (likely no playerid specified)"
 
   print("ADDAI result {}: {}".format(errno, errmsg))
   return jsonify({'message': errmsg}), errno
 
+# Extra entry point used because we couldn't load the template for spectator view otherwise
+# NOTE: It is NOT a valid entry point - so we'll bail if playerid is ever None!
+@tilebagairest_blueprint.route('/<string:gameid>', defaults={'playerid': None}, methods=['DELETE'])
 @tilebagairest_blueprint.route('/<string:gameid>/<string:playerid>', methods=['DELETE'])
 def rest_tilebagai_removeai(gameid, playerid):
   ''' Stop the AI from running for the specified player '''
-  errno=501 #not implemented
-  errmsg="Sorry, haven't implemented this yet"
+  errno=400 
+  errmsg="Invalid call (likely no playerid specified)"
   aiName=_makeAIThreadName(gameid, playerid)
        
-  if gameid in _AITHREADS and playerid in _AITHREADS[gameid]:
-    # if the thread is running, killing the TileBagAIPlayer will kill the thread
-    if _AITHREADS[gameid][playerid]['thread'].is_alive():
-      _AITHREADS[gameid][playerid]['player'].killAILoop()
-    _AITHREADS[gameid].pop(playerid)
-    errno=200
-    errmsg="She's done!"
-  else:
-    errno=404
-    errmsg="No AI running by that name!"
+  if playerid is not None:
+    if gameid in _AITHREADS and playerid in _AITHREADS[gameid]:
+      # if the thread is running, killing the TileBagAIPlayer will kill the thread
+      if _AITHREADS[gameid][playerid]['thread'].is_alive():
+        _AITHREADS[gameid][playerid]['player'].killAILoop()
+      _AITHREADS[gameid].pop(playerid)
+      errno=200
+      errmsg="She's done!"
+    else:
+      errno=404
+      errmsg="No AI running by that name!"
    
   return jsonify({'message': errmsg}), errno
