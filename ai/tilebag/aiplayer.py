@@ -6,10 +6,13 @@ import games.tilebag.aiplayer.constants as constants #for constants
 from time import sleep #to optinonally simulate the human speed of play
 import random #picking tiles at random for now
 import threading #so we can still do other stuff while this player runs!
+from ai.tilebag.tbREST import TileBagREST #to make the calls over to the REST Engine
 
 class TileBagAIPlayer():
-  ''' An AI that can play TileBag - shamelessly stolen from Fred's code and adapted to the new
-      websocket messages that are available: yourturn, privateinfo, publicinfo '''
+  ''' An AI that can play TileBag - shamelessly stolen from Fred's code and adapted 
+       - uses the new websocket messages that are available: yourturn, privateinfo, publicinfo 
+       - uses the new TileBagREST helper class to tidy things up a bit
+      '''
        
   #aiplayer constructor
   def __init__(self, playerid, gameserver="http://localhost:5000", gameid="test", style="aggressive"):
@@ -19,13 +22,7 @@ class TileBagAIPlayer():
     self.style = style
     self.unplayableTiles=[] #list to store tiles in our hand we've tried to play previously, wihout success
     self.currentPlayerState="" #used to concatenate current player and game state, and detect changes, to reduce log verbosity    
-    self.RESTendpoints={"gamestate":"{}/tilebag/v1/{}".format(self.gameserver,self.gameid),
-        "placetile":"{}/tilebag/v1/{}/board?playerid={}".format(self.gameserver,self.gameid,self.id),
-        "buystocks":"{}/tilebag/v1/{}/stocks?playerid={}".format(self.gameserver,self.gameid,self.id),
-        "endturn":"{}/tilebag/v1/{}/stocks?playerid={}".format(self.gameserver,self.gameid,self.id),
-        "placehotel":"{}/tilebag/v1/{}/hotels?playerid={}".format(self.gameserver,self.gameid,self.id),
-        "endgame":"{}/tilebag/v1/{}?playerid={}".format(self.gameserver,self.gameid,self.id),
-        "savegame":"{}/tilebag/v1/save/{}".format(self.gameserver,self.gameid)}
+    self.tb = TileBagREST(gameserver, gameid=gameid, playerid=playerid)
     if constants.LOGLEVEL>=1: print("%saiplayer constructed" % (style+" " if style else ""))
 
     #the ai player needs to receive websocket messages from the server to react to turn signals
@@ -57,8 +54,6 @@ class TileBagAIPlayer():
       ailoop.start() # causes the AI loop to run
       self._connected=True
 
-      # tell anyone that's listening, that there's a new robot in town!
-      self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'new', 'playerid': self.id})
     return ailoop
        
   def killAILoop(self):
@@ -80,6 +75,10 @@ class TileBagAIPlayer():
     self.socketio.emit('join', {'room':'{}'.format(self.gameid)}) # for public info
     self.socketio.emit('join', {'room':'{}.{}'.format(self.gameid,self.id)}) # for private info
     if constants.LOGLEVEL>=1: print("player joined %s" % self.gameserver) 
+     
+    # tell anyone that's listening, that there's a new robot in town!
+    self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'new', 'playerid': self.id})
+     
     self.fetchGameState() # first time in, gotta grab the state
     self.turnHandler()
 
@@ -88,15 +87,15 @@ class TileBagAIPlayer():
   #it is called by the socketio event handling code _update as well as some elements of the playLoop
   def fetchGameState(self):
     if constants.LOGLEVEL>=2: print("fetching a new game state") #no gamestate information at this stage, until code below runs at least once
-    getparams = {"playerid": "{}".format(self.id)}
-    r = requests.get(self.RESTendpoints.get("gamestate"),params=getparams)
-    if r.status_code != 200:
+     
+    r, gamestate = self.tb.getPrivateInfo()
+    if r != 200:
       print("ERROR - error fetching game state\n%s" % r)
     else:
       #updating gamestate
+      self.gamestate=gamestate
+       
       self.previousPlayerState = self.currentPlayerState #storing previous value to determine change
-      #loading and activating the full game state (should trap for errors here)
-      self.gamestate = json.loads(r.text)
       #setting some utility fields
       self.currentPlayer = self.gamestate['game']['gamestate']['currplayer']['id']
       #concatenated snapshot of player and game state, used to determine changes
@@ -114,11 +113,11 @@ class TileBagAIPlayer():
         if constants.LOGLEVEL>=3: print(json.dumps(self.gamestate))
         if constants.LOGLEVEL>=4: 
           #obtain the server's viewpoint of the game state
-          serverstate_req = requests.get(self.RESTendpoints.get("savegame"))
-          if serverstate_req.status_code != 200:
-            print("ERROR - error fetching server state\n%s" % serverstate_req)
+          rc, data = self.tb.saveGame()
+          if rc != 200:
+            print("ERROR - error fetching server state\n%s" % data)
           else:
-            print("server state =>\n{}".format(serverstate_req.text))
+            print("server state =>\n{}".format(data))
 
       #this needs to happen regardless of who's turn it is; so it is not in the play loop
       if self.gamestate['game']['gamestate']['state'] == "EndGame":
@@ -173,12 +172,11 @@ class TileBagAIPlayer():
 
       if len(randomTileList)>0:
         tile = randomTileList.pop()
+   
         if constants.LOGLEVEL>=1: print("we think we'll play this tile %s" % tile)
-        patchdata = {"action":"placetile","tile":"{}".format(tile)}
-        if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placetile")))
-        r = requests.patch(self.RESTendpoints.get("placetile"),json=patchdata)
-        if r.status_code != 200: 
-          print("ERROR - placing tile %s was rejected" % tile)
+        rc, data = self.tb.placeTile(tile)
+        if rc != 200: 
+          print("ERROR - placing tile {} was rejected: {}".format(tile, data))
         else:
           return
            
@@ -189,16 +187,12 @@ class TileBagAIPlayer():
   def placeHotel(self):
     #find the most expensive hotel left (we shouldn't reach this code if there are no hotels left to place)
     #the datastructure is already ordered from cheapest to most expensive, so popping the last hotel from the list without a price
-    hotelchain=list(iter(item for item in self.gamestate['game']['hotels'] if item['price'] is None))[-1]
+    hotel=list(iter(item for item in self.gamestate['game']['hotels'] if item['price'] is None))[-1].get("name")
     
-    if constants.LOGLEVEL>=1: print("we think we'll launch this %s chain; it's worth the most" % hotelchain.get("name"))
-    patchdata = {"action":"placeHotel","hotel":"{}".format(hotelchain.get("name")),"tile":"lastplaced"}
-    if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placehotel")))
-    r = requests.patch(self.RESTendpoints.get("placehotel"),json=patchdata)
-    if r.status_code != 200: 
-      print("ERROR - illegal move trying to place a hotel\n%s" % r)
-      print("ERROR - placeHotel system exit next")
-      #self.killAILoop()
+    if constants.LOGLEVEL>=1: print("we think we'll launch this %s chain; it's worth the most" % hotel)
+    rc, data = self.tb.placeHotel(hotel, "lastplaced")
+    if rc != 200: 
+      print("ERROR - illegal move trying to place a hotel\n%s" % data)
 
   #this is where the AI will also hopefully shine
   def buyStock(self):
@@ -214,17 +208,14 @@ class TileBagAIPlayer():
       htobuy=random.choice([item for item in self.gamestate['game']['hotels'] if item['price'] is not None])
 
       # this is the "smartly" part (unless buying zero, make sure we have the ca$h or pick again)
-      if numtobuy is not 0 and (htobuy['price']*numtobuy > money or htobuy['stocks']<numtobuy):
+      if numtobuy != 0 and (htobuy['price']*numtobuy > money or htobuy['stocks']<numtobuy):
         continue
       
       # make the request to the server
-      patchdata = {"action":"buystocks","hotel":htobuy['name'],"amount":numtobuy}
-      if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("buystocks")))
-      r = requests.patch(self.RESTendpoints.get("buystocks"),json=patchdata)
-
+      rc, data = self.tb.buyStocks(htobuy['name'], numtobuy)
       # if it succeeds we're in business, if not (somewhat expected), that's okay
-      if r.status_code != 200:
-        print("illegal move trying to buy stock!\n%s" % r)
+      if rc != 200:
+        print("illegal move trying to buy stock!\n%s" % data)
       else:
         break # needed so we only do one BuyStocks action per turn (otherwise we'll get out of sync)
     return
@@ -269,12 +260,9 @@ class TileBagAIPlayer():
       hotelName = random.choice(mergeOptionsList)
 
     if constants.LOGLEVEL>=1: print("we've selected to collapse %s" % hotelName)
-    #remove
-    patchdata = {"action":"placeHotel","hotel":"{}".format(hotelName),"tile":None}
-    if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placehotel")))
-    r = requests.patch(self.RESTendpoints.get("placehotel"),json=patchdata)
-    if r.status_code != 200:
-      print("ERROR - illegal move trying to remove a hotel\n%s" % r)
+    rc, data = self.tb.placeHotel(hotelName, None)
+    if rc != 200:
+      print("ERROR - illegal move trying to remove a hotel\n%s" % data)
     
   def selectMergeWinner(self):
     mergeOptionsList = self.gamestate['game']['gamestate']['stateinfo']['bigoption']
@@ -296,11 +284,9 @@ class TileBagAIPlayer():
     selectedHotel=sorted(myHotels, key=lambda x: x['ownworth'])[-1]
     if constants.LOGLEVEL>=1: print("we think we'll retain this %s chain; it's worth the most (%s)" % 
         (selectedHotel['name'],selectedHotel['ownworth']))
-    patchdata = {"action":"placeHotel","hotel":"{}".format(selectedHotel['name']),"tile":"lastplaced"}
-    if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("placehotel")))
-    r = requests.patch(self.RESTendpoints.get("placehotel"),json=patchdata)
-    if r.status_code != 200: 
-      print("ERROR - illegal move trying to place a hotel to merge\n%s" % r)
+    rc, data = self.tb.placeHotel(selectedHotel['name'], "lastplaced")
+    if rc != 200: 
+      print("ERROR - illegal move trying to place a hotel to merge\n%s" % data)
 
 
   #will use simple logic here
@@ -324,32 +310,26 @@ class TileBagAIPlayer():
       #trade up by sending the order to buy largest
 
       if constants.LOGLEVEL>=1: print("we're going ahead and trading two %s stocks to buy one %s stocks!" % (smallestChain,biggestChain))
-      patchdata = {"action":"buystocks","hotel":"{}".format(biggestChain),"amount":1}
-      if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("buystocks")))
-      r = requests.patch(self.RESTendpoints.get("buystocks"),json=patchdata)
-      if r.status_code != 200: 
-        print("ERROR - illegal move trying to liquidate (trade) stock\n%s" % r)
+      rc, data = self.tb.tradeStocks(biggestChain, 1)
+      if rc != 200: 
+        print("ERROR - illegal move trying to liquidate (trade) stock\n%s" % data)
         print("ERROR - liquidateStocks (trade) system exit next")
 
     #we're down to one or none
     #sell in late game, retain in early game
     elif holdings[smallestChain] > 0 and len(self.gamestate['game']['board']['occupied']) > (constants.MIDGAME):
       if constants.LOGLEVEL>=1: print("we're going to sell 1 %s stock" % smallestChain)
-      patchdata = {"action":"buystocks","hotel":"{}".format(smallestChain),"amount":-1}
-      if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("buystocks")))
-      r = requests.patch(self.RESTendpoints.get("buystocks"),json=patchdata)
-      if r.status_code != 200:
-        print("ERROR - illegal move trying to liquidate (sell) stock\n%s" % r)
+      rc, data = self.tb.sellStocks(smallestChain, 1)
+      if rc != 200:
+        print("ERROR - illegal move trying to liquidate (sell) stock\n%s" % data)
         print("ERROR - liquidateStocks(sell) system exit next")
       
     #if holdings remain after this, end turn (turn ends automagically otherwise)
     elif holdings[smallestChain] > 0:
       if constants.LOGLEVEL>=1: print("we're going to retain %s stocks from %s" % (holdings[smallestChain],smallestChain))
-      patchdata = {"action":"buystocks","hotel":"Passing","amount":0}
-      if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("endturn")))
-      r = requests.patch(self.RESTendpoints.get("endturn"),json=patchdata)
-      if r.status_code != 200:
-        print("ERROR - illegal move trying to liquidate (hold) stock\n%s" % r)
+      rc, data = self.tb.endTurn()
+      if rc != 200:
+        print("ERROR - illegal move trying to liquidate (hold) stock\n%s" % data)
         print("ERROR - liquidateStocks (hold) system exit next")
 
   #calculate holdings?; if you're ahead, end, else keep on
@@ -358,11 +338,9 @@ class TileBagAIPlayer():
         returns True if we did ask to end the game '''
     ret=False
     if constants.LOGLEVEL>=1: print("!!!! endgame in sight")
-    patchdata = {"endgame":"yeahletsdoit"}
-    if constants.LOGLEVEL>=3: print("patch data: %s\nendpoint: %s" % (patchdata,self.RESTendpoints.get("endgame")))
-    r = requests.patch(self.RESTendpoints.get("endgame"),json=patchdata)
-    if r.status_code != 200:
-      print("ERROR - unable to end game\%s" % r)
+    rc, data = self.tb.endGame()
+    if rc != 200:
+      print("ERROR - unable to end game\%s" % d)
       print("ERROR - considerEnding system exit next")
     else:
       if constants.LOGLEVEL>=1: print("endgame requested successfully")
