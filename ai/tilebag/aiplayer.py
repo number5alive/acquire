@@ -45,7 +45,7 @@ class TileBagAIPlayer():
     ''' connect to the game, and wait for updates to the gamestate - best done in a thread! '''
     ailoop=None
     try:
-      self.socketio.connect(self.gameserver, namespaces=['/'])
+      self.socketio.connect(self.gameserver, transports=['polling'], namespaces=['/'])
     except socketio.exceptions.ConnectionError as err:
       print("Failed to connect to the websocket")
     else:
