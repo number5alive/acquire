@@ -33,6 +33,10 @@ class TileBagBASEAIPlayer():
     ''' lets the caller know if we have a stable websocket connection or not '''
     return self._connected
 
+  @property
+  def done(self):
+    return self.currstate == "EndGame"
+
   def runAILoop(self):
     ''' connect to the game, and wait for updates to the gamestate - best done in a thread! '''
     ailoop=None
