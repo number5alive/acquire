@@ -9,6 +9,8 @@ class TileBagBASEAIPlayer():
        - uses the new websocket messages that are available: yourturn
        - uses the new TileBagREST helper class to tidy things up a bit
        - abstracts out the connection to game logic from the "smarts"
+       
+        turnHandler: The Inheriting class should implement this if they want to do ANYTHING
       '''
        
   def __init__(self, gameserver="http://localhost:5000", gameid="test", playerid="513"):
@@ -110,7 +112,7 @@ class TileBagBASEAIPlayer():
   # Subclasses: Overwrite this!
   def turnHandler(self):
     ''' The Inheriting class should implement this if they want to do ANYTHING '''
-    print("Hanlding Turn Logic - hope the inheriting class overrides this function!")
+    print("Handling Turn Logic - hope the inheriting class overrides this function!")
 
 
 #entry function parses command line argument and instantiates AI player
