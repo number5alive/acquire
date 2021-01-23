@@ -119,7 +119,10 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
     print("new state: {}".format(self.currobs))
 
   def step(self, action):
-    """ Needs to return: observation, reward, done, info """
+    """ Needs to return: observation, reward, done, info 
+        Will only return when it's our turn, either because
+           a. we took an invalid action; or
+           b. our action was valid, and it's our turn again """
     reward=-1 #presume invalid move
     s_act, s_args = self._getActionStrings(action)
     print("Action: {}, {}".format(s_act, s_args))
@@ -175,42 +178,16 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 # for running tests
 if __name__ == "__main__":
   import random
-  import requests
-  import json
   import sys
-   
-  #converts the player name argument into a player id
-  #because working with names is more fun than working with ids :)
-  def resolvename(gameserver,gameid,playername):
-    r = requests.get("{}/gamelobby/v1/games/{}".format(gameserver,gameid))
-    playerdicts = json.loads(r.text)['game']['players']
-    return next(item for item in playerdicts if item['name'] == playername).get('id')
+  from ai.tilebag.tbargs import parseargs # for command line parsing
 
-  # Parse the command line (thanks for the code Fred!)
-     
-  if len(sys.argv) == 5:
-    gameserver = sys.argv[4] 
-    print("gameserver = %s" % gameserver)
-  else:
-    gameserver = "http://localhost:5000"
-    
-  if len(sys.argv) >= 4:
-    style = sys.argv[3]
-  else:
-    style=None
-  
-  if len(sys.argv) >= 3:
-    gameid = sys.argv[1]
-    playername = sys.argv[2] #aiplayer will assume the identity of the first player with a matching name 
-  else:
-    print("incorrect number of arguments; invoke with:\n%s room playername [style] [http://gameserver:port]" % sys.argv[0])
+  # get all the command line arguments
+  args=parseargs()
+  if args is None:
     sys.exit()
-
-  #convert name into a playerID
-  playerid = resolvename(gameserver,gameid,playername)
-  print("recovered player ID: %s" % playerid)
   
-  tbe=TileBagEnv(gameserver, gameid, playerid)
+  # initiatilize our ai player
+  tbe=TileBagEnv(args['gameserver'], args['gameid'], args['playerid'])
 
   #print("===== Testing the action_space =====")
   #for i in range(0,100):
@@ -221,7 +198,7 @@ if __name__ == "__main__":
   print("===== Kicking off an openai player =====")
   aithread=tbe.runAILoop()
 
-  if style == None:
+  if args['style'] == None:
     tbe.dontActuallyReset=True
   tbe.reset()
    
