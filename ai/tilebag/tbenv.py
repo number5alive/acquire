@@ -43,9 +43,14 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 
   def __init__(self, gameserver, gameid, playerid):
     """ OPENID: needs to define the action_space and observation_space """
-    super(gym.Env, self).__init__()
-    super(TileBagBASEAIPlayer, self).__init__()
+    print("openai enviornment constructed: {} {} {}".format(gameserver, gameid, playerid))
+    gym.Env.__init__(self)
+    TileBagBASEAIPlayer.__init__(self, gameserver, gameid, playerid)
+    #super(gym.Env, self).__init__()
+    #super(TileBagBASEAIPlayer, self).__init__()
     self.lobby=LobbyREST(self.gameserver) #needed for resetting the game
+    self.evtOurTurn=Event() # since data is received in the thread
+    self.dontActuallyReset=False # so we can run some helper AIs
 
     # TODO grab these directly from games.tilebag.tilebag.ACTIONS
     actions={
@@ -62,13 +67,12 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
         'ourturn': spaces.Discrete(1),
         'tbstate': spaces.Discrete(len(TileBagGame.STATES)),
         })
-    self.lockStateChange=Lock()
-    self.evtOurTurn=Event()
 
   def reset(self):
     """ Reset a game to the start so we can run again """
-    print("resetting the game")
-    self.lobby.restartGame(self.gameid)
+    if not self.dontActuallyReset:
+      print("resetting the game")
+      self.lobby.restartGame(self.gameid)
     self._waitForOurTurn()
 
   def _takeAction(self, action):
@@ -143,6 +147,8 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 
       # flag to the main thread that we have data to consume
       self.evtOurTurn.set()
+    else:
+      print("Not our turn... waiting this out {} / {}".format(self.currplayer, self.playerid))
 
   def _tileName(self, coords):
     """ TileBag has 12 numbered columns, and 8 lettered rows, this mixes me up all the time! """
@@ -169,19 +175,55 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 # for running tests
 if __name__ == "__main__":
   import random
-  
-  tbe=TileBagEnv(None,None,None)
+  import requests
+  import json
+  import sys
+   
+  #converts the player name argument into a player id
+  #because working with names is more fun than working with ids :)
+  def resolvename(gameserver,gameid,playername):
+    r = requests.get("{}/gamelobby/v1/games/{}".format(gameserver,gameid))
+    playerdicts = json.loads(r.text)['game']['players']
+    return next(item for item in playerdicts if item['name'] == playername).get('id')
 
-  print("===== Testing the action_space =====")
-  for i in range(0,100):
-    action = random.choice(list(tbe.action_space.sample().items()))
-    s_act, s_args = tbe._getActionStrings(action)
-    print("Action: {}, {}".format(s_act, s_args))
+  # Parse the command line (thanks for the code Fred!)
+     
+  if len(sys.argv) == 5:
+    gameserver = sys.argv[4] 
+    print("gameserver = %s" % gameserver)
+  else:
+    gameserver = "http://localhost:5000"
+    
+  if len(sys.argv) >= 4:
+    style = sys.argv[3]
+  else:
+    style=None
+  
+  if len(sys.argv) >= 3:
+    gameid = sys.argv[1]
+    playername = sys.argv[2] #aiplayer will assume the identity of the first player with a matching name 
+  else:
+    print("incorrect number of arguments; invoke with:\n%s room playername [style] [http://gameserver:port]" % sys.argv[0])
+    sys.exit()
+
+  #convert name into a playerID
+  playerid = resolvename(gameserver,gameid,playername)
+  print("recovered player ID: %s" % playerid)
+  
+  tbe=TileBagEnv(gameserver, gameid, playerid)
+
+  #print("===== Testing the action_space =====")
+  #for i in range(0,100):
+  #  action = random.choice(list(tbe.action_space.sample().items()))
+  #  s_act, s_args = tbe._getActionStrings(action)
+  #  print("Action: {}, {}".format(s_act, s_args))
      
   print("===== Kicking off an openai player =====")
   aithread=tbe.runAILoop()
+
+  if style == None:
+    tbe.dontActuallyReset=True
   tbe.reset()
-   
    
   done=False
   totalreward=0

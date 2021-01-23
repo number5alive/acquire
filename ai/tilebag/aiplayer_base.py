@@ -19,7 +19,7 @@ class TileBagBASEAIPlayer():
     self.gameid = gameid
     self.tb = TileBagREST(gameserver, gameid=gameid, playerid=playerid)
    
-    if constants.LOGLEVEL>=1: print("BASE aiplayer constructed")
+    if constants.LOGLEVEL>=1: print("BASE aiplayer constructed: {} {} {}".format(gameserver, gameid, playerid))
 
     #the ai player needs to receive websocket messages from the server to react to turn signals
     #self.socketio = socketio.Client(reconnection=True, reconnection_attempts=5, reconnection_delay=1, reconnection_delay_max=5, randomization_factor=0.5, logger=True, engineio_logger=True)
