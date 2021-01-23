@@ -75,6 +75,7 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
       print("resetting the game")
       self.lobby.restartGame(self.gameid)
     self._waitForOurTurn()
+    return self.currobs
 
   def _takeAction(self, action):
     rc=404
