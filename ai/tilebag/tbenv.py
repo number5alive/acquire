@@ -7,6 +7,10 @@ from ai.tilebag.aiplayer_base import TileBagBASEAIPlayer
 
 class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
   """ An OpenAI Gym enviornment that knows about TileBag """
+     
+  ROWNAME=[chr( ord('A') + x ) for x in range(0,8)]
+  HOTELNAME=[h['name'] for h in HOTELS]
+  DECLAREACTION=["Do Nothing", "Declare End Game", "End Turn"]
 
   def __init__(self, gameserver, gameid, playerid):
     """ OPENID: needs to define the action_space and observation_space """
@@ -14,9 +18,11 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
     super(TileBagBASEAIPlayer, self).__init__()
     self.lobby=LobbyREST(self.gameserver) #needed for resetting the game
 
+    # TODO grab these directly from games.tilebag.tilebag.ACTIONS
     actions={
         'placetile': spaces.MultiDiscrete([12, 8]), #col, row
         'placehotel': spaces.Discrete(7),
+        'removehotel': spaces.Discrete(7),
         'buystock': spaces.MultiDiscrete([7, 3]),  #max buy is three
         'sellstock': spaces.MultiDiscrete([7, 25]), #can sell up to all holding
         'declare': spaces.Discrete(3), # 0=NOP, 1=Declare Game End, 2=End Turn
@@ -25,7 +31,7 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 
     self.observation_space = spaces.Dict({
         'ourturn': spaces.Discrete(1),
-        'tbstate': spaces.Discrete(6),
+        'tbstate': spaces.Discrete(8),
         })
 
   def reset(self):
@@ -46,9 +52,6 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
     # TODO: flag to the main thread that we have data to consume
     print("Hmm... our turn to do something!")
 
-  ROWNAME=[chr( ord('A') + x ) for x in range(0,8)]
-  HOTELNAME=[h['name'] for h in HOTELS]
-  DECLAREACTION=["Do Nothing", "Declare End Game", "End Turn"]
   def _tileName(self, coords):
     """ TileBag has 12 numbered columns, and 8 lettered rows, this mixes me up all the time! """
     return str(coords[0]) + TileBagEnv.ROWNAME[coords[1]]
@@ -71,9 +74,17 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 # for running tests
 if __name__ == "__main__":
   import random
+
+  
   tbe=TileBagEnv(None,None,None)
-  tbe.runAILoop()
+  aithread=tbe.runAILoop()
   tbe.reset()
   for i in range(0,10):
     tbe.step(random.choice(list(tbe.action_space.sample().items())))
 
+  try:
+    aithread.join()
+  except KeyboardInterrupt:
+    print("Trying to Exit Cleanly...")
+    tbe.killAILoop()
+    print("Exitting")

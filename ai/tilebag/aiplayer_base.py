@@ -59,7 +59,12 @@ class TileBagBASEAIPlayer():
          
     # Before we drop the connection (TODO: test that we still HAVE that connection)
     # tell anyone that's listening, that there's a new robot in town!
-    self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'done', 'playerid': self.playerid})
+    try:
+      self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'done', 'playerid': self.playerid})
+      print("Send (emitted) the robot:done message... woot woot")
+    except:
+      #don't really care much, the emit was a nicety if anything
+      print("Couldn't emit the robot:done message... I guess that happens")
          
     print("Dropping connection to the websocket")
     self.socketio.disconnect() # this should abort the wait loop cleanly
@@ -73,21 +78,25 @@ class TileBagBASEAIPlayer():
 
     #the following officially registers the player with the server and fetches the inital gamestate
          
-    print("trying to join") #join message necessary to receive updates via websockets
-    self.socketio.emit('join', {'room':'{}'.format(self.gameid)}) # for public info
-    self.socketio.emit('join', {'room':'{}.{}'.format(self.gameid,self.playerid)}) # for private info
-    if constants.LOGLEVEL>=1: print("player joined %s" % self.gameserver) 
-     
-    # first time in, gotta grab the state
-    rc, gameinfo = self.tb.getPrivateInfo()
-    if rc == 200:
-      # tell anyone that's listening, that there's a new robot in town!
-      # done if we've connected and successfully pulled some data
-      self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'new', 'playerid': self.playerid})
+    try:
+      print("trying to join") #join message necessary to receive updates via websockets
+      self.socketio.emit('join', {'room':'{}'.format(self.gameid)}) # for public info
+      self.socketio.emit('join', {'room':'{}.{}'.format(self.gameid,self.playerid)}) # for private info
+      if constants.LOGLEVEL>=1: print("player joined %s" % self.gameserver) 
        
-      # make sure to parse the gameinfo into something that's easy for us to use, then handle it
-      self.parseGameState(gameinfo)
-      self.turnHandler()
+      # first time in, gotta grab the state
+      rc, gameinfo = self.tb.getPrivateInfo()
+      if rc == 200:
+        # tell anyone that's listening, that there's a new robot in town!
+        # done if we've connected and successfully pulled some data
+        self.socketio.emit('clientmessage', {'room': self.gameid, 'message':'robots', 'robotaction': 'new', 'playerid': self.playerid})
+         
+        # make sure to parse the gameinfo into something that's easy for us to use, then handle it
+        self.parseGameState(gameinfo)
+        self.turnHandler()
+    except:
+      print("Failed to join the channel... this really won't work!")
+      self.killAILoop()
 
   def _yourturn(self, data):
     ''' websocket message indicating that it's our turn to act '''
