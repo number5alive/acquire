@@ -1,12 +1,18 @@
 import gym
 from gym import spaces
 import random
+from games.tilebag.hotels import HOTELS
+from ai.tilebag.lobbyREST import LobbyREST
+from ai.tilebag.aiplayer_base import TileBagBASEAIPlayer
 
-class TileBagEnv(gym.Env):
+class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
   """ An OpenAI Gym enviornment that knows about TileBag """
 
-  def __init__(self):
-    super(TileBagEnv, self).__init__()
+  def __init__(self, gameserver, gameid, playerid):
+    """ OPENID: needs to define the action_space and observation_space """
+    super(gym.Env, self).__init__()
+    super(TileBagBASEAIPlayer, self).__init__()
+    self.lobby=LobbyREST(self.gameserver) #needed for resetting the game
 
     actions={
         'placetile': spaces.MultiDiscrete([12, 8]), #col, row
@@ -16,13 +22,32 @@ class TileBagEnv(gym.Env):
         'declare': spaces.Discrete(3), # 0=NOP, 1=Declare Game End, 2=End Turn
         }
     self.action_space = spaces.Dict(actions)
-    self.observation_space = spaces.Discrete(50)
+
+    self.observation_space = spaces.Dict({
+        'ourturn': spaces.Discrete(1),
+        'tbstate': spaces.Discrete(6),
+        })
 
   def reset(self):
+    """ Reset a game to the start so we can run again """
+    self.lobby.restartGame(self.gameid)
+
+  def step(self, action):
+    """ Needs to return: observation, reward, done, info """
+    s_act, s_args = self._getActionStrings(action)
+    print("Action: {}, {}".format(s_act, s_args))
+
+  def render(self, mode='human', close=False):
     pass
+     
+  def turnHandler(self):
+    """ from TileBagBASEAIPlayer - called when it's our turn to act 
+        NOTE: called from the websocket thread """
+    # TODO: flag to the main thread that we have data to consume
+    print("Hmm... our turn to do something!")
 
   ROWNAME=[chr( ord('A') + x ) for x in range(0,8)]
-  HOTELNAME=["Worldwide", "Saxxon", "Festival", "Imperial", "American", "Tower", "Continental"]
+  HOTELNAME=[h['name'] for h in HOTELS]
   DECLAREACTION=["Do Nothing", "Declare End Game", "End Turn"]
   def _tileName(self, coords):
     """ TileBag has 12 numbered columns, and 8 lettered rows, this mixes me up all the time! """
@@ -42,19 +67,13 @@ class TileBagEnv(gym.Env):
          
     return action[0], args
 
-  def step(self, action):
-    """ Needs to return: observation, reward, done, info """
-    s_act, s_args = self._getActionStrings(action)
-    print("Action: {}, {}".format(s_act, s_args))
-
-  def render(self, mode='human', close=False):
-    pass
-
 
 # for running tests
 if __name__ == "__main__":
   import random
-  tbe=TileBagEnv()
-  for i in range(0,100):
+  tbe=TileBagEnv(None,None,None)
+  tbe.runAILoop()
+  tbe.reset()
+  for i in range(0,10):
     tbe.step(random.choice(list(tbe.action_space.sample().items())))
 
