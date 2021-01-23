@@ -70,6 +70,7 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 
   def reset(self):
     """ Reset a game to the start so we can run again """
+    self.evtOurTurn.clear()
     if not self.dontActuallyReset:
       print("resetting the game")
       self.lobby.restartGame(self.gameid)
@@ -125,7 +126,7 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
            b. our action was valid, and it's our turn again """
     reward=-1 #presume invalid move
     s_act, s_args = self._getActionStrings(action)
-    print("Action: {}, {}".format(s_act, s_args))
+    # print("Action: {}, {}".format(s_act, s_args))
 
     if self._takeAction(action):
       # we made a valid move, wait until it's our turn again before returning to the caller
@@ -152,6 +153,7 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
       self.evtOurTurn.set()
     else:
       print("Not our turn... waiting this out {} / {}".format(self.currplayer, self.playerid))
+      # print("                                 {} / {}".format(type(self.currplayer), type(self.playerid)))
 
   def _tileName(self, coords):
     """ TileBag has 12 numbered columns, and 8 lettered rows, this mixes me up all the time! """
