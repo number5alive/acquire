@@ -65,17 +65,6 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
     self.lockStateChange=Lock()
     self.evtOurTurn=Event()
 
-  def _waitForOurTurn(self):
-    """ synchronizes between the websocket and the main thread
-        doesn't return until it's our turn"""
-    print("Just waiting for our turn to come around")
-    self.evtOurTurn.wait()
-    self.lockStateChange.acquire() # will block until we get it! keep it until next go-around
-    self.evtOurTurn.clear()
-
-    self.currobs=self._toObservationState()
-    print("new state: {}".format(self.currobs))
-
   def reset(self):
     """ Reset a game to the start so we can run again """
     print("resetting the game")
@@ -83,8 +72,28 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
     self._waitForOurTurn()
 
   def _takeAction(self, action):
+    rc=404
+
     """ issues the rest call into the game engine and returns True if 200-OK response """
-    return False
+    if action[0]==TileBagGame.EVENT_PLACETILE:
+      rc, data = self.tb.placeTile(self._tileName(action[1]))
+    elif action[0]==TileBagGame.EVENT_PLACEHOTEL:
+      rc, data = self.tb.placeHotel(TileBagEnv.HOTELNAME[action[1]])
+    elif action[0]==TileBagGame.EVENT_REMOVEHOTEL:  
+      rc, data = self.tb.removeHotel(TileBagEnv.HOTELNAME[action[1]])
+    elif action[0]==TileBagGame.EVENT_BUYSTOCKS:
+      rc, data = self.tb.buyStocks(TileBagEnv.HOTELNAME[action[1][0]], int(action[1][1])+1)
+    elif action[0]==TileBagGame.EVENT_SELLSTOCKS:
+      rc, data = self.tb.sellStocks(TileBagEnv.HOTELNAME[action[1][0]], int(action[1][1])+1)
+    elif action[0]=='declare':
+      if action[1]==0: #NOP (we'll still call this a fail for now)
+        pass
+      elif action[1]==1: #Request End Game
+        rc, data = self.tb.endGame()
+      elif action[1]==2: #End Turn
+        rc, data = self.tb.endTurn()
+
+    return rc & 0xFA == 200 #any 20x return code
 
   def _toObservationState(self):
     """ converts the game json into the openai gym.Spaces.Dict type for this env """
@@ -95,6 +104,16 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
     """ returns true if the game is over """
     return self.currstate == TileBagGame.STATE_ENDGAME
 
+  def _waitForOurTurn(self):
+    """ synchronizes between the websocket and the main thread
+        doesn't return until it's our turn"""
+    print("Just waiting for our turn to come around")
+    self.evtOurTurn.wait()
+    self.evtOurTurn.clear()
+
+    self.currobs=self._toObservationState()
+    print("new state: {}".format(self.currobs))
+
   def step(self, action):
     """ Needs to return: observation, reward, done, info """
     reward=-1 #presume invalid move
@@ -103,7 +122,7 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
 
     if self._takeAction(action):
       # we made a valid move, wait until it's our turn again before returning to the caller
-      self.lockStateChange.release() # okay, safe to let the game update this again
+      # self.lockStateChange.release() # okay, safe to let the game update this again
        
       # wait until our turn comes around again
       self._waitForOurTurn()
@@ -119,12 +138,11 @@ class TileBagEnv(gym.Env, TileBagBASEAIPlayer):
   def turnHandler(self):
     """ from TileBagBASEAIPlayer - called when it's our turn to act 
         NOTE: called from the websocket thread """
-    # TODO: flag to the main thread that we have data to consume
     if self.currplayer == self.playerid:
       print("Hmm... our turn to do something!")
 
-      with self.lockStateChange:
-        self.evtOurTurn.set()
+      # flag to the main thread that we have data to consume
+      self.evtOurTurn.set()
 
   def _tileName(self, coords):
     """ TileBag has 12 numbered columns, and 8 lettered rows, this mixes me up all the time! """
@@ -163,13 +181,20 @@ if __name__ == "__main__":
   print("===== Kicking off an openai player =====")
   aithread=tbe.runAILoop()
   tbe.reset()
-  for i in range(0,10):
-    tbe.step(random.choice(list(tbe.action_space.sample().items())))
+   
+   
+  done=False
+  totalreward=0
+  try: # so we can catch ctrl-c
+    while not done:
+      obs, stepreward, done, info = tbe.step(random.choice(list(tbe.action_space.sample().items())))
+      totalreward=totalreward + stepreward
 
-  try:
+    # game is done, let's join the thread until it dies
     aithread.join()
   except KeyboardInterrupt:
     print("Trying to Exit Cleanly...")
+    print("totalreward = {}".format(totalreward))
     tbe.killAILoop()
     print("Exitting")
      

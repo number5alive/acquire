@@ -87,7 +87,7 @@ class TileBagREST:
     reqparams = {"playerid": playerid}
     patchdata = {"action":"buystocks","hotel":hotel,"amount":amount}
     
-    print(patchdata)
+    #print(patchdata)
     r = requests.patch(targeturl, params=reqparams, json=patchdata)
     return r.status_code, json.loads(r.text) if r.status_code==200 else r.text
 
@@ -108,7 +108,7 @@ class TileBagREST:
               hotels """
     return self.buyStocks(hotel, amount, playerid, gameid) 
      
-  def placeHotel(self, hotel, location, playerid=None, gameid=None):
+  def placeHotel(self, hotel, location="lastplayed", playerid=None, gameid=None):
     """ Place a hotel onto the board """
     # unless the caller overrides them, presume we're doing this for the current game and player
     if playerid is None: playerid=self.playerid
@@ -118,9 +118,13 @@ class TileBagREST:
     reqparams = {"playerid": playerid}
     patchdata = {"action":"placeHotel","hotel":hotel,"tile":location}
     
-    print(patchdata)
+    #print(patchdata)
     r = requests.patch(targeturl, params=reqparams, json=patchdata)
     return r.status_code, json.loads(r.text) if r.status_code==200 else r.text
+
+  def removeHotel(self, hotel):
+    """ the remove hotel action - it's actually just a placeHotel action with an empty location """
+    return self.placeHotel(hotel, location="")
      
   def endGame(self, playerid=None, gameid=None):
     """ End the game """
