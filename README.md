@@ -24,6 +24,11 @@ $ python3 -mvenv ~/blah
 $ source ~/blah/bin/activate
 (virtual-env) $ pip3 install -r requirements.txt
 
+### If you want to use jupyter for developing
+$ jupyter notebook --ip=0.0.0.0
+You'll now be able to hit that from your host OS at the url it displays
+NOTE: You need the token it supplies, so it'll be: http://localhost:8888/?token=<something>
+
 ### to test the game classes (unit tests)
 NOTE: run these apps from the root folder via:
 (virtual-env) $ python3 -m games.tilebag.player
