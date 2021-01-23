@@ -163,6 +163,8 @@ class TileBagGame(Game, StateEngine):
   EVENT_REMOVEHOTEL='RemoveHotel'
   EVENT_PLACEHOTEL='PlaceHotel'
   EVENT_PLACETILE='PlaceTile'
+  EVENTS=[ EVENT_BUYSTOCKS, EVENT_SELLSTOCKS, EVENT_REMOVEHOTEL,
+            EVENT_PLACEHOTEL, EVENT_PLACETILE, ]
 
   STATE_BUYSTOCKS='BuyStocks'
   STATE_STARTGAME='StartGame'
@@ -172,6 +174,8 @@ class TileBagGame(Game, StateEngine):
   STATE_SELECTMERGELOSER='SelectMergeLoser'
   STATE_LIQUIDATESTOCKS='LiquidateStocks'
   STATE_ENDGAME='EndGame'
+  STATES=[ STATE_BUYSTOCKS, STATE_STARTGAME, STATE_PLACETILE, STATE_PLACEHOTEL,
+          STATE_SELECTMERGEWINNER, STATE_SELECTMERGELOSER, STATE_LIQUIDATESTOCKS, STATE_ENDGAME ]
 
   # current player can trigger the end of the game if the end condition is set
   # NOTE: _endcondition flag is updated after every state change
